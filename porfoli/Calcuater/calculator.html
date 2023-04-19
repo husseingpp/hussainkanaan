@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="cal-style.css" type="text/css">
+    <title>simple calculator</title>
+</head>
+<body>
+    <h1 id="calculater_title">Simple Calculator</h1>
+    <form name="calcul">
+        <table align="center">
+            <tr>
+                <td colspan="4"><input type="text" name="result" placeholder="0" style="text-align: right;"></td>
+            </tr>
+            <tr>         
+                <td> <button type="button" name="rev" onclick="remv()">AC</button></td>
+                <td><button type="button" value="sin" onclick="sin()">sin</button></td>
+                <td><button type="button" value="cos" onclick="cos()">cos</button></td>
+                <td><button type="button" value="%" onclick="number(value)">%</button></td>
+            </tr>
+            <tr>
+                <td><button type="button" value="7" onclick="number(value)">7</button></td>
+                <td><button type="button" value="8" onclick="number(value)">8</button></td>
+                <td><button type="button" value="9" onclick="number(value)">9</button></td>
+                <td><button type="button" value="*" onclick="number(value)">x</button></td>
+            </tr>
+            <tr>
+                <td><button type="button" value="4" onclick="number(value)">4</button></td>
+                <td><button type="button" value="5" onclick="number(value)">5</button></td>
+                <td><button type="button" value="6" onclick="number(value)">6</button></td>
+                <td><button type="button" value="-" onclick="number(value)">-</button></td>
+            </tr>
+            <tr>
+                <td><button type="button" value="1" onclick="number(value)">1</button></td>
+                <td><button type="button" value="2" onclick="number(value)">2</button></td>
+                <td><button type="button" value="3" onclick="number(value)">3</button></td>
+                <td><button type="button" value="+" onclick="number(value)">+</button></td>
+            </tr>
+            <tr>
+                <td><button type="button" value="0" onclick="number(value)">0</button></td>
+                <td><button type="button" value="," onclick="number(value)">,</button></td>
+                <td><button type="button" value="x^2" onclick="square()"> x<sup>2 </button> </td>
+                <td><button type="button" value="=" onclick="equal()">=</button></td>
+            </tr>
+        </table>
+    </form>
+
+        <div class="footer">
+            Designed and coded by Hussain Kanaan
+        </div>
+
+    <script src="cal-app.js"></script>
+</body>
+</html>

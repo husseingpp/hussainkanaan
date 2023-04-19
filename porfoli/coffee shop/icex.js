@@ -1,0 +1,1 @@
+document.getElementById("menu").innerHTML = "Hello JavaScript";
