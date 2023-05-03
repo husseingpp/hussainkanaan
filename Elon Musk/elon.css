@@ -40,14 +40,14 @@ a:hover{
     text-align: center;
 }
 
-.tribute-info{
+/* .tribute-info{
     max-width: 100%;
     display: block;
     font-size: 25px;
     margin: 30px;
     padding: 30px;
     text-align: center;
-}
+} */
 .tribute-info-title{
     max-width: 100%;
     display: block;
@@ -179,6 +179,23 @@ a:hover{
   }
   .footer-contaner a{
     font-size: 10px;
+  }
+}
+.tribute-info {
+  max-width: 100%;
+  display: block;
+  font-size: 25px;
+  margin: 30px;
+  padding: 30px;
+  text-align: center;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+  .tribute-info {
+      font-size: 20px;
+      margin: 20px;
+      padding: 20px;
   }
 }
 
