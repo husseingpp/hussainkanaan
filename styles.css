@@ -12,8 +12,7 @@
     margin: 0;
     padding: 0;
   }
-  
-  /* box-sizing and font sizing */
+
   *,
   *::before,
   *::after {
@@ -23,30 +22,12 @@
   html {
     box-sizing: border-box;
   
-    /* Set font size for easy rem calculations
-     * default document font size = 16px, 1rem = 16px, 100% = 16px
-     * (100% / 16px) * 10 = 62.5%, 1rem = 10px, 62.5% = 10px
-    */
+
     font-size: 62.5%;
     scroll-behavior: smooth;
   }
   
-  /* A few media query to set some font sizes at different screen sizes.
-   * This helps automate a bit of responsiveness.
-   * The trick is to use the rem unit for size values, margin and padding.
-   * Because rem is relative to the document font size
-   * when we scale up or down the font size on the document
-   * it will affect all properties using rem units for the values.
-  */
-  
-  /* I am using the em unit for breakpoints
-   * The calculation is the following
-   * screen size divided by browser base font size
-   * As an example: a breakpoint at 980px
-   * 980px / 16px = 61.25em
-  */
-  
-  /* 1200px / 16px = 75em */
+
   @media (max-width: 28.75em) {
     html {
       font-size: 50%;
@@ -222,6 +203,7 @@
   
    
   @media screen and (max-width: 768px) {
+    /* Header */
     #hader_1 {
       font-size: 64px;
       line-height: 77px;
@@ -243,12 +225,43 @@
       top: 540px;
     }
   
+    /* Main image */
+    .main-img {
+      max-width: 400px;
+    }
+  }
+  
+  @media screen and (max-width: 768px) {
+    /* Header */
+    #hader_1 {
+      font-size: 64px;
+      line-height: 77px;
+    }
+  
+    #heder2n {
+      font-size: 32px;
+      line-height: 38px;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 470px;
+    }
+  
+    #heder3n {
+      font-size: 24px;
+      line-height: 29px;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 540px;
+    }
+  
+    /* Main image */
     .main-img {
       max-width: 400px;
     }
   }
   
   @media screen and (max-width: 480px) {
+    /* Header */
     #hader_1 {
       font-size: 48px;
       line-height: 58px;
@@ -270,21 +283,13 @@
       top: 520px;
     }
   
+    /* Main image */
     .main-img {
       max-width: 300px;
     }
   }
   
-  
-  /* .welcome-section > p {
-    font-size: 3rem;
-    font-weight: 200;
-    font-style: italic;
-    color: var(--main-red);
-  } */
-  
-  /* Projects section */
-  
+
   .projects-section {
     text-align: center;
     padding: 10rem 2rem;
@@ -447,14 +452,6 @@
       text-align: center;
     }
   }
-    
-  
-/* 
-  #welcome-section h1 {
-    font-size: 3rem;
-    font-weight: bold;
-    color: var(--main-black);
-  } */
   
   #welcome-section p.welcome-text {
     font-size: 1.8rem;
@@ -464,174 +461,73 @@
     text-align: center;
   }
   
+  @media (max-width: 768px) {
+    .projects-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .contact-section-header > h2 {
+      font-size: 3rem;
+    }
+  
+    .contact-section-header > p {
+      font-size: 1.8rem;
+    }
+  
+    .contact-links {
+      flex-wrap: nowrap;
+    }
+  
+    .contact-details {
+      font-size: 1.8rem;
+    }
+  }
 
-  /* Screen width less than 576px */
-@media (max-width: 575.98px) {
   body {
     font-size: 16px;
+    margin: 0;
+    padding: 0;
   }
+  
   h1 {
-    font-size: 3rem;
-  }
-  h2 {
-    font-size: 2.5rem;
-  }
-  h3 {
-    font-size: 2rem;
-  }
-  p {
-    font-size: 1.6rem;
-  }
-}
-
-/* Screen width between 576px and 768px */
-@media (min-width: 844px) and (max-width:390px) {
-  body {
-    font-size: 18px;
-  }
-  h1 {
-    font-size: 3.5rem;
-  }
-  h2 {
-    font-size: 3rem;
-  }
-  h3 {
-    font-size: 2.5rem;
-  }
-  p {
-    font-size: 1.8rem;
-  }
-}
-
-/* Screen width between 768px and 992px */
-@media (min-width: 768px) and (max-width: 991.98px) {
-  body {
-    font-size: 20px;
-  }
-  h1 {
-    font-size: 4rem;
-  }
-  h2 {
-    font-size: 3.5rem;
-  }
-  h3 {
-    font-size: 3rem;
-  }
-  p {
-    font-size: 2rem;
-  }
-}
-
-/* Screen width between 992px and 1200px */
-@media (min-width: 992px) and (max-width: 1199.98px) {
-  body {
-    font-size: 22px;
-  }
-  h1 {
-    font-size: 4.5rem;
-  }
-  h2 {
-    font-size: 4rem;
-  }
-  h3 {
-    font-size: 3.5rem;
-  }
-  p {
-    font-size: 2.2rem;
-  }
-}
-
-/* Screen width less than 576px */
-@media (max-width: 575.98px) {
-  body {
-    font-size: 16px;
-  }
-  h1 {
-    font-size: 3rem;
-  }
-  h2 {
-    font-size: 2.5rem;
-  }
-  h3 {
-    font-size: 2rem;
-  }
-  p {
-    font-size: 1.6rem;
-  }
-}
-
-/* Screen width between 576px and 768px */
-@media (min-width: 576px) and (max-width: 767.98px) {
-  body {
-    font-size: 18px;
-  }
-  h1 {
-    font-size: 3.5rem;
-  }
-  h2 {
-    font-size: 3rem;
-  }
-  h3 {
-    font-size: 2.5rem;
-  }
-  p {
-    font-size: 1.8rem;
-  }
-}
-
-/* Screen width between 768px and 992px */
-@media (min-width: 768px) and (max-width: 991.98px) {
-  body {
-    font-size: 20px;
-  }
-  h1 {
-    font-size: 4rem;
-  }
-  h2 {
-    font-size: 3.5rem;
-  }
-  h3 {
-    font-size: 3rem;
-  }
-  p {
-    font-size: 2rem;
-  }
-}
-
-/* Screen width between 992px and 1200px */
-@media (min-width: 992px) and (max-width: 1199.98px) {
-  body {
-    font-size: 22px;
-  }
-  h1 {
-    font-size: 4.5rem;
-  }
-  h2 {
-    font-size: 4rem;
-  }
-  h3 {
-    font-size: 3.5rem;
-  }
-  p {
-    font-size: 2.2rem;
-  }
-}
-
-/* Screen width greater than 1200px */
-@media (min-width: 1200px) {
-  body {
     font-size: 24px;
+    margin-top: 0;
   }
-  h1 {
-    font-size: 5rem;
-  }
-  h2 {
-    font-size: 4.5rem;
-  }
-  h3 {
-    font-size: 4rem;
-  }
+  
   p {
-    font-size: 2.4rem;
+    margin-bottom: 16px;
   }
-}
+  
+  img {
+    max-width: 100%;
+  }
+  
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+    }
+  
+    h1 {
+      font-size: 20px;
+    }
+  
+    p {
+      margin-bottom: 12px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    body {
+      font-size: 12px;
+    }
+  
+    h1 {
+      font-size: 18px;
+    }
+  
+    p {
+      margin-bottom: 10px;
+    }
+  }
