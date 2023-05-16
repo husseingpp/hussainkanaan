@@ -1,0 +1,23 @@
+{
+  "name": "hussainkanaan.github.io",
+  "version": "1.0.0",
+  "description": "hussain kanaan Portfolio",
+  "main": "login.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/groot0y/hussainkanaan.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/groot0y/hussainkanaan/issues"
+  },
+  "homepage": "https://github.com/groot0y/hussainkanaan#readme",
+  "dependencies": {
+    "firebase": "^9.22.0"
+  }
+}
