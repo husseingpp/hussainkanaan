@@ -257,13 +257,18 @@ color: var(--main-gold);
 }
 
 
-@media (max-width: 844px) {
+@media (max-width: 30em) {
+  body{
+    position: relative;
+    width: 390px;
+    height: 2532px;
+  }
   .nav {
-      position: absolute;
-      width: 390px;
-      height: 62px;
-      left: 0px;
-      top: 0px;
+    position: absolute;
+    width: 390px;
+    height: 62px;
+    left: 0px;
+    top: 0px;
   }
   .welcome-section {
       position: absolute;
@@ -273,50 +278,51 @@ color: var(--main-gold);
       top: 60px;
   }
   .container {
-      position: absolute;
-      width: 392px;
-      height: 784px;
-      left: -2px;
-      top: 0px;
+
+    position: absolute;
+    width: 392px;
+    height: 784px;
+    left: -2px;
+    top: 0px;
   }
   #header_1 {
-      position: absolute;
-      width: 368px;
-      height: 81px;
-      left: 11px;
-      top: 148px;
-      
-      font-family: 'Inter';
-      font-style: normal;
-      font-weight: 400;
-      font-size: 64px;
-      line-height: 77px;       
+    position: absolute;
+    width: 368px;
+    height: 81px;
+    left: 11px;
+    top: 148px;
+    
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 64px;
+    line-height: 77px;  
   }
   #firstName {
-      position: absolute;
-      width: 143px;
-      height: 39px;
-      left: 123px;
-      top: 45px;
-      
-      font-family: 'Inter';
-      font-style: normal;
-      font-weight: 400;
-      font-size: 32px;
-      line-height: 39px;        
+    position: absolute;
+    width: 143px;
+    height: 39px;
+    left: 123px;
+    top: 45px;
+    
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 39px;       
   }
   #lastName {
-      position: absolute;
-      width: 101px;
-      height: 29px;
-      left: 144px;
-      top: 84px;
-      
-      font-family: 'Inter';
-      font-style: normal;
-      font-weight: 400;
-      font-size: 24px;
-      line-height: 29px;        
+    position: absolute;
+    width: 101px;
+    height: 29px;
+    left: 144px;
+    top: 84px;
+    
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 29px;       
   }
 }
 /* ---------------------------------------------------------------------------------------------------------- */
