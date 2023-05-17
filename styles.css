@@ -154,7 +154,7 @@ img {
   height: 44px;
   left: 1164px;
   top: 15px;
-
+  display: flex;
   font-family: 'Inter';
   font-style: normal;
   font-weight: 400;
@@ -197,7 +197,7 @@ img {
     height: 112vh;
     left: 0px;
     top: 0px;
-    
+    display: flex;
     
     background-color: var(--main-blue);
 
@@ -208,7 +208,7 @@ img {
     height: 990px;
     left: 0px;
     top: 88px;
-    
+    display: flex;
 }
 
 #hader_1{
@@ -217,13 +217,13 @@ img {
     height: 154px;
     left: 201px;
     top: 232px;
-    
+    display: flex;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
     font-size: 128px;
     line-height: 155px;
-color: var(--main-gold);
+    color: var(--main-gold);
 }
 #firstName{
     position: absolute;
@@ -231,7 +231,7 @@ color: var(--main-gold);
     height: 58px;
     left: 1581px;
     top: 139px;
-    
+    display: flex;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
@@ -246,7 +246,7 @@ color: var(--main-gold);
     height: 39px;
     left: 1661px;
     top: 213px;
-    
+    display: flex;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
@@ -257,11 +257,12 @@ color: var(--main-gold);
 }
 
 
-@media (max-width: 724px) {
+@media (max-width: 768px) {
   body{
     position: relative;
     width: 390px;
     height: 2532px;
+    display: flex;
   }
   .nav {
     position: absolute;
@@ -276,6 +277,7 @@ color: var(--main-gold);
       height: 784px;
       left: 0px;
       top: 60px;
+      display: flex;
   }
   .container {
 
@@ -284,6 +286,7 @@ color: var(--main-gold);
     height: 784px;
     left: -2px;
     top: 0px;
+    display: flex;
   }
   #header_1 {
     position: absolute;
@@ -291,7 +294,7 @@ color: var(--main-gold);
     height: 81px;
     left: 11px;
     top: 148px;
-    
+    display: flex;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
@@ -304,7 +307,7 @@ color: var(--main-gold);
     height: 39px;
     left: 123px;
     top: 45px;
-    
+    display: flex;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
@@ -317,7 +320,7 @@ color: var(--main-gold);
     height: 29px;
     left: 144px;
     top: 84px;
-    
+    display: flex;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
