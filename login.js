@@ -19,3 +19,12 @@
 
 // const auth = getAuth(firebaseApp);
 // const db = getFirestore(firebaseApp);
+
+
+
+
+var viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+console.log("Viewport Width: " + viewportWidth);
+console.log("Viewport Height: " + viewportHeight);

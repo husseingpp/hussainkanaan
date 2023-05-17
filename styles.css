@@ -101,11 +101,12 @@ img {
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
   z-index: 10;
 
-  width: 100%;
+  box-sizing: border-box;
+  position: absolute;
+  width: 1983px;
   height: 74px;
   left: -3px;
   top: 14px;
-  box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
@@ -114,7 +115,7 @@ img {
   position: absolute;
   width: 103px;
   height: 44px;
-  left: 656px;
+  left: 716px;
   top: 15px;
 
   font-family: 'Inter';
@@ -122,7 +123,6 @@ img {
   font-weight: 400;
   font-size: 36px;
   line-height: 44px;
-  /* identical to box height */
 
 
   color: #FFFFFF;
@@ -132,8 +132,8 @@ img {
   position: absolute;
   width: 87px;
   height: 44px;
-  left: 918px;
-  top: 13px;
+  left: 948px;
+  top: 15px;
   
   font-family: 'Inter';
   font-style: normal;
@@ -154,7 +154,7 @@ img {
   height: 44px;
   left: 1164px;
   top: 15px;
-  display: flex;
+  
   font-family: 'Inter';
   font-style: normal;
   font-weight: 400;
@@ -193,8 +193,8 @@ img {
 /* Welcome section */
 .welcome-section{
     position: absolute;
-    width: 100%;
-    height: 112vh;
+    width: 1980px;
+    height: 1113.75px;
     left: 0px;
     top: 0px;
     display: flex;
@@ -204,54 +204,54 @@ img {
 }
 .container{
     position: absolute;
-    width: 556px;
-    height: 990px;
-    left: 0px;
+    width: 603px;
+    height: 1026px;
+    left: 450px;
     top: 88px;
     display: flex;
 }
 
 #hader_1{
-    position: absolute;
-    width: 759px;
-    height: 154px;
-    left: 201px;
-    top: 232px;
-    display: flex;
-    font-family: 'Inter';
-    font-style: normal;
-    font-weight: 400;
-    font-size: 128px;
-    line-height: 155px;
+  position: absolute;
+  width: 759px;
+  height: 154px;
+  left: 694px;
+  top: 223px;
+  display: flex;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 128px;
+  line-height: 155px;
     color: var(--main-gold);
 }
 #firstName{
-    position: absolute;
-    width: 214px;
-    height: 58px;
-    left: 1581px;
-    top: 139px;
-    display: flex;
-    font-family: 'Inter';
-    font-style: normal;
-    font-weight: 400;
-    font-size: 48px;
-    line-height: 58px;
-    /* identical to box height */
+  position: absolute;
+  width: 214px;
+  height: 58px;
+  left: 1413px;
+  top: 88px;
+  display: flex;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 58px;
     color: var(--main-gold);
 }
 #LastName{
-    position: absolute;
-    width: 134px;
-    height: 39px;
-    left: 1661px;
-    top: 213px;
-    display: flex;
-    font-family: 'Inter';
-    font-style: normal;
-    font-weight: 400;
-    font-size: 32px;
-    line-height: 39px;
+
+  position: absolute;
+  width: 134px;
+  height: 39px;
+  left: 1493px;
+  top: 146px;
+  display: flex;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 39px;
     /* identical to box height */
     color: var(--main-gold);    
 }
@@ -260,9 +260,9 @@ img {
 @media (max-width: 768px) {
   body{
     position: relative;
-    width: 390px;
-    height: 2532px;
-    display: flex;
+    width: 1980px;
+    height: 3240px;
+    
   }
   .nav {
     position: absolute;
@@ -334,10 +334,10 @@ img {
   /* padding: 10rem 2rem; */
   background: var(--main-blue-2);
   position: absolute;
-  width: 100%;
-  height: 112vh;
-  left: 0px;
-  top: 1080px;
+  width: 1983px;
+  height: 1046px;
+  left: -3px;
+  top: 1114px;
 }
 
 .projects-section-header {
@@ -437,8 +437,8 @@ img {
   padding: 0 2rem;
   background: var(--main-gray);
   position: absolute;
-  width: 100%;
-  height: 112vh;
+  width: 1980px;
+  height: 1080px;
   left: 0px;
   top: 2160px;
 }
