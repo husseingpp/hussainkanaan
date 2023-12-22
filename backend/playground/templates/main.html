@@ -1,0 +1,95 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hussain Kanaan's Portfolio</title>
+
+    <link rel="stylesheet" href="{% static 'yourapp/styles.css' %}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200i,300,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Raleway:700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/img/icone1.jpg">
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+    <nav id="navbar" class="nav">
+        <ul class="nav-list">
+            <li><a id="about1" href="#welcome-section">About</a></li>
+            <li><a id="work1" href="#projects">Work</a></li>
+            <li><a id="contact1" href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- WELCOME SECTION -->
+    <section id="welcome-section" class="welcome-section">
+        <h1 id="hader_1">PORTFOLIO</h1>
+        <h2 id="firstName">HUSSAIN</h2>
+        <h2 id="LastName">KANAAN</h2>
+    </section>
+
+    <!-- PROJECTS SECTION -->
+    <section id="projects" class="projects-section">
+        <h2 class="projects-section-header">These are some of my projects</h2>
+
+        <div class="projects-grid">
+            <!-- Elon -->
+            <a href="#" target="_blank" class="project project-tile">
+                <img src="{% static 'yourapp/img/elon.png' %}" alt="elon-pic Image">
+                <p class="project-title">
+                    <span class="code">&lt;</span> Tribute Page <span class="code">&#47;&gt;</span>
+                </p>
+            </a>
+
+            <!-- Coffee Shop -->
+            <a href="{% static /yourapp/coffee shop/index.html %}" target="_blank" class="project project-tile">
+                <img src="{% static 'yourapp/img/coffe.png' %}" alt="elon-pic Image">
+                <p class="project-title">
+                    <span class="code">&lt;</span> Coffee Shop Menu <span class="code">&#47;&gt;</span>
+                </p>
+            </a>
+
+            <!-- Calculator -->
+            <a href="/myapp/Calcuater/calculator.html" target="_blank" class="project project-tile">
+                <img src="{% static 'yourapp/img/cal_web3.png' %}" alt="elon-pic Image">
+
+                <p class="project-title">
+                    <span class="code">&lt;</span> JavaScript Calculator <span class="code">&#47;&gt;</span>
+                </p>
+            </a>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="contact" class="contact-section">
+        <div class="contact-section-header">
+            <h2>Let's work together...</h2>
+            <p>How do you take your coffee?</p>
+        </div>
+
+        <div class="contact-links">
+            <a id="profile-link" href="https://github.com/groot0y" target="_blank" class="btn contact-details">
+                <i class="fab fa-github"></i> GitHub
+            </a>
+
+            <a href="mailto:kanaanbh@gmail.com" class="btn contact-details">
+                <i class="fas fa-at"></i> Send a mail
+            </a>
+
+            <a href="tel:+96171632417" class="btn contact-details">
+                <i class="fas fa-mobile-alt"></i> Call me
+            </a>
+        </div>
+
+        <footer>
+            <p>&copy; Created for <a target="_blank" href="#">Hussain Kanaan</a></p>
+        </footer>
+    </section>
+
+</body>
+
+</html>
