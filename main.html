@@ -1,4 +1,3 @@
-{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -7,10 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hussain Kanaan's Portfolio</title>
 
-    <link rel="stylesheet" href="{% static 'yourapp/styles.css' %}">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css?family=Poppins:200i,300,400&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Raleway:700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/x-icon" href="/img/icone1.jpg">
 </head>
 
@@ -38,24 +34,24 @@
 
         <div class="projects-grid">
             <!-- Elon -->
-            <a href="#" target="_blank" class="project project-tile">
-                <img src="{% static 'yourapp/img/elon.png' %}" alt="elon-pic Image">
+            <a href="Elon Musk/elon-musk.html" target="_blank" class="project project-tile">
+                <img src="/img/elon.png" alt="elon-pic Image">
                 <p class="project-title">
                     <span class="code">&lt;</span> Tribute Page <span class="code">&#47;&gt;</span>
                 </p>
             </a>
 
             <!-- Coffee Shop -->
-            <a href="{% static /yourapp/coffee shop/index.html %}" target="_blank" class="project project-tile">
-                <img src="{% static 'yourapp/img/coffe.png' %}" alt="elon-pic Image">
+            <a href="coffee shop/coffe.html" target="_blank" class="project project-tile">
+                <img src="img/coffe.png" alt="elon-pic Image">
                 <p class="project-title">
                     <span class="code">&lt;</span> Coffee Shop Menu <span class="code">&#47;&gt;</span>
                 </p>
             </a>
 
             <!-- Calculator -->
-            <a href="/myapp/Calcuater/calculator.html" target="_blank" class="project project-tile">
-                <img src="{% static 'yourapp/img/cal_web3.png' %}" alt="elon-pic Image">
+            <a href="Calcuater/calculator.html" target="_blank" class="project project-tile">
+                <img src="img/cal_web3.png" alt="elon-pic Image">
 
                 <p class="project-title">
                     <span class="code">&lt;</span> JavaScript Calculator <span class="code">&#47;&gt;</span>
