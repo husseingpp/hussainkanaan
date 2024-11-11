@@ -1,0 +1,327 @@
+/* Import Montserrat font */
+body {
+  font-family: 'Montserrat', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body, html {
+  margin: 0;
+  padding: 0;
+}
+img {
+  display: block;
+}
+
+
+.full-img {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  object-position: center;
+  position: relative;
+}
+
+/* Text overlay */
+
+.text-overlay {
+  position: absolute;
+  top: 85%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 2.5rem;
+  text-align: center;
+  padding: 20px;
+}
+.text-overlay-2 {
+  position: absolute;
+  left: 35%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.3rem;
+  text-align: center;
+  top: 150%;
+}
+.text-overlay-3 {
+  position: absolute;
+  top: 80vh;
+  right: 7vh;
+  transform: translate(-50%, -50%);
+  color: rgb(255, 255, 255);
+  text-align: center;
+  width: 80%;
+}
+
+
+#img-1{
+  width: 150px;
+  height: 150px;
+}
+#logo {
+  position: absolute;
+  top: -700px; /* Adjust to move the logo up or down */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150vh; /* Adjust width as needed */
+  height: auto;
+}
+
+
+
+
+
+
+
+
+
+
+a {
+  text-decoration: none; /* Removes underline */
+  color: inherit; /* Inherits color from parent or use any color you prefer */
+}
+
+/* Or you can set a specific color */
+a {
+  text-decoration: none;
+  color: #000000; /* Set your preferred color */
+}
+
+a:hover {
+  color: #ffffff; /* Optionally set a color for hover */
+}
+
+
+button {
+  padding: 1.3em 3em;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  font-weight: 500;
+  color: #000;
+  background-color: #fff;
+  border: none;
+  border-radius: 45px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+  outline: none;
+}
+
+button:hover {
+  background-color: #23c483;
+  box-shadow: 0px 15px 20px rgba(46, 229, 157, 0.4);
+  color: #fff;
+  transform: translateY(-7px);
+}
+
+button:active {
+  transform: translateY(-1px);
+}
+
+
+
+/* Container to hold cards in two columns */
+.card-container {
+  display: flex;
+  flex-wrap: wrap; /* Allows wrapping to new rows */
+  justify-content: center; /* Center content in the row */
+  gap: 20px; /* Space between the cards */
+}
+
+/* Each card styling */
+.card {
+  box-sizing: border-box;
+  width: 190px;
+  height: 254px;
+  /* background: rgba(217, 217, 217, 0.58); */
+  background:#D9FB00;
+  border: 1px solid white;
+  box-shadow: 12px 17px 51px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(6px);
+  border-radius: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.5s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  font-weight: bolder;
+  color: black;
+}
+
+.card:hover {
+  border: 1px solid black;
+  transform: scale(1.05);
+}
+
+.card:active {
+  transform: scale(0.95) rotateZ(1.7deg);
+}
+
+/* Container alignment */
+.client-content {
+  text-align: center;
+  padding: 30px;
+}
+.client-content h3{
+  color:white;
+  font-size: 42px;
+}
+
+/* Background styling */
+.clinet-back {
+  background-color: #3B145E;
+  height: 100%;
+  width: 100%;
+}
+
+
+
+
+
+
+
+
+
+
+.footer {
+  background-color: #350E54;
+  color: #F7F8F1;
+  text-align: center;
+  padding: 10px 0;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.footer-section h3 {
+  margin-bottom: 0;
+  font-size: 18px;
+}
+
+.footer-section a {
+  color: #F7F8F1;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.footer-section a:hover {
+  color: #ddd;
+}
+
+.footer-bottom {
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.footer p {
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .text-overlay {
+    font-size: 2.4rem; /* Reduce font size for tablets */
+    top: 90%;
+    width: 90%;
+  }
+  .text-overlay-2 {
+    font-size: 1.1rem;
+    width: 90%;
+    top: 160%;
+    left: 50%;
+  }
+  button{
+      font-size: 0.9rem;
+      padding: 17px 24px;
+    
+  }
+  #logo {
+    width: 160vh; /* Adjust for smaller screens */
+    height: auto;
+    top:-600px;
+  }
+  .text-left, .text-right {
+    left: 50%;
+    right: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    text-align: center;
+  }
+
+  .full-img {
+    width: 100%;
+    height: 120vh;
+  }
+
+  /* Combine duplicate footer-content */
+  .footer-content {
+    flex-direction: row;
+    justify-content: space-around;
+    width: 80%;
+    gap: 10px;
+  }
+
+  .footer-section {
+    width: 90%;
+    font-size: 0.3rem;
+  }
+
+  .text-overlay-Packages {
+    font-size: 0.8rem;
+  }
+
+  .card-container {
+    flex-direction: column; /* Stack cards in one column on smaller screens */
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .text-overlay {
+    font-size: 1.7rem; /* Reduce font size for mobile */
+    padding: 5px;
+    width: 90%;
+  }
+
+
+  .text-left, .text-right {
+    left: 50%;
+    right: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    text-align: center;
+  }
+
+  .text-overlay-3 {
+    top: 390%;
+    left: 47%;
+  }
+
+  .button {
+    font-size: 0.9rem;
+    padding: 8px 16px;
+  }
+
+  .footer-section {
+    width: 50%;
+    font-size: 0.3rem;
+  }
+
+  .text-overlay-Packages {
+    font-size: 0.7rem;
+  }
+}
+

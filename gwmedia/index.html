@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+    <title>IFPA</title>
+</head>
+<body>
+
+    <div class="img-container">
+
+      <img src="img/Web-pics (IFPA)-01.jpg" alt="Landing Image of IFPA fitness journey" class="full-img" loading="lazy">
+      <div class="text-overlay-1 text-center">
+
+        <div class="dropdown">
+          <button class="dropbtn">Select Language</button>
+          <div class="dropdown-content">
+            <a href="index.html">English</a>
+            <a href="indexAR.html">Arabic</a>
+            <a href="indexpr.html">Persian</a>
+          </div>
+        </div>
+
+        <h1 id="title">Transform your fitness journey with </h1>
+        <h1 id="title-ifpa">IFPA</h1>
+        <p>
+          Transform your life and career with expert training courses for international certifications...
+        </p>
+        <a href="https://wa.me/+9647506168251" class="button" target="_blank">Get Certified Now!</a>
+      </div>
+    </div>
+
+    <div class="img-container">
+      <img src="img/Web-pics (IFPA)-02.jpg" alt="Image of IFPA's mission" class="full-img" loading="lazy">
+      <div class="text-overlay text-left">
+        <h2>Mission</h2>
+        <h4>
+          Providing high-quality learning experiences while supporting trainers with practical education,
+          helping them excel in the fitness industry.
+        </h4>
+      </div>
+    </div>
+    
+    <div class="img-container">
+      <img src="img/Web-pics (IFPA)-03.jpg" alt="Image representing IFPA's vision" class="full-img" loading="lazy">
+      <div class="text-overlay text-right">
+        <h2>Vision</h2>
+        <h4>To train and lead professionals in the fitness industry, promoting health and fitness globally.</h4>
+      </div>
+    </div>
+
+    <div class="img-container">
+      <img src="img/Web-pics (IFPA)-04.jpg" alt="IFPA accreditation image" class="full-img" loading="lazy">
+      <div class="text-overlay text-left">
+        <h2>Accreditation</h2>
+        <h4>
+          Accredited by the National Commission for Certifying Agencies (NCCA) and the European
+          Register of Exercise Professionals (EREPS).
+        </h4>
+      </div>
+    </div>
+
+    <div class="img-container">
+      <img src="img/Web-pics (IFPA)-05.jpg" alt="Image of IFPA collaboration efforts" class="full-img" loading="lazy">
+      <div class="text-overlay text-right">
+        <h2>Collaboration</h2>
+        <h4>We work with global stakeholders to promote health and fitness worldwide.</h4>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-bottom">
+        &copy; 2024 IFPA | Designed by GW Media
+      </div>
+    </footer>
+    
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const textOverlays = document.querySelectorAll('.text-overlay');
+
+        const options = {
+          root: null,
+          threshold: 0.1,
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        }, options);
+
+        textOverlays.forEach(overlay => {
+          observer.observe(overlay);
+        });
+      });
+    </script>
+
+</body>
+</html>
