@@ -472,7 +472,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  background: #ddff00c4;
+  background: #ddff00b7;
   min-width: 200px;
   border: 0;
   border-radius: 4px;
@@ -510,10 +510,10 @@ body {
   }
 
   100% {
-    box-shadow: 0 0 0 20px rgba(221, 255, 0, 0.247),
-                0 0 0 50px rgba(221, 255, 0, 0.096),
-                0 0 0 80px rgba(221, 255, 0, 0.082),
-                0 0 0 100px rgba(221, 255, 0, 0.082);
+    box-shadow: 0 0 0 20px rgba(221, 255, 0, 0.151),
+                0 0 0 50px rgba(221, 255, 0, 0.116),
+                0 0 0 80px rgba(221, 255, 0, 0.11),
+                0 0 0 100px rgba(221, 255, 0, 0.062);
   }
 }
 

@@ -4,11 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&display=swap" rel="stylesheet">
 
     <title>IFPA</title>
 </head>
 <body>
+    <style>
+      *{
+        font-family: Alexandria;
+      }
+
+    </style>
 
     <div class="img-container">
       <img src="img/Web-pics (IFPA)-01.jpg" alt="Landing Image of IFPA fitness journey" class="full-img" loading="lazy">
@@ -16,7 +26,7 @@
 
 
         <div class="dropdown">
-          <button class="dropbtn">اختر اللغة</button>
+          <button class="dropbtn" style="font-style:Alexandria ;">اختر اللغة</button>
           <div class="dropdown-content">
             <a href="indexAR.html">عربية</a>
             <a href="index.html">انجليزية</a>
@@ -30,13 +40,23 @@
         <p>
           غير حياتك ومسيرتك المهنية بدورات تدريبية للخبراء للحصول على شهادات دولية...
         </p>
-        <a href="https://wa.me/+9647506168251" class="button" target="_blank">الحصول على شهادة!</a>
+
+        <div class="button">
+          <button class="btn"><i class="animation"></i>
+            <a href="https://wa.me/+9647506168251" target="_blank">
+              <strong>
+                الحصول على شهادة 
+            </strong></a>
+          <i class="animation"></i>
+          </button>
+        </div>
+        <!-- <a href="https://wa.me/+9647506168251" class="button" target="_blank">الحصول على شهادة!</a> -->
       </div>
     </div>
 
     <div class="img-container">
       <img src="img/Web-pics (IFPA)-02.jpg" alt="Image of IFPA's mission" class="full-img" loading="lazy">
-      <div class="text-overlay text-right">
+      <div class="text-overlay text-left">
         <h2>مهمتنا</h2>
         <h4>
           توفير خبرات تعليمية عالية الجودة مع دعم المدربين بالعملية...
@@ -54,7 +74,7 @@
 
     <div class="img-container">
       <img src="img/Web-pics (IFPA)-04.jpg" alt="IFPA accreditation image" class="full-img" loading="lazy">
-      <div class="text-overlay text-right">
+      <div class="text-overlay text-left">
         <h2>توثيق</h2>
         <h4>
           معتمدة من قبل اللجنة الوطنية لوكالات التصديق (NCCA) والأوروبية. سجل...
