@@ -338,7 +338,7 @@ button:active {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  background: #4e1583;
+  background: #25ac19;
   min-width: 200px;
   border: 0;
   border-radius: 4px;
@@ -346,7 +346,7 @@ button:active {
   box-sizing: border-box;
   padding: 16px 20px;
   color: #fff;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 1.2px;
   text-transform: uppercase;
