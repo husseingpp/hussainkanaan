@@ -40,13 +40,16 @@ img {
   transform: translate(-50%, -50%);
   color: white;
   font-size: 1.6rem;
-  padding: 10px;
-  margin: 10px;
+  margin-left: 2%;
   top: 150%;
 }
 .text-overlay-2 h3{
   font-size: 2rem;
 }
+.text-overlay-2 p{
+  padding: 5px;
+}
+
 .text-overlay-3 {
   position: absolute;
   top: 80vh;
