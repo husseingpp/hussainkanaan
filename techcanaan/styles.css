@@ -1,0 +1,382 @@
+@import url('https://fonts.googleapis.com/css2?family=Tomorrow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=VT323&display=swap');
+
+/*   font-family: "VT323", monospace;
+ font-family: "Tomorrow", sans-serif;
+*/
+/* 
+
+#363738
+#28EEA7
+#FCFCFD
+*/
+:root{
+    --black: #363738;
+    --green: #28EEA7;
+    --white: #FCFCFD;
+    --gray: #F4F4F4    ; 
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+
+
+}
+
+
+
+body {
+    line-height: 1.6;
+    color: #333;
+    background-color: var(--gray);
+
+
+}
+
+header {
+    background: var(--black);
+    color: #fff;
+    padding: 1rem 0;
+    
+}
+
+header h1 {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+nav ul {
+    display:block;
+    justify-content: right;
+    list-style: none;
+}
+
+nav ul li {
+    margin: 0 10px;
+}
+
+nav ul li a {
+    color: var(--white);
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+
+
+
+h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #350E54;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+form input, form textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+form button {
+    padding: 0.7rem;
+    background: #350E54;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+form button:hover {
+    background: #450c64;
+}
+
+footer {
+    background: #ddd;
+    text-align: center;
+    padding: 1rem 0;
+    margin-top: 2rem;
+}
+#contact{
+    border: 5px solid var(--black);
+    border-radius: 10px;
+    margin-left: 20%;
+    margin-right: 20%;
+    
+}
+.section {
+    padding: 2rem 0;
+    background-color: var(--gray);
+
+}
+
+.container {
+    width: 90%;
+    max-width: 90%;
+    margin: 0 auto;
+    
+}
+
+
+
+#Header-id{
+    font-family: "Tomorrow", sans-serif;
+    font-weight: 500;
+    font-style: italic;
+    padding: 5px;
+}
+
+
+
+.parent-container {
+    display: flex;
+    justify-content: center; /* Centers horizontally */
+    align-items: center; /* Centers vertically */
+    min-height: fit-content; /* Ensures full viewport height */
+    background-color: var(--gray); /* Optional background for the parent */
+    margin: 2%; /* Removes default margin */
+}
+
+/* Styles for .section-about */
+.section-about {
+    background-color: var(--green);
+    height: fit-content;
+    display: inline-block;
+    text-align: center;
+    color: var(--black);
+    font-size: 1.7rem;
+    width: 50%;
+    font-family: "VT323", monospace;
+    border: 5px solid var(--black);
+    border-radius: 15px;
+    margin: 0; /* Remove margin for accurate centering */
+    padding: 1rem; /* Add some padding for aesthetics */
+}
+
+
+
+
+
+
+/* drop down --------------- */
+
+/* Dropdown Menu Styles */
+.dropdown-menu {
+    position: fixed; /* Fixes the menu to the screen */
+    top: 10px;      /* Adjusts distance from the top */
+    right: 10px;    /* Positions the menu on the right side */
+    text-align: right;
+    margin-right: 5%;
+}
+
+.menu-toggle {
+    background-color: var(--black);
+    color: var(--white);
+    padding: 10px 15px;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+/* .menu-toggle:hover {
+    background-color: #450c64;
+} */
+
+.menu-items {
+    display: none; /* Hidden by default */
+    position: absolute;
+    right: 0; /* Align to the right */
+    background-color: white;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.menu-items a {
+    display: block;
+    padding: 10px 20px;
+    color: #350E54;
+    text-decoration: none;
+    font-size: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-items a:last-child {
+    border-bottom: none;
+}
+
+.menu-items a:hover {
+    background-color: #f4f4f4;
+}
+
+@media (max-width: 768px) {
+    #contact{
+        margin-left: 11%;
+        margin-right: 11%;
+        margin-top: 5%;
+    }
+    .dropdown-menu {
+      
+        top: 10px;      /* Adjusts distance from the top */
+        right: 10px;    /* Positions the menu on the right side */
+        text-align: right;
+        margin-right: 5%;
+    }
+    .menu-toggle {
+        font-size: 16px;
+        padding: 8px 12px;
+    }
+
+    .menu-items a {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+
+
+    .section-about {
+        width: 80%; /* Adjust width to fit smaller screens */
+        font-size: 1.2rem; /* Reduce font size for better readability */
+        padding: 0.8rem; /* Adjust padding */
+    }
+}
+
+
+
+
+/* Services Section */
+.services-section {
+    padding: 2rem 0;
+    background-color: var(--gray); /* Optional background color */
+}
+
+.services-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 columns for larger screens */
+    gap: 1rem; /* Spacing between items */
+    width: 90%;
+    margin: 0 auto; /* Center the container */
+}
+
+.service {
+    background-color: var(--white);
+    text-align: center;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+    width: 100%;
+}
+
+.service:hover {
+    transform: translateY(-5px); /* Adds a hover effect for better interactivity */
+}
+
+.service img {
+    width: 100%;
+    height: fit-content;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.service h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--black);
+}
+
+.service p {
+    font-size: 1rem;
+    color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .services-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns for tablets */
+    }
+}
+
+@media (max-width: 768px) {
+    .services-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns for smaller devices */
+    }
+
+    .service h3 {
+        font-size: 1rem;
+    }
+
+    .service p {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .services-container {
+        grid-template-columns: 1fr; /* 1 column for very small screens */
+    }
+
+    .service img {
+        width: 100%;
+        height: auto;
+    }
+
+    .service h3 {
+        font-size: 1rem;
+    }
+}
+
+
+
+
+
+/* WhatsApp Button Styles */
+.whatsapp-button-container {
+    text-align: center;
+    margin: 2rem 0; /* Space between About Us and Services */
+}
+
+.whatsapp-button {
+    display: inline-flex;
+    align-items: center;
+    background-color: #25D366; /* WhatsApp green color */
+    color: white;
+    text-decoration: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.whatsapp-button:hover {
+    background-color: #1ebc5c; /* Darker green on hover */
+    transform: translateY(-2px);
+}
+
+.whatsapp-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .whatsapp-button {
+        font-size: 1rem;
+        padding: 0.7rem 1.2rem;
+    }
+
+    .whatsapp-icon {
+        width: 20px;
+        height: 20px;
+    }
+}

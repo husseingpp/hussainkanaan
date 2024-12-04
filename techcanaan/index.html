@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Canaan Consulting</title>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div id="Header-id">
+                    <h1 >Tech Canaan Consulting </h1>
+                </div>
+                <div class="dropdown-menu">
+                    <button class="menu-toggle">☰ Menu</button>
+                    <div class="menu-items">
+                        <a href="#section-about">About</a>
+                        <a href="#services">Services</a>
+                        <a href="#contact">Contact</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+    
+
+<!-- 
+
+    <section id="services" class="section">
+        <div class="container">
+            <h2>Our Services</h2>
+            <ul>
+                <li>POS Software Support</li>
+                <p>Offer maintenance, training, and troubleshooting for POS systems.</p>
+                <li>Network Troubleshooting</li>
+                <p>Network setup, maintenance, and troubleshooting for small to medium businesses.</p>
+                <li>Security Camera Installation</li>
+                <p>Security Solutions, Install and configure security camera systems for businesses.</p>
+                <li>Server Setup and Maintenance</li>
+                <p>Design, install, and maintain server infrastructure tailored to business needs.</p>
+            </ul>
+        </div>
+    </section> -->
+    <section class="services-section">
+        <div class="services-container">
+            <div class="service">
+                <img src="img/pos1.jpg" alt="Service 1">
+                <h3>POS Software Support</h3>
+                <p>Offer maintenance, training, and troubleshooting for POS systems.</p>
+            </div>
+            <div class="service">
+                <img src="img/Network.jpg" alt="Service 2">
+                <h3>Network Troubleshooting</h3>
+                <p>Network setup, maintenance, and troubleshooting for small to medium businesses.</p>
+            </div>
+            <div class="service">
+                <img src="img/Camera.jpg" alt="Service 3">
+                <h3>Security Camera Installation</h3>
+                <p>Security Solutions, Install and configure security camera systems for businesses.</p>
+            </div>
+            <div class="service">
+                <img src="img/Server.jpg" alt="Service 4">
+                <h3>Server Setup and Maintenance</h3>
+                <p>Design, install, and maintain server infrastructure tailored to business needs.</p>
+            </div>
+
+        </div>
+    </section>
+    
+    <div class="whatsapp-button-container">
+        <a href="https://wa.me/1234567890" target="_blank" class="whatsapp-button">
+            <img src="img/whatsapp-icon.png" alt="WhatsApp" class="whatsapp-icon">
+            Contact Us on WhatsApp
+        </a>
+    </div>
+
+    <div class="parent-container">
+
+        <section  class="section-about">
+            <div class="container" >
+                <h2>About Us</h2>
+                <p>
+                    ⨭At Canaan Consulting, we offer reliable IT consulting services for businesses in Lebanon.
+                </p><br>
+                <p>
+                    ⨭Our expertise includes POS software support, network troubleshooting, hardware repair and maintenance, security camera installation, and server setup.
+                </p><br>
+                <p>
+                    ⨭We deliver tailored solutions to ensure your technology works seamlessly, so you can focus on growing your business.
+                </p>
+            </div>
+        </section>
+
+    </div>
+    
+    <section id="contact" class="section">
+        <div class="container">
+            <h2>Contact Us</h2>
+            <form action="contact.php" method="post">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+                
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+                
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Tech Canaan Consulting . All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
