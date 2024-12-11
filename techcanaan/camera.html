@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Camera Installation</title>
+    <link rel="stylesheet" href="styless.css">
+</head>
+<body>
+    <header>
+        <h1>Tech Canaan Consulting</h1>
+        <div class="dropdown-menu">
+            <button class="menu-toggle">☰ Menu</button>
+            <div class="menu-items">
+                <a href="index.html">Home</a>
+                <a href="#about">About</a>
+                <a href="#services">Services</a>
+                <a href="#contact">Contact</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section-about">
+            <h2>Security Camera Installation</h2>
+            <img src="img/camera.jpg" alt="Security Camera Installation">
+            <p>
+                Our Security Camera Installation services provide peace of mind and protect your business. 
+                We specialize in:
+            </p>
+            <ul>
+                <li>Designing tailored security systems based on your business layout.</li>
+                <li>Installing and configuring advanced camera systems for optimal coverage.</li>
+                <li>Providing remote monitoring solutions accessible from your devices.</li>
+                <li>Offering ongoing maintenance to ensure consistent performance and reliability.</li>
+            </ul>
+        </section>
+
+        <div class="button-container">
+            <a href="index.html#services" class="back-button">Back to Services</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Tech Canaan Consulting. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const menuToggle = document.querySelector('.menu-toggle');
+        const menuItems = document.querySelector('.menu-items');
+
+        menuToggle.addEventListener('click', () => {
+            menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                menuItems.style.display = 'block';
+            } else {
+                menuItems.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Software Support</title>
+    <link rel="stylesheet" href="styless.css">
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <nav>
+                <div id="Header-id">
+                    <h1>Tech Canaan Consulting</h1>
+                </div>
+                <div class="dropdown-menu">
+                    <button class="menu-toggle">☰ Menu</button>
+                    <div class="menu-items">
+                        <a href="index.html#about">About</a>
+                        <a href="index.html#services">Services</a>
+                        <a href="index.html#contact">Contact</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <section class="section-about">
+            <h2>POS Software Support</h2>
+            <img src="img/pos1.jpg" alt="POS Software Support" class="service-image">
+            <p>
+                At Tech Canaan Consulting, we specialize in providing comprehensive POS software support for retail and restaurant businesses. Our services include:
+            </p>
+            <ul>
+                <li>System installation and configuration.</li>
+                <li>Training staff to use POS efficiently.</li>
+                <li>Regular updates and maintenance.</li>
+                <li>Troubleshooting technical issues to minimize downtime.</li>
+            </ul>
+            <p>We aim to ensure your POS system runs seamlessly, helping your business operate efficiently.</p>
+        </section>
+        <div class="button-container">
+            <a href="index.html#services" class="back-button">Back to Services</a>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Tech Canaan Consulting. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Dropdown -->
+    <script>
+        const toggle = document.querySelector('.menu-toggle');
+        const menu = document.querySelector('.menu-items');
+
+        toggle.addEventListener('click', () => {
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+    </script>
+</body>
+</html>
+

@@ -8,9 +8,7 @@ document.querySelectorAll('nav a').forEach(anchor => {
 });
 
 
-// Toggle dropdown menu visibility
-const menuToggle = document.querySelector('.menu-toggle');
-const menuItems = document.querySelector('.menu-items');
+
 
 menuToggle.addEventListener('click', () => {
     const isVisible = menuItems.style.display === 'block';
@@ -22,4 +20,13 @@ document.addEventListener('click', (e) => {
     if (!menuToggle.contains(e.target) && !menuItems.contains(e.target)) {
         menuItems.style.display = 'none';
     }
+});
+
+
+
+const menuToggle = document.querySelector('.menu-toggle');
+const menuItems = document.querySelector('.menu-items');
+
+menuToggle.addEventListener('click', () => {
+    menuItems.classList.toggle('show');
 });

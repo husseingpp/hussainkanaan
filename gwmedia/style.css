@@ -22,11 +22,12 @@ body {
   display: block;
 }
 
+
 /* Background overlay for better text readability */
 
 .text-overlay-1{
   position: absolute;
-  top: 50%;
+  top: 40%;
   color: white;
   font-size: 150%; /* Full-screen font size */
   transform: translate(-50%, -50%);
