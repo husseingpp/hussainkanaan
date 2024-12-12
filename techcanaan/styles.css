@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Tomorrow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
 /*   font-family: "VT323", monospace;
  font-family: "Tomorrow", sans-serif;
@@ -9,6 +10,7 @@
 #FCFCFD
 
 */
+
 
 :root{
     --black: #363738;
@@ -25,6 +27,9 @@
 
 }
 
+a {
+    text-decoration: none;
+}
 
 
 body {
@@ -269,7 +274,8 @@ nav ul li a {
 .intro-text {
     flex: 1;
     color: var(--black);
-    font-family: "VT323", monospace;
+    /* font-family: "VT323", monospace; */
+    font-family: "Montserrat", serif;
     animation: fadeInLeft 1s ease-in-out;
 }
 
@@ -408,8 +414,8 @@ nav ul li a {
     }
 
     .intro-text p {
-        font-size: 1rem; /* Smaller size for mobile */
-        line-height: 1.4;
+        font-size: 1.2rem; /* Smaller size for mobile */
+        line-height: 1.2;
     }
 }
 
@@ -650,12 +656,13 @@ nav ul li a {
         font-size: 1.8rem;
     }
 
+
     .service h3 {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
 
     .service p {
-        font-size: 0.9rem;
+        font-size: 0.7rem;
     }
 }
 
@@ -673,11 +680,11 @@ nav ul li a {
     }
 
     .service h3 {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
 
     .service p {
-        font-size: 0.9rem;
+        font-size: 0.7rem;
     }
 }
 
@@ -923,3 +930,24 @@ nav ul li a {
         font-size: 1rem;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
