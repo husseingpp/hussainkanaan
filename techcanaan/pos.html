@@ -30,8 +30,23 @@
     <main>
         <section class="section-about">
             <h2>POS Software Support</h2>
-            <img src="img/pos1.jpg" alt="POS Software Support" class="service-image">
-            <p>
+            <section class="image-slider">
+                <div class="slider-container">
+                    <div class="slide">
+                        <img src="img/1s.jpg" alt="POS Support 1">
+                    </div>
+                    <div class="slide">
+                        <img src="img/2s.jpg" alt="POS Support 2">
+                    </div>
+                    <div class="slide">
+                        <img src="img/3s.jpg" alt="POS Support 3">
+                    </div>
+                    <div class="slide">
+                        <img src="img/4s.jpg" alt="POS Support 4">
+                    </div>
+                </div>
+            </section>
+                        <p>
                 At Tech Canaan Consulting, we specialize in providing comprehensive POS software support for retail and restaurant businesses. Our services include:
             </p>
             <ul>
@@ -62,6 +77,24 @@
         toggle.addEventListener('click', () => {
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
         });
+
+            let currentIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    function showSlide(index) {
+        const sliderContainer = document.querySelector('.slider-container');
+        const slideWidth = slides[0].clientWidth;
+        sliderContainer.style.transform = `translateX(-${index * slideWidth}px)`;
+    }
+
+    function nextSlide() {
+        currentIndex = (currentIndex + 1) % totalSlides;
+        showSlide(currentIndex);
+    }
+
+    // Auto-slide every 3 seconds
+    setInterval(nextSlide, 3000);
     </script>
 </body>
 </html>

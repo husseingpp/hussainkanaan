@@ -144,7 +144,7 @@ footer {
     .section-about {
         font-size: 1.5rem;
         width: 95%;
-    }
+    }a
 
     .menu-toggle {
         font-size: 16px;
@@ -154,5 +154,55 @@ footer {
     .menu-items a {
         font-size: 14px;
         padding: 8px 16px;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+.image-slider {
+    position: relative;
+    width: 60%; /* Adjust the width for a smaller slider */
+    margin: 20px auto;
+    overflow: hidden;
+    border: 3px solid var(--green); /* Smaller border */
+    border-radius: 8px; /* Adjust the border radius */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Softer shadow */
+}
+
+.slider-container {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+}
+
+.slide {
+    min-width: 100%;
+    transition: opacity 1s ease-in-out;
+}
+
+.slide img {
+    width: 100%;
+    height: auto; /* Ensure the image scales proportionally */
+    border-radius: 8px; /* Match the slider border radius */
+}
+
+/* Smaller slider for mobile */
+@media (max-width: 768px) {
+    .image-slider {
+        width: 90%; /* Take more space on smaller screens */
+    }
+}
+
+/* Slightly larger slider for tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .image-slider {
+        width: 70%; /* Adjust size for tablets */
     }
 }
