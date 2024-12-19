@@ -318,6 +318,14 @@ body {
   .text-overlay {
     font-size: 120%; /* Reduce font size for better readability */
     width: 90%;
+    text-align: left; /* Align text to the left */
+  }
+
+  .text-overlay-1 {
+    font-size: 120%; /* Reduce font size for better readability */
+    width: 90%;
+    bottom: 50%;
+    text-align: center; /* Keep the first image text centered */
   }
 
   .full-img {
@@ -325,17 +333,12 @@ body {
     height: 100%;
     object-fit: cover;
   }
-  .text-overlay-1{
-    font-size: 120%; /* Reduce font size for better readability */
-    width: 90%;
-    bottom: 50%;
-  }
+
   .text-left, .text-right {
-    left: 50%;
-    right: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    text-align: center;
-    width: 80%; /* Keep it centered */
+    left: 5%; /* Align text to the left */
+    transform: translateY(-50%); /* Remove horizontal centering */
+    text-align: left; /* Align content to the left */
+    width: 90%;
   }
 
   .dropdown {
@@ -347,7 +350,6 @@ body {
     font-size: 1.1rem;
     padding: 10px 20px;
   }
-
 
   .footer-content {
     flex-direction: row;
@@ -364,39 +366,42 @@ body {
   .footer-content {
     gap: 10px;
   }
-
 }
 
 /* For mobile devices */
 @media (max-width: 480px) {
   .text-overlay {
-
-    width: 100%;
-    margin-left: -54%;
+    width: 90%; /* Ensure proper width */
+    text-align: left; /* Align text to the left */
+    margin-left: 0; /* Reset any unintended offsets */
   }
 
-  #title{
+  .text-overlay-1 {
+    width: 100%; /* Keep text centered only for the first image */
+    text-align: center;
+  }
+
+  #title {
     margin-top: -60%;
     font-size: 150%;
   }
 
-  .text-left, .text-right {
-    left: 50%;
-    right: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    text-align: center;
-    }
+  .text-left {
+    left: 5%; /* Align text to the left */
+    text-align: left;
+  }
 
   .button {
     font-size: 1.2rem;
     padding: 15px 40px;
-    margin-top: 60%;
+    margin-top: 40%;
   }
 
   .footer-bottom {
     font-size: 0.8rem;
   }
 }
+
 
 
 .footer {
@@ -535,6 +540,15 @@ body {
   border-radius: 100%;
   animation: ripple 1.2s ease-out infinite;
 }
+
+
+
+
+
+
+
+
+
 
 
 
