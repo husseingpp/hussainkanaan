@@ -1,32 +1,26 @@
-// Smooth scroll for navigation links
-document.querySelectorAll('nav a').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        target.scrollIntoView({ behavior: 'smooth' });
-    });
-});
+// Select the menu toggle button and the menu items container
+const menuToggle = document.querySelector('.menu-toggle');
+const menuItems = document.querySelector('.menu-items');
 
-
-
-
+// Toggle the dropdown menu visibility on button click
 menuToggle.addEventListener('click', () => {
-    const isVisible = menuItems.style.display === 'block';
-    menuItems.style.display = isVisible ? 'none' : 'block';
+    menuToggle.classList.toggle('active');
+    menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
 });
 
-// Close the menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!menuToggle.contains(e.target) && !menuItems.contains(e.target)) {
+// Ensure the menu adapts correctly when resizing the window
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+        // Show menu items for larger screens
+        menuItems.style.display = 'block';
+    } else if (!menuToggle.classList.contains('active')) {
+        // Hide menu items for smaller screens if menu is not active
         menuItems.style.display = 'none';
     }
 });
 
 
 
-const menuToggle = document.querySelector('.menu-toggle');
-const menuItems = document.querySelector('.menu-items');
-
-menuToggle.addEventListener('click', () => {
-    menuItems.classList.toggle('show');
-});
+function myFunction(x) {
+    x.classList.toggle("change");
+  }

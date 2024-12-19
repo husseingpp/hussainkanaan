@@ -206,3 +206,34 @@ footer {
         width: 70%; /* Adjust size for tablets */
     }
 }
+
+
+/* Hardware Support Page Styles */
+.section-about img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.section-about ul {
+    padding-left: 20px;
+    list-style: disc;
+}
+
+.button-container .back-button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-top: 20px;
+    background-color: var(--green);
+    color: var(--black);
+    text-decoration: none;
+    font-family: 'Montserrat', sans-serif;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.button-container .back-button:hover {
+    background-color: var(--hover-color);
+}
