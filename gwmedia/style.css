@@ -342,7 +342,7 @@ body {
   }
 
   .dropdown {
-    top: -270px; /* Distance from the top of the page */
+    top: -300px; /* Distance from the top of the page */
     right: 8%; /* Distance from the right side of the page */
   }
 
@@ -365,6 +365,12 @@ body {
 
   .footer-content {
     gap: 10px;
+  }
+  #left-main{
+    left: 5%; /* Align text to the left */
+    text-align: left;
+    margin-left: 10%;
+    
   }
 }
 
@@ -390,15 +396,23 @@ body {
     left: 5%; /* Align text to the left */
     text-align: left;
   }
-
+  .dropdown {
+    top: -300px; /* Distance from the top of the page */
+    right: 8%; /* Distance from the right side of the page */
+  }
   .button {
     font-size: 1.2rem;
     padding: 15px 40px;
-    margin-top: 40%;
   }
 
   .footer-bottom {
     font-size: 0.8rem;
+  }
+  #left-main{
+    left: 5%; /* Align text to the left */
+    text-align: left;
+    margin-left: 8%;
+    margin-top: 30%;
   }
 }
 
