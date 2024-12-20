@@ -172,7 +172,7 @@ body {
     /* Dropdown container */
     .dropdown {
       position: absolute;
-      top: -50%; /* Distance from the top of the page */
+      top: -40%; /* Distance from the top of the page */
       right: 8%; /* Distance from the right side of the page */
       display: inline-block;
     }
@@ -496,10 +496,47 @@ body {
 
 
  */
+/* Container styling */
+.button-container {
+  display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  align-items: center; /* Center elements horizontally */
+  gap: 10px; /* Add space between button and image */
+  margin-top: 20px;
+}
 
+.button {
+  display: block; /* Ensure button takes its own line */
+}
 
+/* Styling for the transparent button */
+.transparent-button {
+  background-color: transparent; /* Fully transparent background */
+  border: none; /* No border for the button */
+  cursor: pointer;
+  display: flex;
+  align-items: center; /* Align arrow and logo vertically */
+  gap: 10px; /* Space between the arrow and logo */
+}
 
-/* From Uiverse.io by mi-series */ 
+/* GW Logo Image */
+.button-image {
+  width: 70px; /* GW logo size */
+  height: 70px;
+}
+
+/* Arrow Image */
+.arrow-image {
+  width: 40px; /* Smaller than the GW logo */
+  height: 40px;
+}
+
+/* Button hover effect */
+.transparent-button:hover {
+  opacity: 0.8; /* Slight transparency on hover */
+}
+
+/* From Uiverse.io by mi-series */
 .btn {
   outline: 0;
   display: inline-flex;
@@ -520,20 +557,21 @@ body {
   overflow: hidden;
   cursor: pointer;
 }
+
 .btn a {
   color: rgb(41, 41, 41);
   text-decoration: none;
 }
 
-
 .btn:hover {
-  opacity: .95;
+  opacity: 0.95;
 }
 
 .btn .animation {
   border-radius: 100%;
   animation: ripple 0.6s linear infinite;
 }
+
 @keyframes ripple {
   0% {
     box-shadow: 0 0 0 0 rgba(221, 255, 0, 0.6), /* Brighter center */
@@ -541,7 +579,6 @@ body {
                 0 0 0 50px rgba(221, 255, 0, 0.2),
                 0 0 0 80px rgba(221, 255, 0, 0.1);
   }
-
   100% {
     box-shadow: 0 0 0 20px rgba(221, 255, 0, 0.151),
                 0 0 0 50px rgba(221, 255, 0, 0.116),
@@ -550,10 +587,7 @@ body {
   }
 }
 
-.btn .animation {
-  border-radius: 100%;
-  animation: ripple 1.2s ease-out infinite;
-}
+
 
 
 

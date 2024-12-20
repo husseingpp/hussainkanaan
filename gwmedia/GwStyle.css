@@ -70,7 +70,7 @@ img {
   top: -700px; /* Adjust to move the logo up or down */
   left: 50%;
   transform: translateX(-50%);
-  width: 150vh; /* Adjust width as needed */
+  width: 50vh; /* Adjust width as needed */
   height: auto;
 }
 
