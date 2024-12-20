@@ -172,7 +172,7 @@ body {
     /* Dropdown container */
     .dropdown {
       position: absolute;
-      top: -40%; /* Distance from the top of the page */
+      top: -35%; /* Distance from the top of the page */
       right: 8%; /* Distance from the right side of the page */
       display: inline-block;
     }
