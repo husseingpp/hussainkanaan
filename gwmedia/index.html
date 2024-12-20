@@ -23,12 +23,18 @@
       <div class="text-overlay-1 text-center">
 
         <div class="dropdown">
+          <div class="image-container">
+            <a href="Gw.html" class="transparent-button">
+              <img src="img/GW Logo-White.png" class="button-image" alt="GW Logo">
+            </a>
+          </div>
           <button class="dropbtn">Select Language</button>
           <div class="dropdown-content">
             <a href="index.html">English</a>
             <a href="indexAR.html">Arabic</a>
             <a href="indexpr.html">Persian</a>
           </div>
+
         </div>
 
         <h1 id="title">Transform your fitness journey with </h1>
@@ -61,12 +67,12 @@
       <i class="animation"></i>
     </button>
   </div>
-  <div class="image-container">
+  <!-- <div class="image-container">
     <a href="Gw.html" class="transparent-button">
       <img src="img/arrow_back.png" alt="Arrow" class="arrow-image">
       <img src="img/GW Logo-White.png" class="button-image" alt="GW Logo">
     </a>
-  </div>
+  </div> -->
 </div>
 
         
@@ -127,6 +133,8 @@
     </footer>
     
     <script>
+      console.log(`Viewport: ${window.innerWidth}px x ${window.innerHeight}px`);
+
       document.addEventListener("DOMContentLoaded", function() {
         const textOverlays = document.querySelectorAll('.text-overlay');
 
