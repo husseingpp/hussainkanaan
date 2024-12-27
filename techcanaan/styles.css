@@ -239,23 +239,6 @@ header h1 {
   .dropdown:hover .dropbtn {background-color: #3e8e41;}
 
 /* Mobile Responsiveness */
-@media screen and (max-width: 768px) {
-    .header-content {
-        flex-direction: column; /* Stack title and dropdown vertically */
-        align-items: center; /* Center the content */
-        text-align: center; /* Center text in mobile view */
-    }
-
-    header h1 {
-        margin-bottom: 1rem; /* Space between the title and dropdown */
-        font-size: 1.5rem; /* Smaller font size for mobile */
-    }
-
-    .container {
-        margin-top: 1rem; /* Space above the dropdown */
-    }
-}
-
 
 
 
@@ -357,107 +340,7 @@ header h1 {
 }
 
 /* Animation for Sliding */
-@keyframes slide {
-    0% {
-        transform: translateX(0); /* Start with the first image */
-    }
-    25% {
-        transform: translateX(-100%); /* Move to the second image */
-    }
-    50% {
-        transform: translateX(-200%); /* Move to the third image */
-    }
-    75% {
-        transform: translateX(-300%); /* Move to the fourth image */
-    }
-    100% {
-        transform: translateX(0); /* Reset to the first image */
-    }
-}
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    #image-slider {
-        width: 100%; /* Adjust width for smaller screens */
-    }
-
-    .slider-container img {
-        border-right: 2px solid var(--gray); /* Adjust border width */
-    }
-}
-
-/* Animations */
-@keyframes fadeInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes fadeInRight {
-    from {
-        opacity: 0;
-        transform: translateX(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-    #intro {
-        height: auto; /* Adjust for smaller screens */
-        padding: 2rem; /* Add padding for a better mobile view */
-    }
-
-    .intro-content {
-        flex-direction: column; /* Stack content vertically on mobile */
-        align-items: center;
-        text-align: center;
-    }
-
-    .intro-image {
-        order: -1; /* Move the image to the top */
-    }
-
-    .intro-image img {
-        width: 100%;
-        max-width: 300px;
-        margin-bottom: 1rem; /* Add space below the image */
-    }
-
-    .intro-text {
-        flex: 1;
-        animation: fadeInUp 1s ease-in-out;
-        text-align: center;
-    }
-
-    .intro-text h2 {
-        font-size: 2rem; /* Smaller size for mobile */
-    }
-
-    .intro-text p {
-        font-size: 1.2rem; /* Smaller size for mobile */
-        line-height: 1.2;
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
 
 
@@ -474,8 +357,7 @@ header h1 {
 
 
 #contact{
-    border: 5px solid var(--black);
-    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add a drop shadow */    border-radius: 10px;
     margin-left: 32%;
     margin-right: 32%;
     text-align: center;
@@ -598,44 +480,6 @@ header h1 {
     background-color: #f4f4f4;
 }
 
-@media (max-width: 768px) {
-    #contact{
-        margin-left: 11%;
-        margin-right: 11%;
-        margin-top: 5%;
-    }
-    #Header-id{
-        font-size: 12px;
-        padding-right: 20%;
-    }
-    iframe{
-        width:300px;
-        height:300px;
-    }
-    .dropdown-menu {
-      
-        top: 10px;      /* Adjusts distance from the top */
-        right: 10px;    /* Positions the menu on the right side */
-        text-align: right;
-        margin-right: 5%;
-    }
-    .menu-toggle {
-        font-size: 16px;
-        padding: 8px 12px;
-    }
-
-    .menu-items a {
-        font-size: 14px;
-        padding: 8px 16px;
-    }
-
-
-    .section-about {
-        width: 80%; /* Adjust width to fit smaller screens */
-        font-size: 1.2rem; /* Reduce font size for better readability */
-        padding: 0.8rem; /* Adjust padding */
-    }
-}
 
 
 
@@ -710,42 +554,6 @@ header h1 {
 }
 
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-    .services-container {
-        grid-template-columns: repeat(2, 1fr); /* 2 columns for tablets */
-    }
-}
-
-@media (max-width: 768px) {
-    .services-container {
-        grid-template-columns: repeat(2, 1fr); /* 2 columns for smaller devices */
-    }
-
-    .service h3 {
-        font-size: 0.8rem;
-    }
-
-    .service p {
-        font-size: 0.7rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .services-container {
-        grid-template-columns: 1fr; /* 1 column for very small screens */
-    }
-
-    .service img {
-        width: 100%;
-        height: auto;
-    }
-
-    .service h3 {
-        font-size: 1rem;
-    }
-}
-
 
 
 
@@ -782,24 +590,6 @@ header h1 {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 768px) {
-    .whatsapp-button {
-        font-size: 1rem;
-        padding: 0.7rem 1.2rem;
-    }
-
-    .whatsapp-icon {
-        width: 20px;
-        height: 20px;
-    }
-}
-
-
-
-
-
-
-
 
 
 
@@ -813,6 +603,7 @@ header h1 {
     text-align: center;
     padding: 2rem 1rem;
     background-color: var(--gray);
+    border: 3px #1ebc5c;
 }
 
 .contact-section h2 {
@@ -874,23 +665,6 @@ header h1 {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-    .contact-section {
-        padding: 1.5rem 1rem;
-    }
-
-    .contact-section h2 {
-        font-size: 1.8rem;
-    }
-
-    .contact-section p {
-        font-size: 0.95rem;
-    }
-
-    .contact-section form {
-        width: 100%;
-    }
-}
 
 
 
@@ -964,27 +738,248 @@ header h1 {
     .about-us-container {
         width: 90%;
     }
-
+    
     .about-us-container h2 {
         font-size: 2rem;
     }
-
+    
     .about-us-container p {
         font-size: 1rem;
     }
 }
 
+@media (max-width: 768px) {
+    .contact-section {
+        padding: 1.5rem 1rem;
+    }
 
+    .contact-section h2 {
+        font-size: 1.8rem;
+    }
 
+    .contact-section p {
+        font-size: 0.95rem;
+    }
 
+    .contact-section form {
+        width: 100%;
+    }
+}
 
+@media (max-width: 768px) {
+    .whatsapp-button {
+        font-size: 1rem;
+        padding: 0.7rem 1.2rem;
+    }
 
+    .whatsapp-icon {
+        width: 20px;
+        height: 20px;
+    }
+}
 
+@media (min-width: 769px) {
+    .menu-items {
+        display: flex; /* Keep menu visible on larger screens */
+        flex-direction: row; /* Align items horizontally */
+        position: static;
+        background: none;
+    }
 
+    .menu-items a {
+        border: none;
+    }
+}
 
+@media (max-width: 768px) {
+    #contact {
+        margin-left: 11%;
+        margin-right: 11%;
+        margin-top: 5%;
+    }
+    #Header-id {
+        font-size: 12px;
+        padding-right: 20%;
+    }
+    iframe {
+        width: 300px;
+        height: 300px;
+    }
+    .dropdown-menu {
+        top: 10px;      /* Adjusts distance from the top */
+        right: 10px;    /* Positions the menu on the right side */
+        text-align: right;
+        margin-right: 5%;
+    }
+    .menu-toggle {
+        font-size: 16px;
+        padding: 8px 12px;
+    }
 
+    .menu-items a {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
 
+    .section-about {
+        width: 80%; /* Adjust width to fit smaller screens */
+        font-size: 1.2rem; /* Reduce font size for better readability */
+        padding: 0.8rem; /* Adjust padding */
+    }
+}
 
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .services-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns for tablets */
+    }
+}
 
+@media (max-width: 768px) {
+    .services-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns for smaller devices */
+    }
 
+    .service h3 {
+        font-size: 0.8rem;
+    }
 
+    .service p {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .services-container {
+        grid-template-columns: 1fr; /* 1 column for very small screens */
+    }
+
+    .service img {
+        width: 110%;
+        height: auto;
+    }
+
+    .service h3 {
+        font-size: 1rem;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .header-content {
+        flex-direction: column; /* Stack title and dropdown vertically */
+        align-items: center; /* Center the content */
+        text-align: center; /* Center text in mobile view */
+    }
+
+    header h1 {
+        margin-bottom: 1rem; /* Space between the title and dropdown */
+        font-size: 1.5rem; /* Smaller font size for mobile */
+    }
+
+    .container {
+        margin-top: 1rem; /* Space above the dropdown */
+    }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    #intro {
+        height: auto; /* Adjust for smaller screens */
+        padding: 2rem; /* Add padding for a better mobile view */
+    }
+
+    .intro-content {
+        flex-direction: column; /* Stack content vertically on mobile */
+        align-items: center;
+        text-align: center;
+    }
+
+    .intro-image {
+        order: -1; /* Move the image to the top */
+    }
+
+    .intro-image img {
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 1rem; /* Add space below the image */
+    }
+
+    .intro-text {
+        flex: 1;
+        animation: fadeInUp 1s ease-in-out;
+        text-align: center;
+    }
+
+    .intro-text h2 {
+        margin-top: 6%;
+        font-size: 1.6rem; /* Smaller size for mobile */
+    }
+
+    .intro-text p {
+        font-size: 1.2rem; /* Smaller size for mobile */
+        line-height: 1.2;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #image-slider {
+        width: 100%; /* Adjust width for smaller screens */
+    }
+
+    .slider-container img {
+        border-right: 2px solid var(--gray); /* Adjust border width */
+    }
+}
+
+/* Animations */
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slide {
+    0% {
+        transform: translateX(0); /* Start with the first image */
+    }
+    25% {
+        transform: translateX(-100%); /* Move to the second image */
+    }
+    50% {
+        transform: translateX(-200%); /* Move to the third image */
+    }
+    75% {
+        transform: translateX(-300%); /* Move to the fourth image */
+    }
+    100% {
+        transform: translateX(0); /* Reset to the first image */
+    }
+}
