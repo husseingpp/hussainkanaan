@@ -22,6 +22,7 @@ img {
   position: relative;
 }
 
+
 /* Text overlay */
 
 .text-overlay {
@@ -30,7 +31,7 @@ img {
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
-  font-size: 2.5rem;
+  font-size: 7rem;
   text-align: center;
   padding: 20px;
 }
@@ -258,9 +259,9 @@ button:active {
     
   }
   #logo {
-    width: 160vh; /* Adjust for smaller screens */
+    width: 50vh; /* Adjust for smaller screens */
     height: auto;
-    top:-600px;
+    top:-500px;
   }
   .text-left, .text-right {
     left: 50%;
