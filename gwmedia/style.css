@@ -40,7 +40,7 @@ body {
 
 .text-overlay-1{
   position: absolute;
-  top: 50%;
+  top: 55%;
   color: white;
   font-size: 150%; /* Full-screen font size */
   transform: translate(-50%, -50%);
@@ -55,7 +55,7 @@ body {
 
 .text-overlay {
   position: absolute;
-  top: 50%;
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
@@ -330,6 +330,11 @@ body {
 
 /* For tablets and smaller screens */
 @media (max-width: 768px) {
+  #bd{
+    top: 15%;
+    font-size: 100%; /* Reduce font size for better readability */
+
+  }
   .text-overlay {
     font-size: 120%; /* Reduce font size for better readability */
     width: 90%;
