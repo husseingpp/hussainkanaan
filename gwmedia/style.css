@@ -336,58 +336,11 @@ body {
         font-size: 0.5rem;
       }
     }
-    /* Responsive for tablets and smaller screens */
-    @media (max-width: 768px) {
-      
-      .text-overlay-4 {
-        padding: 20px;
-      }
-      
-      .text-overlay-4 h3 {
-        font-size: 1.5rem;
-      }
     
-      .text-overlay-4 p {
-        font-size: 1rem;
-      }
-    
-      .text-overlay-4 ul {
-        padding-left: 15px;
-        font-size: 0.9rem;
-      }
-    }
-    
-    /* Mobile Devices */
-    @media (max-width: 480px) {
-      .text-overlay-4 {
-        padding: 10px;
-        text-align: left;
-      }
-      
-    
-      .text-overlay-4 h3 {
-        font-size: 1.2rem;
-      }
-    
-      .text-overlay-4 p {
-        font-size: 0.9rem;
-      }
-    
-      .text-overlay-4 ul {
-        padding-left: 10px;
-        font-size: 0.8rem;
-      }
-    
-      .text-overlay-4 ul li {
-        margin-bottom: 3px;
-      }
-    }
-
-
 /* For tablets and smaller screens */
 @media (max-width: 1600px) {
   .text-overlay-1{
-    top: 46%;
+    top: 44%;
   }
   #bd{
     top: 15%;
@@ -395,7 +348,7 @@ body {
 
   }
   .text-overlay {
-    font-size: 123%; /* Reduce font size for better readability */
+    font-size: 130%; /* Reduce font size for better readability */
     width: 90%;
     text-align: left; /* Align text to the left */
   }
@@ -407,6 +360,77 @@ body {
     width: 90%;
     bottom: 50%;
     text-align: center; /* Keep the first image text centered */
+  }
+
+  .full-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .text-left, .text-right {
+    left: 5%; /* Align text to the left */
+    transform: translateY(-50%); /* Remove horizontal centering */
+    text-align: left; /* Align content to the left */
+    width: 90%;
+  }
+
+  .dropdown {
+    top: -300px; /* Distance from the top of the page */
+    right: 8%; /* Distance from the right side of the page */
+  }
+
+  .button {
+    font-size: 1.1rem;
+    padding: 10px 20px;
+  }
+
+  .footer-content {
+    flex-direction: row;
+    justify-content: space-around;
+    width: 80%;
+  }
+
+  .footer-section {
+    width: 90%;
+    font-size: 0.3rem;
+    margin-left: 20%;
+  }
+
+  .footer-content {
+    gap: 10px;
+  }
+  #left-main{
+    left: 5%; /* Align text to the left */
+    text-align: left;
+    margin-left: 10%;
+    
+  }
+
+}
+
+
+/* For tablets and smaller screens */
+@media (max-width: 768px) {
+  #bd{
+    top: 15%;
+    font-size: 90%; /* Reduce font size for better readability */
+
+  }
+  .text-overlay {
+    font-size: 90%; /* Reduce font size for better readability */
+    width: 90%;
+    text-align: left; /* Align text to the left */
+  }
+  .dropdown{
+    gap: 110px;
+  }
+  .text-overlay-1 {
+    font-size: 120%; /* Reduce font size for better readability */
+    width: 90%;
+    bottom: 50%;
+    text-align: center; /* Keep the first image text centered */
+    top: 55%;
   }
 
   .full-img {
@@ -498,8 +522,6 @@ body {
     margin-top: 30%;
   }
 }
-
-
 
 
 @keyframes ripple {
