@@ -24,3 +24,21 @@ window.addEventListener('resize', () => {
 function myFunction(x) {
     x.classList.toggle("change");
   }
+// Mobile menu toggle
+document.querySelector('.menu-toggle').addEventListener('click', function() {
+    const menuItems = document.querySelector('.menu-items');
+    menuItems.style.display = menuItems.style.display === 'block' ? 'none' : 'block';
+});
+
+// Image slider animation
+let currentSlide = 0;
+const slider = document.querySelector('.slider-container');
+const slides = document.querySelectorAll('.slider-container img');
+const totalSlides = slides.length;
+
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+}
+
+setInterval(nextSlide, 3000); // Change slide every 3 seconds

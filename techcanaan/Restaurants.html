@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Solutions</title>
+    <link rel="stylesheet" href="styless.css">
+</head>
+<body>
+<header>
+    <div class="container">
+        <nav>
+            <div id="Header-id">
+                <h1>PeakOps</h1>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <section class="section-about">
+        <h2>Restaurant Management Solutions</h2>
+        <section class="image-slider">
+            <div class="slider-container">
+                <div class="slide">
+                    <img src="img/Restaurants%201.jpg" alt="Restaurant Inventory">
+                </div>
+                <div class="slide">
+                    <img src="img/Restaurant%202.jpg" alt="POS System">
+                </div>
+                <div class="slide">
+                    <img src="img/Restaurants%203.jpg" alt="POS System">
+                </div>
+            </div>
+        </section>
+        <p>Comprehensive solutions for restaurant operations management:</p>
+        <ul>
+            <li>Supplier price comparison and purchase order automation</li>
+            <li>Recipe costing analysis with margin optimization</li>
+            <li>Waste tracking and reduction strategies</li>
+            <li>Integrated POS system support and data analytics</li>
+            <li>Staff performance monitoring and scheduling</li>
+        </ul>
+    </section>
+    <div class="button-container">
+        <a href="index.html#services" class="back-button">Back to Services</a>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2024 Tech Canaan Consulting. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    // Same JavaScript as pos.html
+    const toggle = document.querySelector('.menu-toggle');
+    const menu = document.querySelector('.menu-items');
+    toggle.addEventListener('click', () => {
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    let currentIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    function showSlide(index) {
+        const sliderContainer = document.querySelector('.slider-container');
+        const slideWidth = slides[0].clientWidth;
+        sliderContainer.style.transform = `translateX(-${index * slideWidth}px)`;
+    }
+    function nextSlide() {
+        currentIndex = (currentIndex + 1) % totalSlides;
+        showSlide(currentIndex);
+    }
+    setInterval(nextSlide, 3000);
+</script>
+</body>
+</html>
