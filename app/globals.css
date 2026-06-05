@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light theme (sunrise) */
+    --background: 248 249 252;
+    --foreground: 17 20 32;
+    --muted: 95 102 122;
+    --card: 255 255 255;
+    --border: 222 226 236;
+
+    --accent-blue: 37 99 235;
+    --accent-violet: 124 58 237;
+    --accent-sunset: 244 114 92;
+  }
+
+  .dark {
+    /* Dark theme (default, deep blue → violet night) */
+    --background: 8 10 20;
+    --foreground: 234 237 248;
+    --muted: 148 156 180;
+    --card: 18 22 38;
+    --border: 38 44 68;
+
+    --accent-blue: 96 145 255;
+    --accent-violet: 167 122 255;
+    --accent-sunset: 255 138 110;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* offset for sticky nav when jumping to anchors */
+  }
+
+  section[id] {
+    scroll-margin-top: 6rem;
+  }
+
+  /* Respect reduced motion: disable animation/transition fanfare. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Visible focus ring for keyboard users */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-violet ring-offset-2 ring-offset-background rounded-sm;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/10 bg-card/60 backdrop-blur-xl;
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.04) inset,
+      0 20px 60px -30px rgb(0 0 0 / 0.6);
+  }
+
+  .dark .glass {
+    @apply bg-card/50;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-accent-blue via-accent-violet to-accent-sunset bg-clip-text text-transparent;
+  }
+
+  .section-padding {
+    @apply px-5 py-24 sm:px-8 md:py-32;
+  }
+
+  .container-content {
+    @apply mx-auto w-full max-w-content;
+  }
+
+  .pill {
+    @apply inline-flex items-center rounded-full border border-border bg-card/60 px-3 py-1 font-mono text-xs text-muted backdrop-blur;
+  }
+}
+
+@layer utilities {
+  /* Subtle film-grain / noise overlay (data-URI SVG, no asset needed). */
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
