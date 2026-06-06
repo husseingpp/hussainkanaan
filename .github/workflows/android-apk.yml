@@ -33,14 +33,10 @@ jobs:
         working-directory: golden-hour-explorer
     env:
       EXPO_NO_TELEMETRY: "1"
-      # ubuntu-latest has 4 cores / 16 GB. Do NOT cap Metaspace — this build
-      # loads a huge number of classes (563 Gradle tasks: AGP, Kotlin, every RN
-      # plugin) and an explicit -XX:MaxMetaspaceSize ceiling just gets hit and
-      # OOMs. Leave Metaspace unbounded (grows into native memory) and keep heap
-      # modest + parallelism at 2 so there is room for it alongside the single-ABI
-      # native compile. -Djava.security.egd=file:/dev/./urandom keeps APK signing
-      # off the blocking /dev/random so :app:packageRelease doesn't hang.
-      GRADLE_OPTS: "-Xmx4g -Djava.security.egd=file:/dev/./urandom -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+      # NOTE: real build-JVM memory/signing settings live in org.gradle.jvmargs,
+      # set in the "Patch android project" step — GRADLE_OPTS only affects the
+      # lightweight gradlew launcher JVM, not the JVM that compiles/signs.
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
     steps:
       - name: Checkout
@@ -91,8 +87,18 @@ jobs:
           # well under the timeout and avoids the parallel-compile Metaspace OOM.
           # arm64-v8a covers every modern (2017+) Android phone.
           echo "reactNativeArchitectures=arm64-v8a" >> gradle.properties
+          # THE memory fix. Expo's generated gradle.properties pins the *build* JVM
+          # to "org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m". 512m of
+          # Metaspace is far too little for this build (AGP + Kotlin + every RN
+          # plugin) and is what actually caused every "OutOfMemoryError: Metaspace"
+          # — the GRADLE_OPTS env var only configures the launcher JVM, not the
+          # build JVM. A later line in a properties file wins, so we override it
+          # here. The /dev/urandom flag must live here too: APK signing runs in the
+          # build JVM, and without it :app:packageRelease blocks on /dev/random.
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=3g -Djava.security.egd=file:/dev/./urandom" >> gradle.properties
+          echo "org.gradle.workers.max=2" >> gradle.properties
           echo "----- gradle.properties tail -----"
-          tail -n 5 gradle.properties
+          tail -n 6 gradle.properties
 
       - name: Build release APK
         working-directory: golden-hour-explorer/android
