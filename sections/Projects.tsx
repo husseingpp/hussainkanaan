@@ -1,70 +1,83 @@
-"use client";
-
-import { SectionHeading } from "@/components/SectionHeading";
-import { SectionReveal } from "@/components/SectionReveal";
-import { TiltCard } from "@/components/TiltCard";
-import { ArrowUpRightIcon } from "@/components/Icons";
-import { projects } from "@/data/portfolio";
+import { Icons } from "@/components/Icons";
+import { data } from "@/data/portfolio";
 
 export function Projects() {
   return (
-    <section id="projects" className="section-padding relative">
-      <div className="container-content">
-        <SectionHeading
-          eyebrow="04 / projects"
-          title="Things I've built"
-          description="A few projects spanning web, mobile, and data."
-        />
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project, i) => (
-            <SectionReveal key={project.title} delay={i * 0.08} className="h-full">
-              <TiltCard className="h-full" intensity={6}>
-                <article className="glass relative flex h-full flex-col overflow-hidden rounded-2xl p-6">
-                  {/* accent glow */}
-                  <div
-                    aria-hidden
-                    className={`absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gradient-to-br ${project.accent} opacity-20 blur-3xl transition-opacity duration-500 group-hover:opacity-40`}
-                  />
-
-                  <div className="relative flex grow flex-col">
-                    <h3 className="text-xl font-semibold tracking-tight">
-                      {project.title}
-                    </h3>
-                    <p className="mt-3 grow text-sm leading-relaxed text-muted">
-                      {project.description}
-                    </p>
-
-                    <ul className="mt-5 flex flex-wrap gap-2">
-                      {project.tech.map((t) => (
-                        <li key={t} className="pill">
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="mt-6 flex flex-wrap gap-4 border-t border-border pt-4">
-                      {project.links.map((link) => {
-                        const external = link.href.startsWith("http");
-                        return (
-                          <a
-                            key={link.label}
-                            href={link.href}
-                            target={external ? "_blank" : undefined}
-                            rel={external ? "noopener noreferrer" : undefined}
-                            className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-accent-violet"
-                          >
-                            {link.label}
-                            <ArrowUpRightIcon width={15} height={15} />
-                          </a>
-                        );
-                      })}
-                    </div>
+    <section className="section" id="projects">
+      <div className="wrap">
+        <div className="section-head reveal">
+          <span className="section-num">03 — Projects</span>
+          <h2 className="h2">Things I&apos;ve built.</h2>
+        </div>
+        <div className="proj-grid">
+          {data.projects.map((p, i) => {
+            const Glyph = Icons[p.glyph] ?? Icons.code;
+            return (
+              <article
+                key={p.title}
+                className={"card proj reveal" + (p.feature ? " feature" : "")}
+                data-d={i + 1}
+              >
+                <div className="proj-visual">
+                  <div className="proj-mesh" />
+                  <div className="proj-pat" />
+                  <span className="proj-tag">{p.tag}</span>
+                  <div className="proj-glyph">
+                    <Glyph />
                   </div>
-                </article>
-              </TiltCard>
-            </SectionReveal>
-          ))}
+                </div>
+                <div className="proj-body">
+                  <h3>{p.title}</h3>
+                  <p>{p.desc}</p>
+                  <div className="proj-stack">
+                    {p.stack.map((t) => (
+                      <span key={t} className="chip">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="proj-links">
+                    {p.github && (
+                      <a
+                        className="proj-link"
+                        href={p.github}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Icons.github /> Source
+                      </a>
+                    )}
+                    {p.demo && (
+                      <a
+                        className="proj-link"
+                        href={p.demo}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Icons.external /> Live Demo
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+          <a
+            className="card proj cta reveal"
+            data-d="3"
+            href={data.github}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Icons.github
+              style={{ width: 30, height: 30, color: "var(--accent)" }}
+            />
+            <div className="big">More on GitHub</div>
+            <p>Experiments, scripts &amp; works in progress.</p>
+            <span className="btn btn-ghost">
+              @{data.githubLabel} <Icons.arrowUpRight className="ar" />
+            </span>
+          </a>
         </div>
       </div>
     </section>

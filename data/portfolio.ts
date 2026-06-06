@@ -1,163 +1,209 @@
 /**
- * Central content config for the portfolio.
- * Edit anything here — bio, jobs, skills, projects, links — and the site updates.
+ * Central content config for the portfolio — Hussein Kanaan.
+ * Edit anything here (bio, jobs, skills, projects, links) and the site updates.
  */
 
-export type SkillGroup = {
-  category: string;
-  /** monospace label shown above the group */
-  label: string;
-  items: string[];
-};
+export type IconKey =
+  | "server"
+  | "tools"
+  | "database"
+  | "code"
+  | "spark"
+  | "sun"
+  | "map";
 
-export type Experience = {
-  role: string;
-  company: string;
-  period: string;
-  location: string;
-  summary: string;
-  highlights: string[];
+export type SkillGroup = {
+  title: string;
+  icon: IconKey;
+  items: string[];
+  /** spans the full grid width */
+  wide?: boolean;
 };
 
 export type Project = {
   title: string;
-  description: string;
-  tech: string[];
-  links: { label: string; href: string }[];
-  /** Tailwind gradient classes used for the card's accent glow */
-  accent: string;
+  tag: string;
+  glyph: IconKey;
+  feature?: boolean;
+  desc: string;
+  stack: string[];
+  github?: string;
+  demo?: string;
 };
 
-export type SocialLink = {
-  label: string;
-  href: string;
-  /** key used to pick an icon in the UI */
-  icon: "github" | "linkedin" | "mail";
+export type ExperienceItem = {
+  title: string;
+  date: string;
+  org: string;
+  orgUrl?: string;
+  points: string[];
+};
+
+export type EducationItem = {
+  title: string;
+  date: string;
+  org: string;
 };
 
 export type Certification = {
-  name: string;
-  issuer: string;
-  year: string;
+  title: string;
+  id: string;
+  meta: string;
 };
 
-export const personal = {
+export type NavItem = { label: string; href: string };
+
+export const data = {
   name: "Hussein Kanaan",
-  shortName: "Hussein",
-  roles: ["IT Support Specialist", "Full-Stack Developer", "Problem Solver"],
+  monogram: "HK",
+  greeting: "Hello, I'm",
+  roles: ["IT Support Specialist", "Aspiring QA Engineer", "Database Administrator"],
   tagline:
-    "I keep systems running and ship clean, fast web apps — bridging hands-on IT support with modern full-stack development.",
-  location: "Lebanon",
+    "IT Support Specialist with 2+ years supporting POS & ERP systems across 20+ F&B brands in Lebanon — now expanding into QA Engineering & Database Administration.",
+  location: "Beirut, Lebanon",
   email: "kanaanbh@gmail.com",
-  /** Path to your CV in /public. Drop a real file here to enable the download. */
+  phone: "(961) 71-632417",
+  phoneHref: "+96171632417",
+  linkedin: "https://linkedin.com/in/hussain-kanaan",
+  linkedinLabel: "hussain-kanaan",
+  github: "https://github.com/husseingpp",
+  githubLabel: "husseingpp",
+  /** Path to your CV in /public. Drop a real file here to enable a download link. */
   cv: "/hussein-kanaan-cv.pdf",
-  initials: "HK",
+
+  about: [
+    "IT Support Specialist with 2+ years of hands-on experience supporting **Omega POS and ERP solutions** deployed across 20+ F&B brands in Lebanon, including high-volume enterprise accounts such as **Dunkin'** and **Burger King**.",
+    "Adept at diagnosing complex system issues, configuring **Windows / Linux server environments**, and delivering end-user training. Certified in **Google IT Support**. Bilingual in English and Arabic.",
+    "Actively expanding into **QA Engineering** and **Database Administration** — building toward a role where I can bridge operational IT knowledge with software quality and data reliability.",
+  ],
+
+  skills: [
+    {
+      title: "IT Support & Infrastructure",
+      icon: "server",
+      items: [
+        "Windows / Linux / macOS",
+        "LAN / WAN / TCP·IP",
+        "DNS & DHCP",
+        "Hardware Troubleshooting",
+        "POS Systems",
+        "Omega ERP",
+        "Server Maintenance",
+        "Backup & Recovery",
+        "System Monitoring",
+        "Cybersecurity Fundamentals",
+      ],
+    },
+    {
+      title: "Tools & Platforms",
+      icon: "tools",
+      items: [
+        "Active Directory",
+        "Office 365",
+        "TeamViewer / AnyDesk",
+        "Git",
+        "Jira",
+        "Slack",
+        "Zoom",
+        "IntelliJ",
+        "Android Studio",
+        "Bootstrap",
+      ],
+    },
+    {
+      title: "Databases",
+      icon: "database",
+      items: [
+        "SQL",
+        "SQLite",
+        "PostgreSQL",
+        "Supabase",
+        "Database Troubleshooting",
+        "Data Integrity",
+      ],
+    },
+    {
+      title: "Programming & Scripting",
+      icon: "code",
+      items: [
+        "Java",
+        "Python",
+        "JavaScript",
+        "SQL",
+        "HTML / CSS",
+        "React.js",
+        "Bash",
+        "Automation Scripts",
+      ],
+    },
+    {
+      title: "AI & Automation",
+      icon: "spark",
+      wide: true,
+      items: ["AI-Assisted Development", "No-Code / Low-Code", "Workflow Automation"],
+    },
+  ] satisfies SkillGroup[],
+
+  projects: [
+    {
+      title: "SunSpot",
+      tag: "Featured",
+      glyph: "sun",
+      feature: true,
+      desc: "Mobile & web app for discovering the best sunset and sunrise viewing spots. Features interactive maps, community-submitted locations, and real-time solar event data.",
+      stack: ["Next.js", "Expo", "Supabase", "PostGIS", "Mapbox"],
+      github: "https://github.com/husseingpp/sunpost",
+      demo: "#",
+    },
+    {
+      title: "Google Maps Scraper",
+      tag: "Tooling",
+      glyph: "map",
+      desc: "Python automation tool that collects structured business data from Google Maps — names, contacts, and locations — for research and lead workflows.",
+      stack: ["Python", "Automation"],
+      github: "https://github.com/husseingpp/google_maps_scraper",
+    },
+  ] satisfies Project[],
+
+  experience: [
+    {
+      title: "IT Support Specialist",
+      date: "2024 – Present",
+      org: "Omega Software · Beirut, Lebanon",
+      orgUrl: "https://omegapos.com",
+      points: [
+        "Provided end-to-end POS & ERP support for Omega Software — Lebanon's dominant F&B systems provider — with clients including Dunkin', Burger King, Lakkis, Grand Factory and Boneless, covering POS front-end, back-office and inventory modules.",
+        "Handled high ticket volume across remote and on-site channels with consistently strong client satisfaction in operationally critical environments.",
+        "Conducted on-site training for staff and managers on POS workflows, inventory control and back-office reporting.",
+        "Configured, maintained and troubleshot Windows and Linux servers — ensuring uptime, data integrity and security compliance.",
+        "Collaborated with development teams to test, validate and roll out software fixes and upgrades — gaining hands-on QA and regression testing exposure.",
+      ],
+    },
+  ] satisfies ExperienceItem[],
+
+  education: [
+    {
+      title: "B.Sc. in Computer Science",
+      date: "Expected 2027",
+      org: "Lebanese International University (LIU) · Beirut, Lebanon",
+    },
+  ] satisfies EducationItem[],
+
+  certifications: [
+    {
+      title: "Google IT Support Professional Certificate",
+      id: "ID: DXAB8348WM86",
+      meta: "Network Protocols · Cloud Infrastructure · Debugging · IT Security · Customer Service",
+    },
+  ] satisfies Certification[],
+
+  nav: [
+    { label: "About", href: "#about" },
+    { label: "Skills", href: "#skills" },
+    { label: "Projects", href: "#projects" },
+    { label: "Experience", href: "#experience" },
+    { label: "Contact", href: "#contact" },
+  ] satisfies NavItem[],
 };
 
-export const about = {
-  heading: "About",
-  body: [
-    "I'm a final-year Computer Science student at the Lebanese International University, based in Lebanon. I split my time between keeping people's tech working and building software that's a pleasure to use.",
-    "On the support side, I've spent 2+ years troubleshooting Windows and macOS, fixing hardware and software issues, and keeping POS and ERP systems healthy. On the development side, I build full-stack web and mobile apps with React, Next.js, and Node — backed by Supabase, Firebase, and Postgres.",
-    "I like problems that sit between systems and code: the kind where understanding the whole stack — from the help desk to the database — is what actually gets things fixed.",
-  ],
-  facts: [
-    { label: "Location", value: "Lebanon" },
-    { label: "Education", value: "Final-year CS @ LIU" },
-    { label: "Focus", value: "IT Support + Full-Stack" },
-    { label: "Open to", value: "Work & collaboration" },
-  ],
-};
-
-export const experiences: Experience[] = [
-  {
-    role: "IT Support Specialist",
-    company: "Omega Software",
-    period: "2022 — Present",
-    location: "Lebanon",
-    summary:
-      "Front-line technical support across hardware, software, and business-critical retail systems.",
-    highlights: [
-      "Diagnosed and resolved Windows and macOS issues for end users, reducing recurring tickets through documentation and quick fixes.",
-      "Maintained and troubleshot hardware and software, from workstations and peripherals to network connectivity.",
-      "Supported POS and ERP systems used in live retail environments, ensuring minimal downtime during business hours.",
-      "Acted as the bridge between non-technical staff and technical resolution — translating problems into fixes.",
-    ],
-  },
-];
-
-export const skillGroups: SkillGroup[] = [
-  {
-    category: "Languages",
-    label: "// languages",
-    items: ["Python", "JavaScript", "TypeScript", "SQL"],
-  },
-  {
-    category: "Frameworks",
-    label: "// frameworks",
-    items: ["React", "Next.js", "Node.js", "Express"],
-  },
-  {
-    category: "Tools",
-    label: "// tools",
-    items: ["Git", "Supabase", "Firebase", "Expo"],
-  },
-  {
-    category: "IT / Support",
-    label: "// it & support",
-    items: ["POS Systems", "ERP Systems", "Windows", "macOS"],
-  },
-];
-
-export const certifications: Certification[] = [
-  {
-    name: "Google IT Support Professional Certificate",
-    issuer: "Google",
-    year: "2023",
-  },
-];
-
-export const projects: Project[] = [
-  {
-    title: "SunSpot",
-    description:
-      "A mobile-first app for discovering the best spots to catch sunrises and sunsets, with location-aware recommendations and golden-hour timing.",
-    tech: ["Next.js", "Expo", "Supabase", "PostGIS", "Mapbox"],
-    links: [{ label: "View project", href: "#" }],
-    accent: "from-accent-sunset to-accent-violet",
-  },
-  {
-    title: "Jardin D'Amin Sales Dashboard",
-    description:
-      "An interactive sales analytics dashboard turning raw transaction data into clear, real-time charts and KPIs for decision-making.",
-    tech: ["React", "Recharts", "JavaScript"],
-    links: [{ label: "View project", href: "#" }],
-    accent: "from-accent-blue to-accent-violet",
-  },
-  {
-    title: "Notion Job Tracker",
-    description:
-      "A streamlined job-application tracker built on Notion — capturing applications, stages, and follow-ups in one organized workflow.",
-    tech: ["Notion API", "JavaScript", "Automation"],
-    links: [{ label: "View project", href: "#" }],
-    accent: "from-accent-violet to-accent-blue",
-  },
-];
-
-export const socials: SocialLink[] = [
-  { label: "GitHub", href: "https://github.com/husseingpp", icon: "github" },
-  {
-    label: "LinkedIn",
-    href: "https://www.linkedin.com/",
-    icon: "linkedin",
-  },
-  { label: "Email", href: "mailto:kanaanbh@gmail.com", icon: "mail" },
-];
-
-export const navLinks = [
-  { label: "About", href: "#about" },
-  { label: "Experience", href: "#experience" },
-  { label: "Skills", href: "#skills" },
-  { label: "Projects", href: "#projects" },
-  { label: "Contact", href: "#contact" },
-];
+export type PortfolioData = typeof data;
