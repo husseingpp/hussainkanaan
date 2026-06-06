@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - claude/beautiful-lovelace-rcjqT
+      - claude/upbeat-babbage-5CAxl
   workflow_dispatch:
 
 permissions:
