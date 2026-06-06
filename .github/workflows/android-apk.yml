@@ -25,12 +25,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Hard cap so a stuck/OOM Gradle process fails fast instead of hanging until
+    # GitHub's 6-hour job limit (which is what happened on the all-ABI build).
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: golden-hour-explorer
     env:
       EXPO_NO_TELEMETRY: "1"
-      GRADLE_OPTS: "-Xmx4g -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+      # ubuntu-latest has 4 cores / 16 GB. Give the JVM room and an explicit
+      # Metaspace ceiling — the previous all-ABI build died with repeated
+      # "OutOfMemoryError: Metaspace" while compiling four ABIs in parallel.
+      GRADLE_OPTS: "-Xmx5g -XX:MaxMetaspaceSize=2g -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3"
 
     steps:
       - name: Checkout
@@ -74,23 +80,15 @@ jobs:
           # string "[]" makes findProperty() return a real value that survives as a
           # single literal arg, and JSON.parse("[]") succeeds.
           echo "expo.inlineModules.watchedDirectories=[]" >> gradle.properties
-          # Limit NDK compilation to arm64-v8a by patching app/build.gradle directly
-          # (keeps the native MapLibre compile to one ABI so the build finishes in a
-          # reasonable time instead of building all four).
-          python3 - <<'PY'
-          import re
-          with open('app/build.gradle', 'r') as f:
-              content = f.read()
-          content = re.sub(
-              r'(defaultConfig \{)',
-              r'\1\n            ndk { abiFilters "arm64-v8a" }',
-              content, count=1
-          )
-          with open('app/build.gradle', 'w') as f:
-              f.write(content)
-          print('Patched app/build.gradle with arm64-v8a abiFilters')
-          PY
-          grep -A 3 "abiFilters" app/build.gradle || echo "WARNING: abiFilters patch not found"
+          # Build native code for a single ABI only. This is the React Native /
+          # Expo mechanism the gradle plugin actually honours for the NDK external
+          # builds and APK packaging (an ndk.abiFilters edit in app/build.gradle did
+          # NOT stop the x86_64 CMake compile last run). One ABI keeps the build
+          # well under the timeout and avoids the parallel-compile Metaspace OOM.
+          # arm64-v8a covers every modern (2017+) Android phone.
+          echo "reactNativeArchitectures=arm64-v8a" >> gradle.properties
+          echo "----- gradle.properties tail -----"
+          tail -n 5 gradle.properties
 
       - name: Build release APK
         working-directory: golden-hour-explorer/android
@@ -140,6 +138,8 @@ jobs:
 
             - Built from `golden-hour-explorer/` via `expo prebuild` + Gradle `assembleRelease`.
             - Embeds the JS bundle (runs without a Metro dev server).
+            - Built for **arm64-v8a** — fine for any modern (2017+) physical Android phone;
+              it will not run on x86 emulators.
             - Debug-keystore signed — Android will warn it is from an "unknown developer";
               that is expected for a test build. Allow install from your browser/files app.
 
