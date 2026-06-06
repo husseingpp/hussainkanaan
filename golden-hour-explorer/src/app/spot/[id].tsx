@@ -1,0 +1,286 @@
+import { useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Glass } from "@/components/Glass";
+import { StarRating } from "@/components/StarRating";
+import { TypeBadge } from "@/components/TypeBadge";
+import { StateView } from "@/components/StateView";
+import { useAuth } from "@/lib/auth";
+import {
+  useAddComment,
+  useFavoriteSpots,
+  useRateSpot,
+  useSpot,
+  useSpotComments,
+  useToggleFavorite,
+  useUserRating,
+} from "@/lib/db";
+import { fmtTime, getSolarTimes } from "@/lib/solar";
+import { fetchWeather, scoreLabel, skyScore } from "@/lib/weather";
+import { scheduleGoldenHourAlert } from "@/lib/notifications";
+import { formatCoord } from "@/lib/geo";
+import { colors, radius, space } from "@/theme/theme";
+
+export default function SpotDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { user, canContribute } = useAuth();
+
+  const { data: spot, isLoading, error } = useSpot(id);
+  const { data: comments } = useSpotComments(id);
+  const { data: userRating } = useUserRating(id, user?.id);
+  const { data: favs } = useFavoriteSpots(user?.id);
+  const rate = useRateSpot();
+  const addComment = useAddComment();
+  const toggleFav = useToggleFavorite();
+
+  const [comment, setComment] = useState("");
+  const [alertMsg, setAlertMsg] = useState<string | null>(null);
+
+  const solar = useMemo(
+    () => (spot ? getSolarTimes(spot.latitude, spot.longitude) : null),
+    [spot],
+  );
+
+  const weather = useQuery({
+    queryKey: ["weather", spot?.id],
+    queryFn: () => fetchWeather(spot!.latitude, spot!.longitude),
+    enabled: !!spot,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  if (isLoading) return <StateView loading />;
+  if (error || !spot) return <StateView message="This spot couldn't be loaded." />;
+
+  const isFav = !!favs?.some((f) => f.id === spot.id);
+  const score = weather.data ? skyScore(weather.data) : null;
+
+  function requireContributor(action: () => void) {
+    if (!canContribute) {
+      router.push("/sign-in");
+      return;
+    }
+    action();
+  }
+
+  async function onAlert() {
+    if (!solar) return;
+    const id = await scheduleGoldenHourAlert(spot!.name, solar.eveningGoldenStart);
+    setAlertMsg(
+      id
+        ? "Alert set — we'll remind you 15 minutes before golden hour."
+        : "Today's golden hour has passed, or notifications are disabled.",
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.root} edges={["top"]}>
+      <ScrollView contentContainerStyle={styles.body}>
+        <Pressable onPress={() => router.back()} hitSlop={10}>
+          <Text style={styles.back}>‹ Back</Text>
+        </Pressable>
+
+        <TypeBadge type={spot.type} />
+        <Text style={styles.name}>{spot.name}</Text>
+        <Text style={styles.coord}>{formatCoord(spot.latitude, spot.longitude)}</Text>
+        {spot.description ? <Text style={styles.desc}>{spot.description}</Text> : null}
+
+        <View style={styles.row}>
+          <Text style={styles.rating}>★ {(spot.average_rating ?? 0).toFixed(1)}</Text>
+          <Text style={styles.count}>{spot.ratings_count} ratings</Text>
+          <Pressable
+            onPress={() => requireContributor(() => toggleFav.mutate({ spotId: spot.id, userId: user!.id }))}
+            style={styles.favBtn}
+          >
+            <Text style={styles.favText}>{isFav ? "♥ Saved" : "♡ Save"}</Text>
+          </Pressable>
+        </View>
+
+        {/* solar */}
+        {solar ? (
+          <Glass style={styles.glass}>
+            <Text style={styles.glassTitle}>Today's light</Text>
+            <View style={styles.timesGrid}>
+              <Time label="Sunrise" value={fmtTime(solar.sunrise)} />
+              <Time label="AM golden ends" value={fmtTime(solar.morningGoldenEnd)} />
+              <Time label="PM golden starts" value={fmtTime(solar.eveningGoldenStart)} />
+              <Time label="Sunset" value={fmtTime(solar.sunset)} />
+            </View>
+          </Glass>
+        ) : null}
+
+        {/* sky score */}
+        <Glass style={styles.glass}>
+          <Text style={styles.glassTitle}>Sky-suitability score</Text>
+          {weather.isLoading ? (
+            <Text style={styles.muted}>Checking the forecast…</Text>
+          ) : score == null ? (
+            <Text style={styles.muted}>Forecast unavailable right now.</Text>
+          ) : (
+            <>
+              <Text style={styles.score}>
+                {score}
+                <Text style={styles.scoreMax}> / 100</Text>
+              </Text>
+              <View style={styles.barTrack}>
+                <View style={[styles.barFill, { width: `${score}%` }]} />
+              </View>
+              <Text style={styles.muted}>
+                {scoreLabel(score)} · {Math.round(weather.data!.cloudCover)}% cloud ·{" "}
+                {Math.round(weather.data!.windSpeed)} km/h wind
+              </Text>
+            </>
+          )}
+        </Glass>
+
+        {/* alert */}
+        <Pressable style={styles.alertBtn} onPress={onAlert}>
+          <Text style={styles.alertText}>🔔 Alert me before golden hour</Text>
+        </Pressable>
+        {alertMsg ? <Text style={styles.alertMsg}>{alertMsg}</Text> : null}
+
+        {/* your rating */}
+        <Glass style={styles.glass}>
+          <Text style={styles.glassTitle}>Your rating</Text>
+          <StarRating
+            value={userRating?.score ?? 0}
+            size={28}
+            onChange={(n) =>
+              requireContributor(() =>
+                rate.mutate({ spotId: spot.id, userId: user!.id, score: n }),
+              )
+            }
+          />
+          {!canContribute ? (
+            <Text style={styles.muted}>Sign in with a confirmed email to rate.</Text>
+          ) : null}
+        </Glass>
+
+        {/* comments */}
+        <Text style={styles.h}>Reviews</Text>
+        <View style={styles.commentBox}>
+          <TextInput
+            style={styles.input}
+            placeholder={canContribute ? "Share what it's like…" : "Sign in to review"}
+            placeholderTextColor={colors.textFaint}
+            value={comment}
+            onChangeText={setComment}
+            editable={canContribute}
+            multiline
+          />
+          <Pressable
+            style={styles.send}
+            onPress={() =>
+              requireContributor(() => {
+                if (!comment.trim()) return;
+                addComment.mutate(
+                  { spotId: spot.id, authorId: user!.id, body: comment.trim() },
+                  { onSuccess: () => setComment("") },
+                );
+              })
+            }
+          >
+            <Text style={styles.sendText}>Post</Text>
+          </Pressable>
+        </View>
+
+        {(comments ?? []).map((c) => (
+          <Glass key={c.id} style={styles.comment}>
+            <Text style={styles.commentBody}>{c.body}</Text>
+          </Glass>
+        ))}
+        {comments && comments.length === 0 ? (
+          <Text style={styles.muted}>No reviews yet — be the first.</Text>
+        ) : null}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function Time({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.time}>
+      <Text style={styles.timeValue}>{value}</Text>
+      <Text style={styles.timeLabel}>{label}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.bg },
+  body: { padding: space.lg, gap: space.md },
+  back: { color: colors.accent, fontSize: 16, marginBottom: 4 },
+  name: { color: colors.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
+  coord: { color: colors.textFaint, fontSize: 13, fontFamily: "monospace" },
+  desc: { color: colors.textMuted, fontSize: 15, lineHeight: 22 },
+  row: { flexDirection: "row", alignItems: "center", gap: space.md },
+  rating: { color: colors.star, fontSize: 18, fontWeight: "700" },
+  count: { color: colors.textFaint, fontSize: 13 },
+  favBtn: {
+    marginLeft: "auto",
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+  },
+  favText: { color: colors.text, fontWeight: "600" },
+  glass: { gap: space.sm },
+  glassTitle: { color: colors.text, fontSize: 15, fontWeight: "700" },
+  timesGrid: { flexDirection: "row", flexWrap: "wrap", gap: space.md },
+  time: { width: "44%", gap: 2 },
+  timeValue: { color: colors.accent, fontSize: 18, fontWeight: "700" },
+  timeLabel: { color: colors.textMuted, fontSize: 12 },
+  score: { color: colors.text, fontSize: 34, fontWeight: "800" },
+  scoreMax: { color: colors.textFaint, fontSize: 16, fontWeight: "600" },
+  barTrack: {
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: colors.card,
+    overflow: "hidden",
+  },
+  barFill: { height: 8, borderRadius: 999, backgroundColor: colors.accent },
+  muted: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  alertBtn: {
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  alertText: { color: colors.text, fontWeight: "600" },
+  alertMsg: { color: colors.good, fontSize: 13 },
+  h: { color: colors.text, fontSize: 18, fontWeight: "700", marginTop: space.sm },
+  commentBox: { flexDirection: "row", gap: space.sm, alignItems: "flex-end" },
+  input: {
+    flex: 1,
+    minHeight: 44,
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: colors.text,
+  },
+  send: {
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  sendText: { color: "#2a160c", fontWeight: "700" },
+  comment: { padding: space.md },
+  commentBody: { color: colors.text, fontSize: 14, lineHeight: 20 },
+});
