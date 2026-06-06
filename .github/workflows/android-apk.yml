@@ -65,10 +65,18 @@ jobs:
           # Expo SDK 56's generated build scripts use some APIs deprecated in
           # Gradle 9 that would otherwise fail the build before any tasks run.
           echo "org.gradle.warning.mode=all" >> gradle.properties
-          # Limit NDK compilation to arm64-v8a by patching app/build.gradle directly.
-          # NOTE: Do NOT set reactNativeArchitectures in gradle.properties — doing so
-          # causes ExpoAutolinkingPlugin's lazy node exec (ExpoAutolinkingPlugin.kt:69)
-          # to exit with code 1, failing the entire build before any tasks run.
+          # Fix the real cause of "Process 'command 'node'' finished with non-zero
+          # exit value 1" at ExpoAutolinkingPlugin.kt:69. That plugin runs
+          #   node ... mirror-kotlin-inline-modules --watched-directories-serialized <X>
+          # where <X> defaults to a Kotlin emptyList(). Gradle's commandLine(Object...)
+          # flattens an empty collection to ZERO args, so node receives the flag with
+          # no value and exits 1 ("argument missing"). Setting this property to the
+          # string "[]" makes findProperty() return a real value that survives as a
+          # single literal arg, and JSON.parse("[]") succeeds.
+          echo "expo.inlineModules.watchedDirectories=[]" >> gradle.properties
+          # Limit NDK compilation to arm64-v8a by patching app/build.gradle directly
+          # (keeps the native MapLibre compile to one ABI so the build finishes in a
+          # reasonable time instead of building all four).
           python3 - <<'PY'
           import re
           with open('app/build.gradle', 'r') as f:
