@@ -58,14 +58,31 @@ jobs:
       - name: Expo prebuild (android)
         run: npx expo prebuild --platform android --no-install
 
-      - name: Patch gradle.properties
+      - name: Patch android project
         working-directory: golden-hour-explorer/android
         run: |
-          echo "reactNativeArchitectures=arm64-v8a" >> gradle.properties
           # Treat Gradle deprecation warnings as warnings only, not errors.
           # Expo SDK 56's generated build scripts use some APIs deprecated in
           # Gradle 9 that would otherwise fail the build before any tasks run.
           echo "org.gradle.warning.mode=all" >> gradle.properties
+          # Limit NDK compilation to arm64-v8a by patching app/build.gradle directly.
+          # NOTE: Do NOT set reactNativeArchitectures in gradle.properties — doing so
+          # causes ExpoAutolinkingPlugin's lazy node exec (ExpoAutolinkingPlugin.kt:69)
+          # to exit with code 1, failing the entire build before any tasks run.
+          python3 -c "
+import re
+with open('app/build.gradle', 'r') as f:
+    content = f.read()
+content = re.sub(
+    r'(defaultConfig \{)',
+    r'\1\n            ndk { abiFilters \"arm64-v8a\" }',
+    content, count=1
+)
+with open('app/build.gradle', 'w') as f:
+    f.write(content)
+print('Patched app/build.gradle with arm64-v8a abiFilters')
+"
+          grep -A 3 "abiFilters" app/build.gradle || echo "WARNING: abiFilters patch not found"
 
       - name: Build release APK
         working-directory: golden-hour-explorer/android
