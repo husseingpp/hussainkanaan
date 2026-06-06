@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { Icons } from "@/components/Icons";
-import { data } from "@/data/portfolio";
+import { data, type Project } from "@/data/portfolio";
 
 export function Projects() {
   return (
@@ -10,7 +11,7 @@ export function Projects() {
           <h2 className="h2">Things I&apos;ve built.</h2>
         </div>
         <div className="proj-grid">
-          {data.projects.map((p, i) => {
+          {data.projects.map((p: Project, i) => {
             const Glyph = Icons[p.glyph] ?? Icons.code;
             return (
               <article
@@ -37,6 +38,11 @@ export function Projects() {
                     ))}
                   </div>
                   <div className="proj-links">
+                    {p.route && (
+                      <Link className="proj-link" href={p.route}>
+                        <Icons.arrowUpRight /> View Project
+                      </Link>
+                    )}
                     {p.github && (
                       <a
                         className="proj-link"

@@ -29,6 +29,8 @@ export type Project = {
   stack: string[];
   github?: string;
   demo?: string;
+  /** Internal route to a dedicated project page (rendered via next/link). */
+  route?: string;
 };
 
 export type ExperienceItem = {
@@ -146,14 +148,14 @@ export const data = {
 
   projects: [
     {
-      title: "SunSpot",
+      title: "SunSpot · Golden Hour Explorer",
       tag: "Featured",
       glyph: "sun",
       feature: true,
-      desc: "Mobile & web app for discovering the best sunset and sunrise viewing spots. Features interactive maps, community-submitted locations, and real-time solar event data.",
-      stack: ["Next.js", "Expo", "Supabase", "PostGIS", "Mapbox"],
-      github: "https://github.com/husseingpp/sunpost",
-      demo: "#",
+      desc: "A community app for discovering, rating and sharing the best sunrise & sunset photography spots. Interactive maps, local golden-hour solar math, a live sky-suitability score from weather data, and community submissions — backed by a real Supabase (Postgres) database with row-level security. No AI; runs on free tiers.",
+      stack: ["React Native", "Expo", "Supabase", "PostgreSQL", "MapLibre", "TanStack Query"],
+      github: "https://github.com/husseingpp/hussainkanaan/tree/main/golden-hour-explorer",
+      route: "/sunspot",
     },
     {
       title: "Google Maps Scraper",
