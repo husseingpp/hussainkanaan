@@ -7,6 +7,8 @@ import "./sunspot.css";
 
 const SOURCE_URL =
   "https://github.com/husseingpp/hussainkanaan/tree/main/golden-hour-explorer";
+const APK_URL =
+  "https://github.com/husseingpp/hussainkanaan/releases/download/sunspot-android-latest/sunspot-golden-hour.apk";
 
 export const metadata: Metadata = {
   title: "SunSpot · Golden Hour Explorer — Hussein Kanaan",
@@ -212,6 +214,9 @@ export default function SunspotPage() {
             <a className="gh-btn gh-btn-solid" href="#live">
               <Icons.map /> Explore the live map
             </a>
+            <a className="gh-btn gh-btn-android" href={APK_URL}>
+              <Icons.phone /> Download Android APK
+            </a>
             <a className="gh-btn gh-btn-ghost" href={SOURCE_URL} target="_blank" rel="noreferrer">
               <Icons.github /> View source
             </a>
@@ -344,9 +349,23 @@ export default function SunspotPage() {
         <span className="gh-kicker">Try it</span>
         <h2 className="gh-h2">Run it yourself.</h2>
         <p className="gh-sub">
-          MapLibre needs a native build, so the app runs on a dev client (not Expo Go).
-          The source lives in the{" "}
-          <code>golden-hour-explorer/</code> folder of this repo.
+          The fastest way to try it on Android is the prebuilt APK — no toolchain needed.
+          Download it, open the file on your phone and allow install from an unknown source.
+          It is a debug-keystore-signed test build (CI: Expo prebuild → Gradle release), so
+          Android will warn it is from an “unknown developer” — that is expected.
+        </p>
+        <div className="gh-cta-row gh-cta-left">
+          <a className="gh-btn gh-btn-android" href={APK_URL}>
+            <Icons.phone /> Download Android APK
+          </a>
+          <a className="gh-btn gh-btn-ghost" href={SOURCE_URL} target="_blank" rel="noreferrer">
+            <Icons.github /> View source
+          </a>
+        </div>
+        <p className="gh-sub" style={{ marginTop: "1.4rem" }}>
+          Prefer to build it from source (and the only route for iOS)? MapLibre needs a
+          native build, so the app runs on a dev client (not Expo Go). The source lives in
+          the <code>golden-hour-explorer/</code> folder of this repo.
         </p>
         <div className="gh-code">
           <div className="gh-code-head">terminal</div>

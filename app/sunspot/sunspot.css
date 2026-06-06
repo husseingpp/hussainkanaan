@@ -198,6 +198,17 @@
 .gh-btn-ghost:hover {
   border-color: #fff3e2;
 }
+.gh-btn-android {
+  background: linear-gradient(135deg, #ffb347 0%, #e0612b 100%);
+  color: #2a160c;
+  box-shadow: 0 6px 18px rgba(224, 97, 43, 0.35);
+}
+.gh-btn-android:hover {
+  box-shadow: 0 10px 24px rgba(224, 97, 43, 0.45);
+}
+.gh-cta-left {
+  justify-content: flex-start;
+}
 
 /* ---------- generic section ---------- */
 .gh-section {

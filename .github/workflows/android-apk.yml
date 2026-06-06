@@ -1,0 +1,100 @@
+name: Build Android APK (SunSpot)
+
+# Builds a standalone, installable Android APK for the Golden Hour Explorer
+# Expo app and publishes it to a stable GitHub Release so it can be sideloaded
+# for testing. The release build is signed with Expo's bundled debug keystore
+# (no secrets required) and embeds the JS bundle, so it runs without a Metro
+# dev server.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/upbeat-babbage-5CAxl
+    paths:
+      - "golden-hour-explorer/**"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: golden-hour-explorer
+    env:
+      EXPO_NO_TELEMETRY: "1"
+      GRADLE_OPTS: "-Xmx4g -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: golden-hour-explorer/package-lock.json
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Expo prebuild (android)
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK
+        working-directory: golden-hour-explorer/android
+        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Stage APK
+        run: |
+          set -e
+          src="android/app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$src" ]; then
+            echo "APK not found at $src" >&2
+            find android/app/build/outputs -name "*.apk" -print || true
+            exit 1
+          fi
+          cp "$src" sunspot-golden-hour.apk
+          ls -lh sunspot-golden-hour.apk
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sunspot-golden-hour-apk
+          path: golden-hour-explorer/sunspot-golden-hour.apk
+          if-no-files-found: error
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: sunspot-android-latest
+          name: "SunSpot · Golden Hour Explorer — Android test build"
+          body: |
+            Standalone Android APK for sideload testing.
+
+            - Built from `golden-hour-explorer/` via `expo prebuild` + Gradle `assembleRelease`.
+            - Embeds the JS bundle (runs without a Metro dev server).
+            - Debug-keystore signed — Android will warn it is from an "unknown developer";
+              that is expected for a test build. Allow install from your browser/files app.
+
+            Commit: ${{ github.sha }}
+          files: golden-hour-explorer/sunspot-golden-hour.apk
+          make_latest: "true"
