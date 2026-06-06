@@ -36,7 +36,10 @@ jobs:
       # ubuntu-latest has 4 cores / 16 GB. Give the JVM room and an explicit
       # Metaspace ceiling — the previous all-ABI build died with repeated
       # "OutOfMemoryError: Metaspace" while compiling four ABIs in parallel.
-      GRADLE_OPTS: "-Xmx5g -XX:MaxMetaspaceSize=2g -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3"
+      # -Djava.security.egd=file:/dev/./urandom makes APK signing use the
+      # non-blocking entropy source; without it :app:packageRelease hangs for
+      # over an hour waiting on /dev/random on the headless runner.
+      GRADLE_OPTS: "-Xmx5g -XX:MaxMetaspaceSize=2g -Djava.security.egd=file:/dev/./urandom -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3"
 
     steps:
       - name: Checkout
@@ -95,19 +98,38 @@ jobs:
         run: |
           # Ensure the node binary used by ExpoAutolinkingPlugin is in PATH.
           export PATH="$(dirname "$(which node)"):$PATH"
-          ./gradlew :app:assembleRelease --no-daemon --stacktrace --warning-mode=all; GRADLE_EXIT=$?
-          # "28 actionable tasks: 28 executed" in Gradle means assembleRelease
-          # completed. A post-build ExpoAutolinkingPlugin node call can fail and
-          # produce a non-zero exit even when the APK was built successfully.
-          # Succeed if the APK exists; otherwise propagate Gradle's exit code.
           APK="app/build/outputs/apk/release/app-release.apk"
+
+          # Run Gradle in the background and watch for the finished APK instead of
+          # waiting on the process to exit. The release build compiles in ~15 min
+          # and reaches :app:packageRelease, but the JVM can fail to terminate
+          # afterwards (lingering signing/file-watch threads). Once the signed APK
+          # exists, the build is effectively done, so we stop waiting on Gradle.
+          ./gradlew :app:assembleRelease --no-daemon --no-watch-fs --stacktrace --warning-mode=all &
+          GRADLE_PID=$!
+
+          for _ in $(seq 1 180); do   # up to ~60 min (180 * 20s)
+            if ! kill -0 "$GRADLE_PID" 2>/dev/null; then
+              echo "Gradle process exited on its own."
+              break
+            fi
+            if [ -f "$APK" ]; then
+              echo "Signed APK detected; allowing 20s to finish writing, then stopping Gradle."
+              sleep 20
+              kill "$GRADLE_PID" 2>/dev/null || true
+              break
+            fi
+            sleep 20
+          done
+          wait "$GRADLE_PID" 2>/dev/null || true
+
           if [ -f "$APK" ]; then
-            echo "APK produced: $(ls -lh $APK)"
+            echo "APK produced: $(ls -lh "$APK")"
             exit 0
           fi
-          echo "APK not found (Gradle exit $GRADLE_EXIT):"
+          echo "APK not found after build:"
           find app/build/outputs -name "*.apk" 2>/dev/null || true
-          exit ${GRADLE_EXIT:-1}
+          exit 1
 
       - name: Stage APK
         run: |
