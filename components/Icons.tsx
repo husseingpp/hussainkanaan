@@ -104,6 +104,12 @@ export const Icons = {
     />
   ),
   close: (p: P) => <I {...p} d="M6 6l12 12M18 6 6 18" />,
+  globe: (p: P) => (
+    <I {...p}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 3a14.5 14.5 0 0 1 0 18M12 3a14.5 14.5 0 0 0 0 18M3 12h18" />
+    </I>
+  ),
   sliders: (p: P) => (
     <I {...p}>
       <path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0" />

@@ -31,11 +31,26 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Install portfolio dependencies
         run: npm ci
 
-      - name: Build (static export)
+      - name: Install Expo web app dependencies
+        working-directory: golden-hour-explorer
+        run: npm ci
+
+      - name: Build Expo web app
+        working-directory: golden-hour-explorer
+        run: npx expo export --platform web --output-dir web-dist
+        env:
+          EXPO_NO_TELEMETRY: "1"
+
+      - name: Build portfolio (static export)
         run: npm run build
+
+      - name: Inject Expo web app into portfolio output
+        run: |
+          mkdir -p out/sunspot-app
+          cp -r golden-hour-explorer/web-dist/. out/sunspot-app/
 
       - name: Disable Jekyll processing
         run: touch out/.nojekyll

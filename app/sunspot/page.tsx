@@ -9,6 +9,7 @@ const SOURCE_URL =
   "https://github.com/husseingpp/hussainkanaan/tree/main/golden-hour-explorer";
 const APK_URL =
   "https://github.com/husseingpp/hussainkanaan/releases/download/sunspot-android-latest/sunspot-golden-hour.apk";
+const WEB_APP_URL = "/hussainkanaan/sunspot-app/";
 
 export const metadata: Metadata = {
   title: "SunSpot · Golden Hour Explorer — Hussein Kanaan",
@@ -211,17 +212,17 @@ export default function SunspotPage() {
             ))}
           </div>
           <div className="gh-cta-row">
-            <a className="gh-btn gh-btn-solid" href="#live">
-              <Icons.map /> Explore the live map
+            <a className="gh-btn gh-btn-solid" href={WEB_APP_URL} target="_blank" rel="noreferrer">
+              <Icons.globe /> Open web app
             </a>
             <a className="gh-btn gh-btn-android" href={APK_URL}>
               <Icons.phone /> Download Android APK
             </a>
+            <a className="gh-btn gh-btn-ghost" href="#live">
+              <Icons.map /> Explore the live map
+            </a>
             <a className="gh-btn gh-btn-ghost" href={SOURCE_URL} target="_blank" rel="noreferrer">
               <Icons.github /> View source
-            </a>
-            <a className="gh-btn gh-btn-ghost" href="#run">
-              <Icons.code /> Run it yourself
             </a>
           </div>
         </div>
@@ -355,6 +356,9 @@ export default function SunspotPage() {
           Android will warn it is from an “unknown developer” — that is expected.
         </p>
         <div className="gh-cta-row gh-cta-left">
+          <a className="gh-btn gh-btn-solid" href={WEB_APP_URL} target="_blank" rel="noreferrer">
+            <Icons.globe /> Open web app
+          </a>
           <a className="gh-btn gh-btn-android" href={APK_URL}>
             <Icons.phone /> Download Android APK
           </a>
