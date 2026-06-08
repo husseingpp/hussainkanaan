@@ -128,7 +128,7 @@ export default function MapScreen() {
         <WeatherHeader />
       </View>
       {selected ? (
-        <View style={[styles.cardWrap, { bottom: insets.bottom + 144 }]} pointerEvents="box-none">
+        <View style={[styles.cardWrap, { bottom: insets.bottom + 156 }]} pointerEvents="box-none">
           <PopupCard
             spot={selected}
             onClose={() => setSelected(null)}
@@ -141,7 +141,7 @@ export default function MapScreen() {
         </View>
       ) : null}
       <Pressable
-        style={({ pressed }) => [styles.fab, { bottom: insets.bottom + 88 }, pressed && styles.fabPressed]}
+        style={({ pressed }) => [styles.fab, { bottom: insets.bottom + 100 }, pressed && styles.fabPressed]}
         onPress={() => router.push("/submit")}
       >
         <Text style={styles.fabText}>＋ Add spot</Text>

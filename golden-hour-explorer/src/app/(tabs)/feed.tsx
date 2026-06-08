@@ -38,7 +38,7 @@ export default function FeedScreen() {
   const { data, isLoading, error } = useDailyFeed();
   const insets = useSafeAreaInsets();
   // Clear the floating dock (its top edge sits ~max(insets.bottom,12)+68 up).
-  const fabBottom = insets.bottom + 88;
+  const fabBottom = insets.bottom + 100;
   const captionBottom = fabBottom + 56;
 
   let content: React.ReactNode;
