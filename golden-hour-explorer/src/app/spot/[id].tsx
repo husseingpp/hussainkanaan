@@ -224,7 +224,7 @@ export default function SpotDetailScreen() {
         {/* solar */}
         {solar ? (
           <Glass style={styles.glass}>
-            <Text style={styles.glassTitle}>Today's light</Text>
+            <Text style={styles.glassTitle}>Today&apos;s light</Text>
             <View style={styles.timesGrid}>
               <Time label="Sunrise" value={fmtTime(solar.sunrise)} />
               <Time label="AM golden ends" value={fmtTime(solar.morningGoldenEnd)} />
