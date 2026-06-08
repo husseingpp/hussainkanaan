@@ -2,16 +2,19 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Map as MapLibreMap, Camera, Marker } from "@maplibre/maplibre-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Screen } from "@/components/Screen";
 import { StateView } from "@/components/StateView";
+import { WeatherHeader } from "@/components/WeatherHeader";
 import { useApprovedSpots } from "@/lib/db";
 import { MAP_STYLE, DEFAULT_CENTER } from "@/lib/config";
-import { colors, typeColor } from "@/theme/theme";
+import { colors, space, typeColor } from "@/theme/theme";
 
 export default function MapScreen() {
   const router = useRouter();
   const { data: spots, isLoading, error } = useApprovedSpots();
   const [mapFailed, setMapFailed] = useState(false);
+  const insets = useSafeAreaInsets();
 
   if (isLoading) {
     return (
@@ -58,6 +61,12 @@ export default function MapScreen() {
           </Text>
         </View>
       ) : null}
+      <View
+        style={[styles.weatherOverlay, { top: insets.top + space.sm }]}
+        pointerEvents="box-none"
+      >
+        <WeatherHeader />
+      </View>
       <Pressable style={styles.fab} onPress={() => router.push("/submit")}>
         <Text style={styles.fabText}>＋ Add spot</Text>
       </Pressable>
@@ -78,6 +87,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   errorText: { color: "#fff", fontSize: 13, fontWeight: "600", textAlign: "center" },
+  weatherOverlay: {
+    position: "absolute",
+    left: space.lg,
+    right: space.lg,
+    zIndex: 10,
+  },
   pin: {
     width: 16,
     height: 16,

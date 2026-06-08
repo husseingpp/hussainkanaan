@@ -3,9 +3,10 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { StateView } from "@/components/StateView";
+import { WeatherHeader } from "@/components/WeatherHeader";
 import { useApprovedSpots } from "@/lib/db";
 import { MAP_STYLE, DEFAULT_CENTER } from "@/lib/config";
-import { colors, typeColor } from "@/theme/theme";
+import { colors, space, typeColor } from "@/theme/theme";
 
 // Inject maplibre CSS once per session (Metro can't import .css files directly).
 // Pinned to the exact installed version so the markup matches the JS bundle.
@@ -132,6 +133,9 @@ export default function MapScreen() {
           </Text>
         </View>
       ) : null}
+      <View style={styles.weatherOverlay} pointerEvents="box-none">
+        <WeatherHeader />
+      </View>
       <Pressable style={styles.fab} onPress={() => router.push("/submit")}>
         <Text style={styles.fabText}>＋ Add spot</Text>
       </Pressable>
@@ -152,6 +156,13 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   errorText: { color: "#fff", fontSize: 13, fontWeight: "600", textAlign: "center" },
+  weatherOverlay: {
+    position: "absolute",
+    top: space.md,
+    left: space.lg,
+    right: space.lg,
+    zIndex: 10,
+  },
   fab: {
     position: "absolute",
     right: 18,

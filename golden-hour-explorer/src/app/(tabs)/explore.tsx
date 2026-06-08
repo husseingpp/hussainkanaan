@@ -5,6 +5,7 @@ import * as Location from "expo-location";
 import { Screen } from "@/components/Screen";
 import { SpotCard } from "@/components/SpotCard";
 import { StateView } from "@/components/StateView";
+import { WeatherHeader } from "@/components/WeatherHeader";
 import { useApprovedSpots } from "@/lib/db";
 import { haversineKm } from "@/lib/geo";
 import { colors, radius, space } from "@/theme/theme";
@@ -66,6 +67,9 @@ export default function ExploreScreen() {
 
   return (
     <Screen title="Explore" subtitle="Find your next golden hour">
+      <View style={styles.weather}>
+        <WeatherHeader />
+      </View>
       <View style={styles.sorts}>
         {SORTS.map((s) => {
           const on = sort === s.key;
@@ -97,6 +101,7 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
+  weather: { paddingHorizontal: space.lg, paddingBottom: space.sm },
   sorts: { flexDirection: "row", gap: 8, paddingHorizontal: space.lg, paddingBottom: space.sm },
   sort: {
     paddingHorizontal: 14,
