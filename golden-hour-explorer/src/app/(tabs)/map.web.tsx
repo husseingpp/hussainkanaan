@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Image } from "expo-image";
+import { useQuery } from "@tanstack/react-query";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { useApprovedSpots } from "@/lib/db";
 import { MAP_STYLE, DEFAULT_CENTER } from "@/lib/config";
 import { fetchWeather, skyScore, scoreLabel } from "@/lib/weather";
-import { colors, space, typeColor } from "@/theme/theme";
+import { colors, radius, space, typeColor } from "@/theme/theme";
 import type { Spot } from "@/lib/types";
 
 // Inject maplibre CSS once per session (Metro can't import .css files directly).
-// Pinned to the exact installed version so the markup matches the JS bundle.
 function ensureMaplibreCSS() {
   if (document.getElementById("maplibre-css")) return;
   const link = document.createElement("link");
@@ -21,90 +28,92 @@ function ensureMaplibreCSS() {
 }
 
 /**
- * Build the popup's DOM: a photo, a (lazily filled) weather line, and the two
- * action buttons. Returns the container plus the weather <span> so the caller
- * can update it once the forecast resolves without rebuilding the node.
+ * Bottom card shown when a pin is clicked — mirrors the native PopupCard so
+ * the UX is identical across platforms. Rendered in React so it sits in the
+ * normal stacking context (no MapLibre DOM popup quirks).
  */
-function buildPopupContent(spot: Spot, onMore: () => void) {
-  const container = document.createElement("div");
-  container.style.cssText = "width:212px;font-family:inherit;";
-
+function PopupCard({
+  spot,
+  onClose,
+  onMore,
+}: {
+  spot: Spot;
+  onClose: () => void;
+  onMore: () => void;
+}) {
   const photo = spot.photo_urls?.[0];
-  if (photo) {
-    const img = document.createElement("img");
-    img.src = photo;
-    img.alt = spot.name;
-    img.style.cssText =
-      "width:100%;height:118px;object-fit:cover;border-radius:8px;display:block;background:#222;";
-    container.appendChild(img);
-  } else {
-    const ph = document.createElement("div");
-    ph.style.cssText =
-      `width:100%;height:118px;border-radius:8px;background:${typeColor[spot.type]};` +
-      "display:flex;align-items:center;justify-content:center;font-size:30px;";
-    ph.textContent = "🌄";
-    container.appendChild(ph);
+  const { data: weather } = useQuery({
+    queryKey: ["spot-weather", spot.latitude.toFixed(1), spot.longitude.toFixed(1)],
+    queryFn: () => fetchWeather(spot.latitude, spot.longitude),
+    staleTime: 600_000,
+    retry: 0,
+  });
+  const wxText = weather
+    ? `${scoreLabel(skyScore(weather))} sky · ${Math.round(weather.temperature)}° · ${Math.round(weather.cloudCover)}% cloud`
+    : "Checking sky…";
+
+  function drive() {
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${spot.latitude},${spot.longitude}`,
+      "_blank",
+      "noopener",
+    );
   }
 
-  const name = document.createElement("div");
-  name.textContent = spot.name;
-  name.style.cssText = "color:#f4ece0;font-weight:700;font-size:14px;margin:8px 0 2px;";
-  container.appendChild(name);
-
-  const wx = document.createElement("div");
-  wx.textContent = "Checking sky…";
-  wx.style.cssText = "color:#b9b2c8;font-size:12px;margin-bottom:8px;";
-  container.appendChild(wx);
-
-  const row = document.createElement("div");
-  row.style.cssText = "display:flex;gap:6px;";
-
-  const drive = document.createElement("a");
-  drive.textContent = "🚗 Drive there";
-  drive.href = `https://www.google.com/maps/dir/?api=1&destination=${spot.latitude},${spot.longitude}`;
-  drive.target = "_blank";
-  drive.rel = "noopener";
-  drive.style.cssText =
-    "flex:1;text-align:center;text-decoration:none;background:#f0922f;color:#2a160c;" +
-    "font-weight:700;font-size:12px;padding:8px 6px;border-radius:999px;";
-  row.appendChild(drive);
-
-  const more = document.createElement("button");
-  more.type = "button";
-  more.textContent = "More info";
-  more.style.cssText =
-    "flex:1;cursor:pointer;background:rgba(255,255,255,0.08);color:#f4ece0;" +
-    "border:1px solid rgba(255,255,255,0.18);font-weight:600;font-size:12px;" +
-    "padding:8px 6px;border-radius:999px;";
-  more.addEventListener("click", onMore);
-  row.appendChild(more);
-
-  container.appendChild(row);
-  return { container, wx };
+  return (
+    <View style={styles.card}>
+      <Pressable style={styles.cardClose} onPress={onClose} hitSlop={10}>
+        <Text style={styles.cardCloseText}>✕</Text>
+      </Pressable>
+      {photo ? (
+        <Image source={{ uri: photo }} style={styles.cardPhoto} contentFit="cover" />
+      ) : (
+        <View
+          style={[
+            styles.cardPhoto,
+            styles.cardPhotoPlaceholder,
+            { backgroundColor: typeColor[spot.type] },
+          ]}
+        >
+          <Text style={styles.cardPhotoEmoji}>🌄</Text>
+        </View>
+      )}
+      <Text style={styles.cardName} numberOfLines={1}>
+        {spot.name}
+      </Text>
+      <Text style={styles.cardWx}>{wxText}</Text>
+      <View style={styles.cardRow}>
+        <Pressable style={[styles.cardBtn, styles.cardBtnPrimary]} onPress={drive}>
+          <Text style={styles.cardBtnPrimaryText}>🚗 Drive there</Text>
+        </Pressable>
+        <Pressable style={[styles.cardBtn, styles.cardBtnGhost]} onPress={onMore}>
+          <Text style={styles.cardBtnGhostText}>More info</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
 }
 
 export default function MapScreen() {
   const router = useRouter();
   const { data: spots, isLoading, error } = useApprovedSpots();
   const [mapError, setMapError] = useState(false);
+  const [selected, setSelected] = useState<Spot | null>(null);
 
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
   const markersRef = useRef<import("maplibre-gl").Marker[]>([]);
-  const popupRef = useRef<import("maplibre-gl").Popup | null>(null);
   const resizeObsRef = useRef<ResizeObserver | null>(null);
-  // Latest spots, read inside the one-time init without re-running it.
   const spotsRef = useRef(spots);
   spotsRef.current = spots;
-  // Keep a stable router reference for marker listeners created inside init.
-  const routerRef = useRef(router);
-  routerRef.current = router;
+  // Stable setter ref so DOM click handlers always call the latest setter.
+  const setSelectedRef = useRef(setSelected);
+  setSelectedRef.current = setSelected;
 
   /**
-   * Callback ref: build the map the moment the container <div> is actually
-   * attached to the DOM. This avoids the classic bug where a mount effect runs
-   * before the container exists (e.g. while data is still loading) and never
-   * re-runs. maplibre also needs the container to have a real size, so we
-   * resize on load and whenever the element's box changes.
+   * Callback ref: build the map the moment the container <div> is attached.
+   * Using a callback ref avoids the bug where useEffect([]) fires before the
+   * div exists (loading state, early return). maplibre needs a real size too,
+   * so we resize on load and whenever the element's box changes.
    */
   const attachMap = useCallback((container: HTMLDivElement | null) => {
     if (!container || mapRef.current) return;
@@ -128,49 +137,21 @@ export default function MapScreen() {
         console.warn("MapLibre error", e?.error ?? e);
         setMapError(true);
       });
-      // The tab content can settle its height a frame after mount; force the
-      // canvas to recompute against the real container box once and on resize.
       map.on("load", () => map.resize());
       const ro = new ResizeObserver(() => map.resize());
       ro.observe(container);
       resizeObsRef.current = ro;
       mapRef.current = map;
-      // Draw any markers we already have.
       syncMarkers(map, spotsRef.current ?? []);
     });
-    // syncMarkers is stable for our purposes; init must run exactly once.
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Draw/refresh markers whenever the spots list changes (after the map exists).
+  // Refresh markers whenever the spots list changes (after the map exists).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !spots) return;
     syncMarkers(map, spots);
   }, [spots]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function openPopup(map: import("maplibre-gl").Map, spot: Spot) {
-    import("maplibre-gl").then(({ Popup }) => {
-      popupRef.current?.remove();
-      const { container, wx } = buildPopupContent(spot, () => {
-        popupRef.current?.remove();
-        routerRef.current.push(`/spot/${spot.id}`);
-      });
-      const popup = new Popup({ closeButton: true, maxWidth: "232px", offset: 14 })
-        .setLngLat([spot.longitude, spot.latitude])
-        .setDOMContent(container)
-        .addTo(map);
-      popupRef.current = popup;
-      // Fill the weather line once the forecast resolves (popup may have closed).
-      fetchWeather(spot.latitude, spot.longitude)
-        .then((w) => {
-          const s = skyScore(w);
-          wx.textContent = `${scoreLabel(s)} sky · ${Math.round(w.temperature)}° · ${Math.round(w.cloudCover)}% cloud`;
-        })
-        .catch(() => {
-          wx.textContent = "Sky forecast unavailable";
-        });
-    });
-  }
 
   function syncMarkers(map: import("maplibre-gl").Map, list: typeof spots) {
     import("maplibre-gl").then(({ Marker }) => {
@@ -184,7 +165,11 @@ export default function MapScreen() {
           `width:16px;height:16px;border-radius:50%;` +
           `border:2px solid #fff;background:${typeColor[spot.type]};` +
           `cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.45);padding:0;`;
-        el.addEventListener("click", () => openPopup(map, spot));
+        // stopPropagation so the map doesn't see the click and pan away.
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          setSelectedRef.current(spot);
+        });
         markersRef.current.push(
           new Marker({ element: el }).setLngLat([spot.longitude, spot.latitude]).addTo(map),
         );
@@ -197,8 +182,6 @@ export default function MapScreen() {
     return () => {
       resizeObsRef.current?.disconnect();
       resizeObsRef.current = null;
-      popupRef.current?.remove();
-      popupRef.current = null;
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
       mapRef.current?.remove();
@@ -209,10 +192,8 @@ export default function MapScreen() {
   return (
     <View style={styles.root}>
       {/*
-       * A real <div> is necessary so maplibre-gl can receive an HTMLElement, and
-       * it is rendered UNCONDITIONALLY (never behind a loading/error early return)
-       * so the callback ref always fires and the map can initialise. This file is
-       * web-only, so DOM elements are valid here.
+       * Rendered UNCONDITIONALLY so the callback ref always fires and the map
+       * can initialise regardless of query state. Web-only file → DOM is fine.
        */}
       <div
         ref={attachMap}
@@ -239,6 +220,21 @@ export default function MapScreen() {
       <View style={styles.weatherOverlay} pointerEvents="box-none">
         <WeatherHeader />
       </View>
+
+      {selected ? (
+        <View style={styles.cardWrap} pointerEvents="box-none">
+          <PopupCard
+            spot={selected}
+            onClose={() => setSelected(null)}
+            onMore={() => {
+              const id = selected.id;
+              setSelected(null);
+              router.push(`/spot/${id}`);
+            }}
+          />
+        </View>
+      ) : null}
+
       <Pressable style={styles.fab} onPress={() => router.push("/submit")}>
         <Text style={styles.fabText}>＋ Add spot</Text>
       </Pressable>
@@ -277,6 +273,53 @@ const styles = StyleSheet.create({
     right: space.lg,
     zIndex: 10,
   },
+  cardWrap: {
+    position: "absolute",
+    left: space.lg,
+    right: space.lg,
+    bottom: 88,
+    zIndex: 15,
+  },
+  card: {
+    backgroundColor: colors.bg2,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    padding: space.md,
+    gap: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  cardClose: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardCloseText: { color: "#fff", fontSize: 14, fontWeight: "700" },
+  cardPhoto: { width: "100%", height: 130, borderRadius: radius.sm },
+  cardPhotoPlaceholder: { alignItems: "center", justifyContent: "center" },
+  cardPhotoEmoji: { fontSize: 34 },
+  cardName: { color: colors.text, fontWeight: "700", fontSize: 16 },
+  cardWx: { color: colors.textMuted, fontSize: 13 },
+  cardRow: { flexDirection: "row", gap: 8, marginTop: 2 },
+  cardBtn: { flex: 1, paddingVertical: 11, borderRadius: radius.pill, alignItems: "center" },
+  cardBtnPrimary: { backgroundColor: colors.accent },
+  cardBtnPrimaryText: { color: "#2a160c", fontWeight: "700", fontSize: 13 },
+  cardBtnGhost: {
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  cardBtnGhostText: { color: colors.text, fontWeight: "600", fontSize: 13 },
   fab: {
     position: "absolute",
     right: 18,
