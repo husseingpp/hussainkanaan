@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Glass } from "@/components/Glass";
 import { fetchWeather, scoreLabel, skyScore } from "@/lib/weather";
 import { fmtTime, nextGoldenHour } from "@/lib/solar";
-import { colors, radius, space } from "@/theme/theme";
+import { colors, fonts, radius, space } from "@/theme/theme";
 
 type Coords = { latitude: number; longitude: number };
 const round = (n: number) => Math.round(n * 10) / 10;
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   enableText: { color: colors.text, fontSize: 14, fontWeight: "600" },
   muted: { color: colors.textMuted, fontSize: 13 },
   scoreCol: { flexDirection: "row", alignItems: "baseline" },
-  score: { color: colors.accent, fontSize: 28, fontWeight: "800" },
+  score: { fontFamily: fonts.display, color: colors.accent, fontSize: 30, fontWeight: "600" },
   scoreMax: { color: colors.textFaint, fontSize: 13, fontWeight: "600" },
   info: { flex: 1, gap: 2 },
   label: { color: colors.text, fontSize: 14, fontWeight: "700" },

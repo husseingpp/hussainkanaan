@@ -1,6 +1,7 @@
 import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatDistanceToNow } from "date-fns";
 import { Screen } from "@/components/Screen";
 import { StateView } from "@/components/StateView";
@@ -11,7 +12,7 @@ import type { DailySpot } from "@/lib/types";
 
 const { width } = Dimensions.get("window");
 
-function Moment({ item }: { item: DailySpot }) {
+function Moment({ item, captionBottom }: { item: DailySpot; captionBottom: number }) {
   return (
     <View style={[styles.page, { width }]}>
       <Image
@@ -21,7 +22,7 @@ function Moment({ item }: { item: DailySpot }) {
         transition={200}
       />
       <View style={styles.scrim} />
-      <Glass style={styles.caption}>
+      <Glass style={[styles.caption, { marginBottom: captionBottom }]}>
         {item.location_name ? <Text style={styles.place}>{item.location_name}</Text> : null}
         {item.caption ? <Text style={styles.text}>{item.caption}</Text> : null}
         <Text style={styles.time}>
@@ -35,6 +36,10 @@ function Moment({ item }: { item: DailySpot }) {
 export default function FeedScreen() {
   const router = useRouter();
   const { data, isLoading, error } = useDailyFeed();
+  const insets = useSafeAreaInsets();
+  // Clear the floating dock (its top edge sits ~max(insets.bottom,12)+68 up).
+  const fabBottom = insets.bottom + 88;
+  const captionBottom = fabBottom + 56;
 
   let content: React.ReactNode;
   if (isLoading) {
@@ -63,7 +68,7 @@ export default function FeedScreen() {
         showsHorizontalScrollIndicator={false}
         data={data}
         keyExtractor={(d) => d.id}
-        renderItem={({ item }) => <Moment item={item} />}
+        renderItem={({ item }) => <Moment item={item} captionBottom={captionBottom} />}
       />
     );
   }
@@ -71,7 +76,10 @@ export default function FeedScreen() {
   return (
     <View style={styles.root}>
       {content}
-      <Pressable style={styles.fab} onPress={() => router.push("/add-daily")}>
+      <Pressable
+        style={({ pressed }) => [styles.fab, { bottom: fabBottom }, pressed && styles.fabPressed]}
+        onPress={() => router.push("/add-daily")}
+      >
         <Text style={styles.fabText}>＋ Daily photo</Text>
       </Pressable>
     </View>
@@ -89,14 +97,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "rgba(0,0,0,0.28)",
   },
-  caption: { margin: space.lg, marginBottom: space.xxl, gap: 4 },
+  caption: { margin: space.lg, gap: 4 },
   place: { color: colors.accent, fontWeight: "700", fontSize: 13 },
   text: { color: colors.text, fontSize: 16, lineHeight: 22 },
   time: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
   fab: {
     position: "absolute",
     right: 18,
-    bottom: 24,
     backgroundColor: colors.accent,
     paddingHorizontal: 18,
     paddingVertical: 12,
@@ -108,5 +115,6 @@ const styles = StyleSheet.create({
     elevation: 4,
     zIndex: 10,
   },
+  fabPressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
   fabText: { color: "#2a160c", fontWeight: "700", fontSize: 14 },
 });

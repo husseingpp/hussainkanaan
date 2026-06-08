@@ -40,8 +40,20 @@ const BASE_CSS = `
   --gh-radius-sm: 4px; --gh-radius-md: 8px; --gh-radius-lg: 12px;
 }
 html, body, #root { height: 100%; }
-body { margin: 0; background: var(--gh-bg); }
+body {
+  margin: 0;
+  background: var(--gh-bg);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 #root { display: flex; flex-direction: column; }
+/* Photos and surfaces ease their hover/press transforms for a polished feel. */
+img { -webkit-user-drag: none; user-select: none; }
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+}
 `;
 
 // Runs in the browser before React mounts → no theme flash on reload.
@@ -75,6 +87,12 @@ export default function Root({ children }: PropsWithChildren) {
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
         />
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: BASE_CSS }} />

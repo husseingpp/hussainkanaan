@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import type { ReactNode } from "react";
-import { colors, space } from "@/theme/theme";
+import { colors, fonts, space } from "@/theme/theme";
 
 export function Screen({
   children,
@@ -18,8 +18,8 @@ export function Screen({
     <SafeAreaView style={styles.root} edges={edges}>
       {title ? (
         <View style={styles.header}>
+          {subtitle ? <Text style={styles.eyebrow}>{subtitle}</Text> : null}
           <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
       ) : null}
       {children}
@@ -31,9 +31,24 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   header: {
     paddingHorizontal: space.lg,
-    paddingTop: space.md,
+    paddingTop: space.lg,
     paddingBottom: space.sm,
   },
-  title: { color: colors.text, fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
-  subtitle: { color: colors.textMuted, fontSize: 14, marginTop: 2 },
+  // Small, tracked, uppercase label that sits above the headline — editorial style.
+  eyebrow: {
+    color: colors.accent,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  title: {
+    fontFamily: fonts.display,
+    color: colors.text,
+    fontSize: 34,
+    fontWeight: "600",
+    letterSpacing: -0.5,
+    lineHeight: 38,
+  },
 });

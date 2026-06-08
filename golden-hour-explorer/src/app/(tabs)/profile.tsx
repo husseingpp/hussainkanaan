@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { Screen } from "@/components/Screen";
 import { Glass } from "@/components/Glass";
 import { useAuth } from "@/lib/auth";
-import { colors, radius, space } from "@/theme/theme";
+import { colors, fonts, radius, space } from "@/theme/theme";
 
 const BADGES = [
   { emoji: "🌄", name: "Dawn Chaser", desc: "Logged a sunrise spot" },
@@ -71,9 +71,9 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  body: { padding: space.lg, gap: space.lg },
+  body: { padding: space.lg, paddingBottom: 120, gap: space.lg },
   card: { gap: 8 },
-  name: { color: colors.text, fontSize: 19, fontWeight: "700" },
+  name: { fontFamily: fonts.display, color: colors.text, fontSize: 21, fontWeight: "600" },
   sub: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
   btn: {
     marginTop: 6,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: "hidden",
   },
-  h: { color: colors.text, fontSize: 16, fontWeight: "700" },
+  h: { fontFamily: fonts.display, color: colors.text, fontSize: 19, fontWeight: "600" },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   badge: { width: "47%", alignItems: "flex-start", gap: 4 },
   badgeEmoji: { fontSize: 28 },

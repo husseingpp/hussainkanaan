@@ -128,7 +128,7 @@ export default function MapScreen() {
         <WeatherHeader />
       </View>
       {selected ? (
-        <View style={styles.cardWrap} pointerEvents="box-none">
+        <View style={[styles.cardWrap, { bottom: insets.bottom + 144 }]} pointerEvents="box-none">
           <PopupCard
             spot={selected}
             onClose={() => setSelected(null)}
@@ -140,7 +140,10 @@ export default function MapScreen() {
           />
         </View>
       ) : null}
-      <Pressable style={styles.fab} onPress={() => router.push("/submit")}>
+      <Pressable
+        style={({ pressed }) => [styles.fab, { bottom: insets.bottom + 88 }, pressed && styles.fabPressed]}
+        onPress={() => router.push("/submit")}
+      >
         <Text style={styles.fabText}>＋ Add spot</Text>
       </Pressable>
     </View>
@@ -177,7 +180,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: space.lg,
     right: space.lg,
-    bottom: 92,
     zIndex: 15,
   },
   card: {
@@ -224,7 +226,6 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 18,
-    bottom: 24,
     backgroundColor: colors.accent,
     paddingHorizontal: 18,
     paddingVertical: 12,
@@ -235,5 +236,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
+  fabPressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
   fabText: { color: "#2a160c", fontWeight: "700", fontSize: 14 },
 });

@@ -235,7 +235,10 @@ export default function MapScreen() {
         </View>
       ) : null}
 
-      <Pressable style={styles.fab} onPress={() => router.push("/submit")}>
+      <Pressable
+        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        onPress={() => router.push("/submit")}
+      >
         <Text style={styles.fabText}>＋ Add spot</Text>
       </Pressable>
     </View>
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: space.lg,
     right: space.lg,
-    bottom: 88,
+    bottom: 150,
     zIndex: 15,
   },
   card: {
@@ -323,7 +326,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 18,
-    bottom: 24,
+    bottom: 92,
     backgroundColor: colors.accent,
     paddingHorizontal: 18,
     paddingVertical: 12,
@@ -335,5 +338,6 @@ const styles = StyleSheet.create({
     elevation: 4,
     zIndex: 10,
   },
+  fabPressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
   fabText: { color: "#2a160c", fontWeight: "700", fontSize: 14 },
 });

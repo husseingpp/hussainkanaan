@@ -53,5 +53,15 @@ export const radius = {
   pill: "var(--gh-radius-pill, 999px)",
 } as const;
 
+/**
+ * Editorial type system for web. Fraunces (loaded in +html.tsx) is a variable
+ * serif with real character for headings; Inter carries the body. Falls back to
+ * platform serifs/sans if the webfonts haven't loaded yet.
+ */
+export const fonts = {
+  display: '"Fraunces", Georgia, "Times New Roman", serif',
+  body: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+} as const;
+
 /** Default gradient backdrop for screens (unused on web, kept for parity). */
 export const SKY_GRADIENT = ["#241433", "#5a2a4d", "#c25a2e"] as const;

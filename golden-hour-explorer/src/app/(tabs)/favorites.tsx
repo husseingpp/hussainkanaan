@@ -49,7 +49,7 @@ export default function FavoritesScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: space.lg },
+  list: { padding: space.lg, paddingBottom: 120 },
   cta: { alignItems: "center", paddingBottom: space.xxl },
   link: {
     color: "#2a160c",

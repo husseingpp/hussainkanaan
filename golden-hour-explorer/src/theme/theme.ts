@@ -1,3 +1,5 @@
+import { Platform } from "react-native";
+
 /** Dark, glassmorphic palette tuned for outdoor (bright-light) visibility. */
 export const colors = {
   bg: "#0c0a14",
@@ -28,6 +30,17 @@ export const typeColor: Record<"sunrise" | "sunset" | "both", string> = {
 
 export const space = { xs: 6, sm: 10, md: 14, lg: 20, xl: 28, xxl: 40 } as const;
 export const radius = { sm: 10, md: 16, lg: 22, pill: 999 } as const;
+
+/**
+ * Editorial type system: a serif display face for headings (titles, names,
+ * big numbers) paired with the system sans for body copy. Native uses the
+ * built-in platform serif so no font assets need bundling; the web override
+ * (theme.web.ts) upgrades the display face to Fraunces.
+ */
+export const fonts = {
+  display: Platform.select({ ios: "Georgia", android: "serif", default: "serif" }) as string,
+  body: Platform.select({ ios: "System", android: "sans-serif", default: "System" }) as string,
+} as const;
 
 /** Default gradient backdrop for screens (top → horizon). */
 export const SKY_GRADIENT = ["#241433", "#5a2a4d", "#c25a2e"] as const;
