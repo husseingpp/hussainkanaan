@@ -81,7 +81,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   pressed: { opacity: 0.92 },
-  photoFrame: { width: "100%", height: 168, overflow: "hidden", backgroundColor: colors.bg2 },
+  // Wide 3:2 cover that scales with the card width — imagery leads the card.
+  photoFrame: { width: "100%", aspectRatio: 3 / 2, overflow: "hidden", backgroundColor: colors.bg2 },
   photo: { width: "100%", height: "100%" },
   photoPlaceholder: { alignItems: "center", justifyContent: "center" },
   photoEmoji: { fontSize: 40 },

@@ -201,9 +201,10 @@ const styles = StyleSheet.create({
   tile: { borderRadius: radius.md },
   pressed: { opacity: 0.92 },
   // Frame clips the zoom so the photo scales within rounded corners (web hover).
+  // Tall 4:5 portrait crop scales with the tile width for a cinematic, photo-led grid.
   photoFrame: {
     width: "100%",
-    height: 190,
+    aspectRatio: 4 / 5,
     borderRadius: radius.md,
     overflow: "hidden",
     backgroundColor: colors.card,
