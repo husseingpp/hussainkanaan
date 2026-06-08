@@ -14,8 +14,9 @@ const BADGES = [
 
 export default function ProfileScreen() {
   const { user, canContribute, isAdmin, signOut } = useAuth();
+  const isWeb = Platform.OS === "web";
   // The admin queue is a web-only screen; only surface the entry there.
-  const showAdminLink = Platform.OS === "web" && isAdmin;
+  const showAdminLink = isWeb && isAdmin;
 
   return (
     <Screen title="Profile">
@@ -41,6 +42,12 @@ export default function ProfileScreen() {
             </Link>
           )}
         </Glass>
+
+        {isWeb ? (
+          <Link href="/settings" style={styles.adminLink}>
+            ⚙︎ Appearance
+          </Link>
+        ) : null}
 
         {showAdminLink ? (
           <Link href="/admin" style={styles.adminLink}>

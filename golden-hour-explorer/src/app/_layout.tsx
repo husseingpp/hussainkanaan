@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/auth";
+import { TweaksProvider } from "@/lib/tweaks";
 import { configureNotifications } from "@/lib/notifications";
 import { colors } from "@/theme/theme";
 
@@ -19,19 +20,22 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <StatusBar style="light" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.bg },
-              }}
-            >
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="spot/[id]" />
-              <Stack.Screen name="admin" />
-              <Stack.Screen name="submit" options={{ presentation: "modal" }} />
-              <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
-            </Stack>
+            <TweaksProvider>
+              <StatusBar style="light" />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.bg },
+                }}
+              >
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="spot/[id]" />
+                <Stack.Screen name="admin" />
+                <Stack.Screen name="settings" />
+                <Stack.Screen name="submit" options={{ presentation: "modal" }} />
+                <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+              </Stack>
+            </TweaksProvider>
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

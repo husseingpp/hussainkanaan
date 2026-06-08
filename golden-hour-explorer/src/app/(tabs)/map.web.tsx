@@ -69,14 +69,15 @@ export default function MapScreen() {
       // Draw any markers we already have.
       syncMarkers(map, spotsRef.current ?? []);
     });
-  }, []);
+    // syncMarkers is stable for our purposes; init must run exactly once.
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Draw/refresh markers whenever the spots list changes (after the map exists).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !spots) return;
     syncMarkers(map, spots);
-  }, [spots]);
+  }, [spots]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function syncMarkers(map: import("maplibre-gl").Map, list: typeof spots) {
     import("maplibre-gl").then(({ Marker }) => {
