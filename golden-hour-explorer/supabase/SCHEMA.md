@@ -28,6 +28,13 @@ to match it. Only one *additive* change was made: a `spot-images` Storage bucket
 - **Writes:** every insert/update requires `author_id|user_id = auth.uid()`
   **and** `is_email_verified()`. Anonymous users (no email) cannot write — hence
   the "guest = read-only, contribute = confirmed email" model in the app.
+- **Admin moderation:** `spots` additionally has
+  `spots_owner_or_admin_update` (`USING author_id = auth.uid() OR is_admin()`) and
+  `spots_admin_delete` (`USING is_admin()`), so an admin can approve/reject any
+  spot and edit its `photo_urls`. `is_admin()` is `SECURITY DEFINER` and
+  `EXECUTE`-granted to anon/authenticated, so the client detects admin status with
+  `supabase.rpc('is_admin')` (same source of truth as RLS). Admins are rows in
+  `admins(id=auth.uid, email, role)` — see `migrations/0002_bootstrap_admin.sql`.
 
 ## Helpers & triggers (unchanged)
 

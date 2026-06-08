@@ -21,6 +21,12 @@ type AuthValue = {
    * accounts get a read-only experience.
    */
   canContribute: boolean;
+  /**
+   * True when the signed-in user is a moderator. Resolved against the DB via the
+   * `is_admin()` RPC — the exact same check the RLS policies use — so the UI can
+   * never show admin controls the database would then reject.
+   */
+  isAdmin: boolean;
   signInWithEmail: (email: string, password: string) => Promise<AuthResult>;
   signUpWithEmail: (
     email: string,
@@ -35,6 +41,7 @@ const AuthContext = createContext<AuthValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -47,6 +54,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Resolve admin status against the DB. is_admin() is the same predicate the
+  // spots UPDATE/DELETE policies use, so UI gating and RLS can never disagree.
+  useEffect(() => {
+    let cancelled = false;
+    const userId = session?.user?.id;
+    if (!userId) {
+      setIsAdmin(false);
+      return;
+    }
+    supabase
+      .rpc("is_admin")
+      .then(({ data, error }) => {
+        if (!cancelled) setIsAdmin(!error && data === true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
+
   const value = useMemo<AuthValue>(() => {
     const user = session?.user ?? null;
     return {
@@ -54,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       canContribute: !!user?.email_confirmed_at,
+      isAdmin,
       async signInWithEmail(email, password) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return { error: error?.message ?? null };
@@ -70,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
       },
     };
-  }, [session, loading]);
+  }, [session, loading, isAdmin]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

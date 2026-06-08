@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { Glass } from "@/components/Glass";
 import { useAuth } from "@/lib/auth";
@@ -13,7 +13,9 @@ const BADGES = [
 ];
 
 export default function ProfileScreen() {
-  const { user, canContribute, signOut } = useAuth();
+  const { user, canContribute, isAdmin, signOut } = useAuth();
+  // The admin queue is a web-only screen; only surface the entry there.
+  const showAdminLink = Platform.OS === "web" && isAdmin;
 
   return (
     <Screen title="Profile">
@@ -39,6 +41,12 @@ export default function ProfileScreen() {
             </Link>
           )}
         </Glass>
+
+        {showAdminLink ? (
+          <Link href="/admin" style={styles.adminLink}>
+            🛡️ Open moderation queue
+          </Link>
+        ) : null}
 
         <Text style={styles.h}>Badges</Text>
         <View style={styles.badges}>
@@ -71,6 +79,19 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   btnText: { color: colors.text, fontWeight: "600" },
+  adminLink: {
+    alignSelf: "flex-start",
+    color: colors.text,
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    fontWeight: "700",
+    fontSize: 15,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: radius.pill,
+    overflow: "hidden",
+  },
   btnLink: {
     marginTop: 6,
     alignSelf: "flex-start",

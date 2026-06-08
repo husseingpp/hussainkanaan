@@ -17,6 +17,7 @@ import type { Comment, DailySpot, Favorite, Rating, Spot, SpotType } from "./typ
 
 export const qk = {
   spots: ["spots", "approved"] as const,
+  pendingSpots: ["spots", "pending"] as const,
   spot: (id: string) => ["spot", id] as const,
   comments: (id: string) => ["comments", id] as const,
   userRating: (spotId: string, userId: string) => ["rating", spotId, userId] as const,
@@ -47,6 +48,24 @@ async function fetchApprovedSpots(): Promise<Spot[]> {
 
 export function useApprovedSpots(): UseQueryResult<Spot[]> {
   return useQuery({ queryKey: qk.spots, queryFn: fetchApprovedSpots, staleTime: 60_000 });
+}
+
+/** Spots awaiting moderation — for the admin queue. RLS SELECT is public, but
+ * only admins are ever routed to the screen that calls this. Oldest first. */
+export function usePendingSpots(): UseQueryResult<Spot[]> {
+  return useQuery({
+    queryKey: qk.pendingSpots,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("spots")
+        .select(SPOT_COLS)
+        .eq("status", "pending")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return dedupById((data ?? []) as Spot[]);
+    },
+    staleTime: 30_000,
+  });
 }
 
 export function useSpot(id: string): UseQueryResult<Spot> {
@@ -248,5 +267,43 @@ export function useCreateSpot() {
       return data as { id: string };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.spots }),
+  });
+}
+
+// ---------- admin mutations (RLS: spots_owner_or_admin_update / _admin_delete) ----------
+
+/** Approve or reject a pending spot. Admin-only at the DB level via is_admin(). */
+export function useModerateSpot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: { id: string; status: "approved" | "rejected" }) => {
+      const { error } = await supabase
+        .from("spots")
+        .update({ status: vars.status })
+        .eq("id", vars.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.pendingSpots });
+      qc.invalidateQueries({ queryKey: qk.spots });
+    },
+  });
+}
+
+/** Replace a spot's whole photo_urls array (admin photo add/remove). */
+export function useUpdateSpotPhotos() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: { id: string; photo_urls: string[] }) => {
+      const { error } = await supabase
+        .from("spots")
+        .update({ photo_urls: vars.photo_urls })
+        .eq("id", vars.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: qk.spot(vars.id) });
+      qc.invalidateQueries({ queryKey: qk.spots });
+    },
   });
 }
