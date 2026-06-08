@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Map as MapLibreMap, Camera, Marker } from "@maplibre/maplibre-react-native";
@@ -10,6 +11,7 @@ import { colors, typeColor } from "@/theme/theme";
 export default function MapScreen() {
   const router = useRouter();
   const { data: spots, isLoading, error } = useApprovedSpots();
+  const [mapFailed, setMapFailed] = useState(false);
 
   if (isLoading) {
     return (
@@ -32,7 +34,11 @@ export default function MapScreen() {
 
   return (
     <View style={styles.root}>
-      <MapLibreMap style={styles.map} mapStyle={MAP_STYLE}>
+      <MapLibreMap
+        style={styles.map}
+        mapStyle={MAP_STYLE}
+        onDidFailLoadingMap={() => setMapFailed(true)}
+      >
         <Camera initialViewState={{ center, zoom: 1.4 }} />
         {list.map((s) => (
           <Marker
@@ -45,6 +51,13 @@ export default function MapScreen() {
           </Marker>
         ))}
       </MapLibreMap>
+      {mapFailed ? (
+        <View style={styles.errorBanner} pointerEvents="none">
+          <Text style={styles.errorText}>
+            The basemap couldn&apos;t load. Check your connection.
+          </Text>
+        </View>
+      ) : null}
       <Pressable style={styles.fab} onPress={() => router.push("/submit")}>
         <Text style={styles.fabText}>＋ Add spot</Text>
       </Pressable>
@@ -55,6 +68,16 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   map: { flex: 1 },
+  errorBanner: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(224,85,107,0.92)",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  errorText: { color: "#fff", fontSize: 13, fontWeight: "600", textAlign: "center" },
   pin: {
     width: 16,
     height: 16,

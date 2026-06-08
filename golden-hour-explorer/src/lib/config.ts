@@ -12,12 +12,16 @@ export const SUPABASE_ANON_KEY =
 
 const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY;
 
-/** Vector basemap. Falls back to MapLibre's keyless demo style. */
+/**
+ * Vector basemap. Falls back to CARTO's keyless dark-matter style — a real
+ * street/label basemap (not the country-outline-only MapLibre demo style) that
+ * matches the app's dark theme and needs no API key.
+ */
 export const MAP_STYLE =
   process.env.EXPO_PUBLIC_MAP_STYLE ??
   (MAPTILER_KEY
     ? `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${MAPTILER_KEY}`
-    : "https://demotiles.maplibre.org/style.json");
+    : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json");
 
 export const SPOT_IMAGES_BUCKET = "spot-images";
 

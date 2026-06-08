@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Screen } from "@/components/Screen";
@@ -8,18 +8,21 @@ import { MAP_STYLE, DEFAULT_CENTER } from "@/lib/config";
 import { colors, typeColor } from "@/theme/theme";
 
 // Inject maplibre CSS once per session (Metro can't import .css files directly).
+// Pinned to the exact installed version so the markup matches the JS bundle.
 function ensureMaplibreCSS() {
   if (document.getElementById("maplibre-css")) return;
   const link = document.createElement("link");
   link.id = "maplibre-css";
   link.rel = "stylesheet";
-  link.href = "https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css";
+  link.href = "https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css";
+  link.onerror = () => console.warn("Failed to load maplibre-gl CSS");
   document.head.appendChild(link);
 }
 
 export default function MapScreen() {
   const router = useRouter();
   const { data: spots, isLoading, error } = useApprovedSpots();
+  const [mapError, setMapError] = useState(false);
 
   // mapContainerRef points to a real <div> rendered in the JSX below.
   // In .web.tsx, native HTML elements are valid — this file never runs on native.
@@ -48,6 +51,11 @@ export default function MapScreen() {
         attributionControl: { compact: true },
       });
       map.addControl(new NavigationControl({ showCompass: false }), "top-right");
+      // Surface a failed style/tiles load instead of leaving a blank canvas.
+      map.on("error", (e) => {
+        console.warn("MapLibre error", e?.error ?? e);
+        setMapError(true);
+      });
       mapRef.current = map;
     });
 
@@ -110,11 +118,20 @@ export default function MapScreen() {
        * A real <div> is necessary here so maplibre-gl can receive an HTMLElement.
        * react-native-web renders View as a div, but the ref gives a component
        * instance rather than the DOM node. This file is web-only so DOM elements are valid.
+       * Explicit width/height (not just inset) keeps it sized even if a parent
+       * loses flex height in static export.
        */}
       <div
         ref={mapContainerRef}
-        style={{ position: "absolute", inset: 0 }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
       />
+      {mapError ? (
+        <View style={styles.errorBanner} pointerEvents="none">
+          <Text style={styles.errorText}>
+            The basemap couldn&apos;t load. Check your connection and reload.
+          </Text>
+        </View>
+      ) : null}
       <Pressable style={styles.fab} onPress={() => router.push("/submit")}>
         <Text style={styles.fabText}>＋ Add spot</Text>
       </Pressable>
@@ -124,6 +141,17 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg, position: "relative" },
+  errorBanner: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(224,85,107,0.92)",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    zIndex: 20,
+  },
+  errorText: { color: "#fff", fontSize: 13, fontWeight: "600", textAlign: "center" },
   fab: {
     position: "absolute",
     right: 18,

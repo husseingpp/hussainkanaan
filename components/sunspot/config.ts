@@ -13,6 +13,11 @@ export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   "sb_publishable_QKwZDZCgcI_l7CeBc5Pf9g_M6bViift";
 
-/** Keyless demo basemap — no MapTiler key required for the showcase. */
+/**
+ * Keyless dark basemap for the showcase — CARTO's dark-matter GL style. A real
+ * street/label basemap (not the country-outline-only MapLibre demo style) that
+ * matches the portfolio's dark theme and needs no API key.
+ */
 export const MAP_STYLE =
-  process.env.NEXT_PUBLIC_MAP_STYLE ?? "https://demotiles.maplibre.org/style.json";
+  process.env.NEXT_PUBLIC_MAP_STYLE ??
+  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";

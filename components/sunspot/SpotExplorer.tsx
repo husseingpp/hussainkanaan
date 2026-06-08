@@ -93,6 +93,12 @@ export function SpotExplorer() {
         attributionControl: { compact: true },
       });
       map.addControl(new NavigationControl({ showCompass: false }), "top-right");
+      // Surface a failed style/tiles load to the existing fallback UI instead of
+      // leaving a blank canvas.
+      map.on("error", (e) => {
+        console.warn("MapLibre error", e?.error ?? e);
+        setError("the basemap failed to load");
+      });
       mapRef.current = map;
       for (const s of spots) {
         const el = document.createElement("button");
