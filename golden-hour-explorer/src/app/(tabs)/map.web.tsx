@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Screen } from "@/components/Screen";
-import { StateView } from "@/components/StateView";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { useApprovedSpots } from "@/lib/db";
 import { MAP_STYLE, DEFAULT_CENTER } from "@/lib/config";
@@ -25,56 +23,66 @@ export default function MapScreen() {
   const { data: spots, isLoading, error } = useApprovedSpots();
   const [mapError, setMapError] = useState(false);
 
-  // mapContainerRef points to a real <div> rendered in the JSX below.
-  // In .web.tsx, native HTML elements are valid — this file never runs on native.
-  const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
   const markersRef = useRef<import("maplibre-gl").Marker[]>([]);
+  const resizeObsRef = useRef<ResizeObserver | null>(null);
+  // Latest spots, read inside the one-time init without re-running it.
+  const spotsRef = useRef(spots);
+  spotsRef.current = spots;
 
-  // Initialise the map once the container div mounts.
-  useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
-    let disposed = false;
-    const container = mapContainerRef.current;
-
+  /**
+   * Callback ref: build the map the moment the container <div> is actually
+   * attached to the DOM. This avoids the classic bug where a mount effect runs
+   * before the container exists (e.g. while data is still loading) and never
+   * re-runs. maplibre also needs the container to have a real size, so we
+   * resize on load and whenever the element's box changes.
+   */
+  const attachMap = useCallback((container: HTMLDivElement | null) => {
+    if (!container || mapRef.current) return;
     ensureMaplibreCSS();
 
     import("maplibre-gl").then(({ Map: MlMap, NavigationControl }) => {
-      if (disposed || mapRef.current) return;
-      const center: [number, number] = spots?.length
-        ? [spots[0].longitude, spots[0].latitude]
+      if (mapRef.current) return;
+      const initial = spotsRef.current;
+      const center: [number, number] = initial?.length
+        ? [initial[0].longitude, initial[0].latitude]
         : DEFAULT_CENTER;
       const map = new MlMap({
         container,
         style: MAP_STYLE,
         center,
-        zoom: spots?.length ? 5 : 1.4,
+        zoom: initial?.length ? 5 : 1.4,
         attributionControl: { compact: true },
       });
       map.addControl(new NavigationControl({ showCompass: false }), "top-right");
-      // Surface a failed style/tiles load instead of leaving a blank canvas.
       map.on("error", (e) => {
         console.warn("MapLibre error", e?.error ?? e);
         setMapError(true);
       });
+      // The tab content can settle its height a frame after mount; force the
+      // canvas to recompute against the real container box once and on resize.
+      map.on("load", () => map.resize());
+      const ro = new ResizeObserver(() => map.resize());
+      ro.observe(container);
+      resizeObsRef.current = ro;
       mapRef.current = map;
+      // Draw any markers we already have.
+      syncMarkers(map, spotsRef.current ?? []);
     });
+  }, []);
 
-    return () => {
-      disposed = true;
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Re-draw markers whenever the spots list changes.
+  // Draw/refresh markers whenever the spots list changes (after the map exists).
   useEffect(() => {
-    if (!spots?.length) return;
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
+    const map = mapRef.current;
+    if (!map || !spots) return;
+    syncMarkers(map, spots);
+  }, [spots]);
 
+  function syncMarkers(map: import("maplibre-gl").Map, list: typeof spots) {
     import("maplibre-gl").then(({ Marker }) => {
-      const map = mapRef.current;
-      if (!map) return;
-      for (const spot of spots) {
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      for (const spot of list ?? []) {
         const el = document.createElement("button");
         el.type = "button";
         el.title = spot.name;
@@ -88,11 +96,13 @@ export default function MapScreen() {
         );
       }
     });
-  }, [spots, router]);
+  }
 
   // Tear-down on unmount.
   useEffect(() => {
     return () => {
+      resizeObsRef.current?.disconnect();
+      resizeObsRef.current = null;
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
       mapRef.current?.remove();
@@ -100,39 +110,36 @@ export default function MapScreen() {
     };
   }, []);
 
-  if (isLoading)
-    return (
-      <Screen title="Map">
-        <StateView loading message="Loading spots…" />
-      </Screen>
-    );
-  if (error)
-    return (
-      <Screen title="Map">
-        <StateView message="Couldn't reach the map data right now." />
-      </Screen>
-    );
-
   return (
     <View style={styles.root}>
       {/*
-       * A real <div> is necessary here so maplibre-gl can receive an HTMLElement.
-       * react-native-web renders View as a div, but the ref gives a component
-       * instance rather than the DOM node. This file is web-only so DOM elements are valid.
-       * Explicit width/height (not just inset) keeps it sized even if a parent
-       * loses flex height in static export.
+       * A real <div> is necessary so maplibre-gl can receive an HTMLElement, and
+       * it is rendered UNCONDITIONALLY (never behind a loading/error early return)
+       * so the callback ref always fires and the map can initialise. This file is
+       * web-only, so DOM elements are valid here.
        */}
       <div
-        ref={mapContainerRef}
+        ref={attachMap}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
       />
-      {mapError ? (
+
+      {isLoading ? (
+        <View style={styles.loading} pointerEvents="none">
+          <ActivityIndicator color={colors.accent} />
+          <Text style={styles.loadingText}>Loading spots…</Text>
+        </View>
+      ) : null}
+
+      {error || mapError ? (
         <View style={styles.errorBanner} pointerEvents="none">
           <Text style={styles.errorText}>
-            The basemap couldn&apos;t load. Check your connection and reload.
+            {error
+              ? "Couldn't reach the map data right now."
+              : "The basemap couldn't load. Check your connection and reload."}
           </Text>
         </View>
       ) : null}
+
       <View style={styles.weatherOverlay} pointerEvents="box-none">
         <WeatherHeader />
       </View>
@@ -145,6 +152,17 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg, position: "relative" },
+  loading: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space.sm,
+  },
+  loadingText: { color: colors.textMuted, fontSize: 14 },
   errorBanner: {
     position: "absolute",
     top: 0,
