@@ -290,6 +290,32 @@ export function useModerateSpot() {
   });
 }
 
+/** Share a daily "moment" — a photo with an optional caption/location. */
+export function useCreateDailySpot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: {
+      authorId: string;
+      photoUrl: string;
+      caption: string;
+      latitude: number | null;
+      longitude: number | null;
+      locationName: string;
+    }) => {
+      const { error } = await supabase.from("daily_spots").insert({
+        author_id: vars.authorId,
+        photo_url: vars.photoUrl,
+        caption: vars.caption || null,
+        latitude: vars.latitude,
+        longitude: vars.longitude,
+        location_name: vars.locationName || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.feed }),
+  });
+}
+
 /** Replace a spot's whole photo_urls array (admin photo add/remove). */
 export function useUpdateSpotPhotos() {
   const qc = useQueryClient();

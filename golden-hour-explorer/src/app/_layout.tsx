@@ -33,6 +33,7 @@ export default function RootLayout() {
                 <Stack.Screen name="admin" />
                 <Stack.Screen name="settings" />
                 <Stack.Screen name="submit" options={{ presentation: "modal" }} />
+                <Stack.Screen name="add-daily" options={{ presentation: "modal" }} />
                 <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
               </Stack>
             </TweaksProvider>

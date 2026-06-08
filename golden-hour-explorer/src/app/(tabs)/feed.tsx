@@ -1,4 +1,5 @@
-import { Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { formatDistanceToNow } from "date-fns";
 import { Screen } from "@/components/Screen";
@@ -32,29 +33,30 @@ function Moment({ item }: { item: DailySpot }) {
 }
 
 export default function FeedScreen() {
+  const router = useRouter();
   const { data, isLoading, error } = useDailyFeed();
 
-  if (isLoading)
-    return (
+  let content: React.ReactNode;
+  if (isLoading) {
+    content = (
       <Screen title="Today's skies">
         <StateView loading />
       </Screen>
     );
-  if (error)
-    return (
+  } else if (error) {
+    content = (
       <Screen title="Today's skies">
         <StateView message="Couldn't load the feed." />
       </Screen>
     );
-  if (!data || data.length === 0)
-    return (
+  } else if (!data || data.length === 0) {
+    content = (
       <Screen title="Today's skies">
         <StateView message="No moments in the last 24 hours. Be the first to share one!" />
       </Screen>
     );
-
-  return (
-    <View style={styles.root}>
+  } else {
+    content = (
       <FlatList
         horizontal
         pagingEnabled
@@ -63,6 +65,15 @@ export default function FeedScreen() {
         keyExtractor={(d) => d.id}
         renderItem={({ item }) => <Moment item={item} />}
       />
+    );
+  }
+
+  return (
+    <View style={styles.root}>
+      {content}
+      <Pressable style={styles.fab} onPress={() => router.push("/add-daily")}>
+        <Text style={styles.fabText}>＋ Daily photo</Text>
+      </Pressable>
     </View>
   );
 }
@@ -82,4 +93,20 @@ const styles = StyleSheet.create({
   place: { color: colors.accent, fontWeight: "700", fontSize: 13 },
   text: { color: colors.text, fontSize: 16, lineHeight: 22 },
   time: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
+  fab: {
+    position: "absolute",
+    right: 18,
+    bottom: 24,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 999,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+    zIndex: 10,
+  },
+  fabText: { color: "#2a160c", fontWeight: "700", fontSize: 14 },
 });
