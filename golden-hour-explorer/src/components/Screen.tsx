@@ -6,20 +6,37 @@ import { colors, fonts, space } from "@/theme/theme";
 export function Screen({
   children,
   title,
+  accent,
   subtitle,
+  right,
+  center,
   edges = ["top"],
 }: {
   children: ReactNode;
   title?: string;
+  /** Second word rendered in italic amber — the two-tone headline treatment. */
+  accent?: string;
   subtitle?: string;
+  /** Optional control aligned to the right of the headline (e.g. a button). */
+  right?: ReactNode;
+  /** Center the headline block (used by the Daily feed). */
+  center?: boolean;
   edges?: Edge[];
 }) {
   return (
     <SafeAreaView style={styles.root} edges={edges}>
       {title ? (
-        <View style={styles.header}>
-          {subtitle ? <Text style={styles.eyebrow}>{subtitle}</Text> : null}
-          <Text style={styles.title}>{title}</Text>
+        <View style={[styles.header, center && styles.headerCenter]}>
+          <View style={center ? styles.colCenter : styles.col}>
+            <Text style={[styles.title, center && styles.textCenter]}>
+              {title}
+              {accent ? <Text style={styles.accent}> {accent}</Text> : null}
+            </Text>
+            {subtitle ? (
+              <Text style={[styles.subtitle, center && styles.textCenter]}>{subtitle}</Text>
+            ) : null}
+          </View>
+          {right ? <View style={styles.right}>{right}</View> : null}
         </View>
       ) : null}
       {children}
@@ -30,25 +47,35 @@ export function Screen({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
     paddingHorizontal: space.lg,
     paddingTop: space.lg,
-    paddingBottom: space.sm,
+    paddingBottom: space.md,
   },
-  // Small, tracked, uppercase label that sits above the headline — editorial style.
-  eyebrow: {
-    color: colors.accent,
+  headerCenter: { justifyContent: "center", position: "relative" },
+  col: { flex: 1 },
+  colCenter: { alignItems: "center" },
+  // Heavy uppercase grotesk headline — the reference's section-title treatment.
+  title: {
+    fontFamily: fonts.body,
+    color: colors.text,
+    fontSize: 30,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    lineHeight: 34,
+  },
+  accent: { color: colors.accent, fontStyle: "italic" },
+  subtitle: {
+    color: colors.textFaint,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1.6,
     textTransform: "uppercase",
-    marginBottom: 6,
+    marginTop: 6,
   },
-  title: {
-    fontFamily: fonts.display,
-    color: colors.text,
-    fontSize: 34,
-    fontWeight: "600",
-    letterSpacing: -0.5,
-    lineHeight: 38,
-  },
+  textCenter: { textAlign: "center" },
+  right: { position: "absolute", right: space.lg },
 });

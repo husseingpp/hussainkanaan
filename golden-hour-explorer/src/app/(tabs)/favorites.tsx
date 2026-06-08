@@ -14,7 +14,7 @@ export default function FavoritesScreen() {
 
   if (!user) {
     return (
-      <Screen title="Saved">
+      <Screen title="Saved" accent="Spots" subtitle="Your bookmarked locations" edges={[]}>
         <StateView message="Sign in to bookmark spots and find them here." />
         <View style={styles.cta}>
           <Link href="/sign-in" style={styles.link}>
@@ -27,13 +27,13 @@ export default function FavoritesScreen() {
 
   if (isLoading)
     return (
-      <Screen title="Saved">
+      <Screen title="Saved" accent="Spots" subtitle="Your bookmarked locations" edges={[]}>
         <StateView loading />
       </Screen>
     );
 
   return (
-    <Screen title="Saved">
+    <Screen title="Saved" accent="Spots" subtitle="Your bookmarked locations" edges={[]}>
       <FlatList
         data={data ?? []}
         keyExtractor={(s) => s.id}

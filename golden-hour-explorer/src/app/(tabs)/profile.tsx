@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { Screen } from "@/components/Screen";
 import { Glass } from "@/components/Glass";
 import { useAuth } from "@/lib/auth";
-import { colors, fonts, radius, space } from "@/theme/theme";
+import { colors, radius, space } from "@/theme/theme";
 
 const BADGES = [
   { emoji: "🌄", name: "Dawn Chaser", desc: "Logged a sunrise spot" },
@@ -19,7 +19,7 @@ export default function ProfileScreen() {
   const showAdminLink = isWeb && isAdmin;
 
   return (
-    <Screen title="Profile">
+    <Screen title="Your" accent="Profile" subtitle="Account & badges" edges={[]}>
       <ScrollView contentContainerStyle={styles.body}>
         <Glass style={styles.card}>
           <Text style={styles.name}>
@@ -73,7 +73,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   body: { padding: space.lg, paddingBottom: 120, gap: space.lg },
   card: { gap: 8 },
-  name: { fontFamily: fonts.display, color: colors.text, fontSize: 21, fontWeight: "600" },
+  name: { color: colors.text, fontSize: 20, fontWeight: "800", letterSpacing: -0.2 },
   sub: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
   btn: {
     marginTop: 6,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: "hidden",
   },
-  h: { fontFamily: fonts.display, color: colors.text, fontSize: 19, fontWeight: "600" },
+  h: { color: colors.text, fontSize: 15, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.6 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   badge: { width: "47%", alignItems: "flex-start", gap: 4 },
   badgeEmoji: { fontSize: 28 },

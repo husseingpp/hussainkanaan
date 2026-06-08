@@ -1,20 +1,32 @@
 import { useEffect, useRef } from "react";
 import { Tabs } from "expo-router";
-import { Animated, StyleSheet, Text } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Animated, StyleSheet, View, type ColorValue } from "react-native";
+import Feather from "@expo/vector-icons/Feather";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { TopBar } from "@/components/TopBar";
 import { colors } from "@/theme/theme";
 
 // Translucent brand amber used for the active-tab pill. A fixed rgba (rather
 // than the themed accent var) so it reads correctly in both light and dark.
 const ACTIVE_PILL = "rgba(240,146,47,0.16)";
 
+type FeatherName = keyof typeof Feather.glyphMap;
+
 /**
- * Tab icon with a characterful spring: the emoji sits in a pill that fades in
- * and springs up when its tab is focused. Only the transform uses the native
+ * Tab icon with a characterful spring: the line icon sits in a pill that fades
+ * in and springs up when its tab is focused. Only the transform uses the native
  * driver (color/background can't), so the scale animates smoothly everywhere
  * while the highlight toggles instantly.
  */
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
+function TabIcon({
+  name,
+  focused,
+  color,
+}: {
+  name: FeatherName;
+  focused: boolean;
+  color: ColorValue;
+}) {
   const scale = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   useEffect(() => {
@@ -34,7 +46,7 @@ function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
         { transform: [{ scale: scale.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.08] }) }] },
       ]}
     >
-      <Text style={styles.icon}>{emoji}</Text>
+      <Feather name={name} size={20} color={color} />
     </Animated.View>
   );
 }
@@ -46,8 +58,11 @@ export default function TabsLayout() {
   const bottom = Math.max(insets.bottom, 12) + 6;
 
   return (
-    <Tabs
-      screenOptions={{
+    <SafeAreaView edges={["top"]} style={styles.shell}>
+      <TopBar />
+      <View style={styles.body}>
+        <Tabs
+          screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textFaint,
@@ -75,34 +90,44 @@ export default function TabsLayout() {
           elevation: 10,
         },
         tabBarItemStyle: { paddingVertical: 0, borderRadius: 999 },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "600", marginTop: 3 },
+        tabBarLabelStyle: {
+          fontSize: 9.5,
+          fontWeight: "700",
+          letterSpacing: 0.8,
+          textTransform: "uppercase",
+          marginTop: 3,
+        },
       }}
     >
       <Tabs.Screen
         name="map"
-        options={{ title: "Map", tabBarIcon: ({ focused }) => <TabIcon emoji="🗺️" focused={focused} /> }}
+        options={{ title: "Map", tabBarIcon: ({ focused, color }) => <TabIcon name="map" focused={focused} color={color} /> }}
       />
       <Tabs.Screen
         name="explore"
-        options={{ title: "Explore", tabBarIcon: ({ focused }) => <TabIcon emoji="🧭" focused={focused} /> }}
+        options={{ title: "Explore", tabBarIcon: ({ focused, color }) => <TabIcon name="compass" focused={focused} color={color} /> }}
       />
       <Tabs.Screen
         name="feed"
-        options={{ title: "Feed", tabBarIcon: ({ focused }) => <TabIcon emoji="🌅" focused={focused} /> }}
+        options={{ title: "Daily", tabBarIcon: ({ focused, color }) => <TabIcon name="camera" focused={focused} color={color} /> }}
       />
       <Tabs.Screen
         name="favorites"
-        options={{ title: "Saved", tabBarIcon: ({ focused }) => <TabIcon emoji="♥" focused={focused} /> }}
+        options={{ title: "Saved", tabBarIcon: ({ focused, color }) => <TabIcon name="heart" focused={focused} color={color} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: "Profile", tabBarIcon: ({ focused }) => <TabIcon emoji="👤" focused={focused} /> }}
+        options={{ title: "Profile", tabBarIcon: ({ focused, color }) => <TabIcon name="user" focused={focused} color={color} /> }}
       />
-    </Tabs>
+        </Tabs>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  shell: { flex: 1, backgroundColor: colors.bg },
+  body: { flex: 1 },
   iconWrap: {
     paddingHorizontal: 13,
     paddingVertical: 2,
@@ -111,5 +136,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconWrapActive: { backgroundColor: ACTIVE_PILL },
-  icon: { fontSize: 17 },
 });
