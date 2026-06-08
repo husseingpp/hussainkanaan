@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
+  ActivityIndicator,
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,6 +11,8 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Glass } from "@/components/Glass";
@@ -22,8 +27,10 @@ import {
   useSpot,
   useSpotComments,
   useToggleFavorite,
+  useUpdateSpotPhotos,
   useUserRating,
 } from "@/lib/db";
+import { uploadSpotImage } from "@/lib/images";
 import { fmtTime, getSolarTimes } from "@/lib/solar";
 import { fetchWeather, scoreLabel, skyScore } from "@/lib/weather";
 import { scheduleGoldenHourAlert } from "@/lib/notifications";
@@ -33,7 +40,7 @@ import { colors, radius, space } from "@/theme/theme";
 export default function SpotDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user, canContribute } = useAuth();
+  const { user, canContribute, isAdmin } = useAuth();
 
   const { data: spot, isLoading, error } = useSpot(id);
   const { data: comments } = useSpotComments(id);
@@ -42,9 +49,15 @@ export default function SpotDetailScreen() {
   const rate = useRateSpot();
   const addComment = useAddComment();
   const toggleFav = useToggleFavorite();
+  const updatePhotos = useUpdateSpotPhotos();
 
   const [comment, setComment] = useState("");
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoErr, setPhotoErr] = useState<string | null>(null);
+
+  // Photo management is a web-only admin tool.
+  const canManagePhotos = Platform.OS === "web" && isAdmin;
 
   const solar = useMemo(
     () => (spot ? getSolarTimes(spot.latitude, spot.longitude) : null),
@@ -82,6 +95,66 @@ export default function SpotDetailScreen() {
     );
   }
 
+  // Open turn-by-turn directions in the platform's maps app.
+  async function openDirections() {
+    const { latitude: lat, longitude: lng } = spot!;
+    const web = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    const url = Platform.select({
+      ios: `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`,
+      android: `google.navigation:q=${lat},${lng}`,
+      default: web,
+    })!;
+    try {
+      // On Android the geo intent can be unavailable (no Google Maps) — fall back.
+      if (Platform.OS === "android" && !(await Linking.canOpenURL(url))) {
+        await Linking.openURL(web);
+        return;
+      }
+      await Linking.openURL(url);
+    } catch {
+      await Linking.openURL(web).catch(() => {});
+    }
+  }
+
+  async function addPhoto() {
+    if (!spot || !user) return;
+    setPhotoErr(null);
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      setPhotoErr("Photo-library permission is needed to add an image.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 1,
+    });
+    if (result.canceled) return;
+    setPhotoBusy(true);
+    try {
+      const url = await uploadSpotImage(result.assets[0].uri, user.id);
+      const next = [...(spot.photo_urls ?? []), url];
+      await updatePhotos.mutateAsync({ id: spot.id, photo_urls: next });
+    } catch (e) {
+      setPhotoErr(e instanceof Error ? e.message : "Could not add the photo.");
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  async function removePhoto(url: string) {
+    if (!spot) return;
+    setPhotoErr(null);
+    setPhotoBusy(true);
+    try {
+      const next = (spot.photo_urls ?? []).filter((u) => u !== url);
+      await updatePhotos.mutateAsync({ id: spot.id, photo_urls: next });
+    } catch (e) {
+      setPhotoErr(e instanceof Error ? e.message : "Could not remove the photo.");
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.root} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.body}>
@@ -104,6 +177,49 @@ export default function SpotDetailScreen() {
             <Text style={styles.favText}>{isFav ? "♥ Saved" : "♡ Save"}</Text>
           </Pressable>
         </View>
+
+        {/* directions */}
+        <Pressable style={styles.directionsBtn} onPress={openDirections}>
+          <Text style={styles.directionsText}>🚗 Drive there</Text>
+        </Pressable>
+
+        {/* admin: photo management (web only) */}
+        {canManagePhotos ? (
+          <Glass style={styles.glass}>
+            <Text style={styles.glassTitle}>Photos · admin</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.photoRow}
+            >
+              {(spot.photo_urls ?? []).map((url) => (
+                <View key={url} style={styles.photoItem}>
+                  <Image source={{ uri: url }} style={styles.photo} contentFit="cover" />
+                  <Pressable
+                    style={styles.photoRemove}
+                    onPress={() => removePhoto(url)}
+                    disabled={photoBusy}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.photoRemoveText}>×</Text>
+                  </Pressable>
+                </View>
+              ))}
+              <Pressable
+                style={styles.photoAdd}
+                onPress={addPhoto}
+                disabled={photoBusy}
+              >
+                {photoBusy ? (
+                  <ActivityIndicator color={colors.accent} />
+                ) : (
+                  <Text style={styles.photoAddText}>＋</Text>
+                )}
+              </Pressable>
+            </ScrollView>
+            {photoErr ? <Text style={styles.muted}>{photoErr}</Text> : null}
+          </Glass>
+        ) : null}
 
         {/* solar */}
         {solar ? (
@@ -235,7 +351,40 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   favText: { color: colors.text, fontWeight: "600" },
+  directionsBtn: {
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  directionsText: { color: "#2a160c", fontWeight: "700", fontSize: 15 },
   glass: { gap: space.sm },
+  photoRow: { gap: space.sm, paddingVertical: 4 },
+  photoItem: { position: "relative" },
+  photo: { width: 92, height: 92, borderRadius: radius.sm, backgroundColor: colors.card },
+  photoRemove: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.danger,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoRemoveText: { color: "#fff", fontSize: 16, fontWeight: "700", lineHeight: 18 },
+  photoAdd: {
+    width: 92,
+    height: 92,
+    borderRadius: radius.sm,
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoAddText: { color: colors.accent, fontSize: 30, fontWeight: "300" },
   glassTitle: { color: colors.text, fontSize: 15, fontWeight: "700" },
   timesGrid: { flexDirection: "row", flexWrap: "wrap", gap: space.md },
   time: { width: "44%", gap: 2 },
