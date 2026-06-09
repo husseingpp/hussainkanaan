@@ -6,8 +6,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Platform } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+
+// Lets the in-app browser auto-dismiss when the OAuth redirect returns.
+WebBrowser.maybeCompleteAuthSession();
 
 type AuthResult = { error: string | null };
 
@@ -33,6 +39,7 @@ type AuthValue = {
     password: string,
     displayName: string,
   ) => Promise<AuthResult>;
+  signInWithGoogle: () => Promise<AuthResult>;
   signOut: () => Promise<void>;
 };
 
@@ -92,6 +99,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           options: { data: { full_name: displayName } },
         });
         return { error: error?.message ?? null };
+      },
+      // Requires the Google provider to be enabled in Supabase Auth (with the
+      // app's redirect URLs allow-listed). On web the redirect completes via
+      // detectSessionInUrl; on native we open the URL and set the returned session.
+      async signInWithGoogle() {
+        try {
+          if (Platform.OS === "web") {
+            const redirectTo =
+              typeof window !== "undefined" ? window.location.origin : undefined;
+            const { error } = await supabase.auth.signInWithOAuth({
+              provider: "google",
+              options: { redirectTo },
+            });
+            return { error: error?.message ?? null };
+          }
+          const redirectTo = Linking.createURL("sign-in");
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo, skipBrowserRedirect: true },
+          });
+          if (error) return { error: error.message };
+          if (!data?.url) return { error: "Could not start Google sign-in." };
+          const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+          if (res.type !== "success" || !res.url) return { error: null };
+          const frag = res.url.includes("#")
+            ? res.url.split("#")[1]
+            : res.url.split("?")[1] ?? "";
+          const params = new URLSearchParams(frag);
+          const access_token = params.get("access_token");
+          const refresh_token = params.get("refresh_token");
+          if (access_token && refresh_token) {
+            const { error: e2 } = await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+            return { error: e2?.message ?? null };
+          }
+          return { error: "Google sign-in did not return a session." };
+        } catch (e) {
+          return { error: e instanceof Error ? e.message : "Google sign-in failed." };
+        }
       },
       async signOut() {
         await supabase.auth.signOut();

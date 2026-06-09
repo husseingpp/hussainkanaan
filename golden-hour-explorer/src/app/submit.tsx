@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, type ComponentRef } from "react";
 import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
+import { Map as MapLibreMap, Camera } from "@maplibre/maplibre-react-native";
+import Feather from "@expo/vector-icons/Feather";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { Screen } from "@/components/Screen";
@@ -17,6 +19,7 @@ import { useAuth } from "@/lib/auth";
 import { useCreateSpot } from "@/lib/db";
 import { uploadSpotImage } from "@/lib/images";
 import { formatCoord } from "@/lib/geo";
+import { MAP_STYLE, DEFAULT_CENTER } from "@/lib/config";
 import { colors, radius, space } from "@/theme/theme";
 import type { SpotType } from "@/lib/types";
 
@@ -38,6 +41,15 @@ export default function SubmitScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const mapRef = useRef<ComponentRef<typeof MapLibreMap>>(null);
+
+  // "Pick on map": drag so the crosshair sits on the spot, then confirm the centre.
+  async function useMapCenter() {
+    const c = await mapRef.current?.getCenter();
+    if (c) setCoords({ latitude: c[1], longitude: c[0] });
+    setShowMap(false);
+  }
 
   if (!canContribute) {
     return (
@@ -137,11 +149,40 @@ export default function SubmitScreen() {
           })}
         </View>
 
-        <Pressable style={styles.action} onPress={captureLocation}>
-          <Text style={styles.actionText}>
-            {coords ? `📍 ${formatCoord(coords.latitude, coords.longitude)}` : "📍 Capture GPS location"}
-          </Text>
-        </Pressable>
+        <View style={styles.locRow}>
+          <Pressable style={[styles.action, styles.locBtn]} onPress={captureLocation}>
+            <Text style={styles.actionText}>📍 Use GPS</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.action, styles.locBtn, showMap && styles.locBtnOn]}
+            onPress={() => setShowMap((s) => !s)}
+          >
+            <Text style={[styles.actionText, showMap && styles.locBtnOnText]}>🗺️ Pick on map</Text>
+          </Pressable>
+        </View>
+        {coords ? (
+          <Text style={styles.coordText}>📍 {formatCoord(coords.latitude, coords.longitude)}</Text>
+        ) : null}
+        {showMap ? (
+          <View style={styles.mapWrap}>
+            <MapLibreMap ref={mapRef} style={styles.map} mapStyle={MAP_STYLE}>
+              <Camera
+                initialViewState={{
+                  center: coords ? [coords.longitude, coords.latitude] : DEFAULT_CENTER,
+                  zoom: coords ? 11 : 5,
+                }}
+              />
+            </MapLibreMap>
+            <View pointerEvents="none" style={styles.crosshair}>
+              <Feather name="map-pin" size={30} color={colors.accent} />
+            </View>
+            <View pointerEvents="box-none" style={styles.useHereWrap}>
+              <Pressable style={styles.useHere} onPress={useMapCenter}>
+                <Text style={styles.useHereText}>Use this location</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
 
         <Pressable style={styles.action} onPress={pickPhoto}>
           <Text style={styles.actionText}>{photoUri ? "Change photo" : "🖼️ Add a photo"}</Text>
@@ -203,6 +244,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionText: { color: colors.text, fontWeight: "600" },
+  locRow: { flexDirection: "row", gap: 8 },
+  locBtn: { flex: 1 },
+  locBtnOn: { borderColor: colors.accent },
+  locBtnOnText: { color: colors.accent },
+  coordText: { color: colors.accent, fontSize: 13, fontWeight: "600" },
+  mapWrap: {
+    height: 280,
+    borderRadius: radius.md,
+    overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  map: { flex: 1 },
+  crosshair: { position: "absolute", top: "50%", left: "50%", marginLeft: -15, marginTop: -30 },
+  useHereWrap: { position: "absolute", left: 0, right: 0, bottom: 12, alignItems: "center" },
+  useHere: {
+    backgroundColor: colors.accent,
+    borderRadius: radius.pill,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  useHereText: { color: "#2a160c", fontWeight: "700" },
   preview: { width: "100%", height: 180, borderRadius: radius.md },
   err: { color: colors.danger, fontSize: 13 },
   primary: {

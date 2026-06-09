@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
+import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { format } from "date-fns";
@@ -59,6 +60,7 @@ function Chip({
  * keep the bar to a single row.
  */
 export function TopBar() {
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const wide = width >= 640;
   const [coords, setCoords] = useState<Coords | null>(null);
@@ -133,12 +135,15 @@ export function TopBar() {
             </>
           ) : null}
           {weather.data ? (
-            <View style={styles.chip}>
+            <Pressable
+              style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+              onPress={() => router.push("/weather")}
+            >
               <Feather name="thermometer" size={13} color={colors.accent} />
               <Text style={styles.chipText}>{Math.round(weather.data.temperature)}°</Text>
               <Feather name="cloud" size={13} color={colors.textFaint} style={{ marginLeft: 4 }} />
               <Text style={styles.chipText}>{conditionLabel(weather.data.cloudCover)}</Text>
-            </View>
+            </Pressable>
           ) : null}
         </View>
       ) : (
@@ -192,5 +197,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
+  chipPressed: { opacity: 0.7 },
   chipText: { color: colors.text, fontSize: 12.5, fontWeight: "700", letterSpacing: 0.3 },
 });

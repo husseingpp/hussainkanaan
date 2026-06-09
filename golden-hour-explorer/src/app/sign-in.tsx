@@ -11,13 +11,14 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Screen } from "@/components/Screen";
 import { useAuth } from "@/lib/auth";
 import { colors, radius, space } from "@/theme/theme";
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +50,20 @@ export default function SignInScreen() {
       return;
     }
     router.back();
+  }
+
+  async function google() {
+    setBusy(true);
+    setErr(null);
+    setMsg(null);
+    const res = await signInWithGoogle();
+    setBusy(false);
+    if (res.error) {
+      setErr(res.error);
+      return;
+    }
+    // Web redirects away; native returns here with a session set.
+    if (Platform.OS !== "web") router.back();
   }
 
   return (
@@ -105,6 +120,17 @@ export default function SignInScreen() {
             )}
           </Pressable>
 
+          <View style={styles.divider}>
+            <View style={styles.line} />
+            <Text style={styles.or}>or</Text>
+            <View style={styles.line} />
+          </View>
+
+          <Pressable style={styles.google} onPress={google} disabled={busy}>
+            <Ionicons name="logo-google" size={18} color={colors.text} />
+            <Text style={styles.googleText}>Continue with Google</Text>
+          </Pressable>
+
           <Pressable onPress={() => setMode(mode === "in" ? "up" : "in")}>
             <Text style={styles.switch}>
               {mode === "in"
@@ -146,6 +172,21 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryText: { color: "#2a160c", fontWeight: "700", fontSize: 16 },
+  divider: { flexDirection: "row", alignItems: "center", gap: space.sm, marginVertical: 4 },
+  line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
+  or: { color: colors.textFaint, fontSize: 12, fontWeight: "600" },
+  google: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: colors.bg2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingVertical: 13,
+  },
+  googleText: { color: colors.text, fontWeight: "700", fontSize: 15 },
   switch: { color: colors.accent, textAlign: "center", marginTop: 4 },
   guest: { color: colors.textFaint, textAlign: "center", marginTop: space.sm },
 });
