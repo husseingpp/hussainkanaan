@@ -296,8 +296,9 @@ const styles = StyleSheet.create({
   cardWrap: {
     position: "absolute",
     left: space.lg,
-    right: space.lg,
-    bottom: 150,
+    bottom: 96,
+    width: 320,
+    maxWidth: "86%",
     zIndex: 15,
   },
   card: {

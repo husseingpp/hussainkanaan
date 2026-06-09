@@ -57,7 +57,8 @@ export default function SpotDetailScreen() {
   const [photoErr, setPhotoErr] = useState<string | null>(null);
 
   // Photo management is a web-only admin tool.
-  const canManagePhotos = Platform.OS === "web" && isAdmin;
+  const isWeb = Platform.OS === "web";
+  const canManagePhotos = isWeb && isAdmin;
 
   const solar = useMemo(
     () => (spot ? getSolarTimes(spot.latitude, spot.longitude) : null),
@@ -76,6 +77,7 @@ export default function SpotDetailScreen() {
 
   const isFav = !!favs?.some((f) => f.id === spot.id);
   const score = weather.data ? skyScore(weather.data) : null;
+  const cover = spot.photo_urls?.[0] ?? null;
 
   function requireContributor(action: () => void) {
     if (!canContribute) {
@@ -158,9 +160,19 @@ export default function SpotDetailScreen() {
   return (
     <SafeAreaView style={styles.root} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.body}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Text style={styles.back}>‹ Back</Text>
-        </Pressable>
+        {/* Web: lead with the spot's cover photo as a hero, with Back overlaid. */}
+        {isWeb && cover ? (
+          <View style={styles.heroWrap}>
+            <Image source={{ uri: cover }} style={styles.hero} contentFit="cover" transition={200} />
+            <Pressable onPress={() => router.back()} hitSlop={10} style={styles.heroBack}>
+              <Text style={styles.heroBackText}>‹</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable onPress={() => router.back()} hitSlop={10}>
+            <Text style={styles.back}>‹ Back</Text>
+          </Pressable>
+        )}
 
         <TypeBadge type={spot.type} />
         <Text style={styles.name}>{spot.name}</Text>
@@ -335,6 +347,26 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   body: { padding: space.lg, gap: space.md },
   back: { color: colors.accent, fontSize: 16, marginBottom: 4 },
+  heroWrap: {
+    width: "100%",
+    height: 300,
+    borderRadius: radius.lg,
+    overflow: "hidden",
+    backgroundColor: colors.bg2,
+  },
+  hero: { width: "100%", height: "100%" },
+  heroBack: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroBackText: { color: "#fff", fontSize: 26, fontWeight: "700", lineHeight: 28, marginTop: -2 },
   name: { color: colors.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
   coord: { color: colors.textFaint, fontSize: 13, fontFamily: "monospace" },
   desc: { color: colors.textMuted, fontSize: 15, lineHeight: 22 },
