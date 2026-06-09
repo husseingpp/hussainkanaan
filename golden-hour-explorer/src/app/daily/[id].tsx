@@ -21,12 +21,13 @@ import { useAuth } from "@/lib/auth";
 import {
   useAddDailyComment,
   useDailyComments,
+  useDailyFeed,
   useDailyLikes,
   useDailySpot,
   useToggleDailyLike,
 } from "@/lib/db";
 import { colors, radius, space } from "@/theme/theme";
-import type { AuthorRef, DailyComment } from "@/lib/types";
+import type { AuthorRef, DailyComment, DailySpotWithAuthor } from "@/lib/types";
 
 function Avatar({ author, size = 36 }: { author: AuthorRef; size?: number }) {
   const initial = (author?.display_name ?? "S").trim().charAt(0).toUpperCase() || "S";
@@ -63,24 +64,33 @@ export default function DailyPostScreen() {
   const router = useRouter();
   const { user, canContribute } = useAuth();
 
-  const { data: post, isLoading, error } = useDailySpot(id);
-  const likes = useDailyLikes(id, user?.id);
+  // Stories-style navigation: keep the active post in state and page through the
+  // cached feed so swiping/tapping doesn't refetch-flash.
+  const { data: feed } = useDailyFeed();
+  const [activeId, setActiveId] = useState(id);
+  const { data: enriched, isLoading } = useDailySpot(activeId);
+  const likes = useDailyLikes(activeId, user?.id);
   const toggleLike = useToggleDailyLike();
-  const { data: comments } = useDailyComments(id);
+  const { data: comments } = useDailyComments(activeId);
   const addComment = useAddDailyComment();
   const [text, setText] = useState("");
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.root} edges={["top"]}>
-        <StateView loading />
-      </SafeAreaView>
-    );
+  const feedPost = (feed ?? []).find((p) => p.id === activeId) ?? null;
+  const post: DailySpotWithAuthor | null = enriched ?? feedPost;
+  const index = (feed ?? []).findIndex((p) => p.id === activeId);
+
+  function go(delta: number) {
+    const list = feed ?? [];
+    const ni = index + delta;
+    if (ni < 0 || ni >= list.length) return;
+    setActiveId(list[ni].id);
+    setText("");
   }
-  if (error || !post) {
+
+  if (!post) {
     return (
       <SafeAreaView style={styles.root} edges={["top"]}>
-        <StateView message="This moment couldn't be loaded." />
+        {isLoading ? <StateView loading /> : <StateView message="This moment couldn't be loaded." />}
       </SafeAreaView>
     );
   }
@@ -92,14 +102,14 @@ export default function DailyPostScreen() {
   function onLike() {
     if (!user) return router.push("/sign-in");
     if (!canContribute) return;
-    toggleLike.mutate({ dailySpotId: id, userId: user.id, liked });
+    toggleLike.mutate({ dailySpotId: activeId, userId: user.id, liked });
   }
 
   function onSend() {
     if (!user) return router.push("/sign-in");
     if (!canContribute || !text.trim()) return;
     addComment.mutate(
-      { dailySpotId: id, authorId: user.id, body: text.trim() },
+      { dailySpotId: activeId, authorId: user.id, body: text.trim() },
       { onSuccess: () => setText("") },
     );
   }
@@ -116,7 +126,20 @@ export default function DailyPostScreen() {
           <View style={styles.scrimTop} pointerEvents="none" />
           <View style={styles.scrimBottom} pointerEvents="none" />
 
-          <View style={styles.header}>
+          {/* Tap left/right to move between posts, like Instagram stories. */}
+          {feed && feed.length > 1 ? (
+            <>
+              <Pressable style={styles.zoneLeft} onPress={() => go(-1)} />
+              <Pressable style={styles.zoneRight} onPress={() => go(1)} />
+              <View style={styles.progress} pointerEvents="none">
+                {feed.map((p, i) => (
+                  <View key={p.id} style={[styles.progressSeg, i === index && styles.progressSegOn]} />
+                ))}
+              </View>
+            </>
+          ) : null}
+
+          <View style={styles.header} pointerEvents="box-none">
             <Avatar author={post.author ?? null} />
             <View style={styles.flex}>
               <Text style={styles.author} numberOfLines={1}>{name}</Text>
@@ -127,7 +150,7 @@ export default function DailyPostScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.captionWrap}>
+          <View style={styles.captionWrap} pointerEvents="box-none">
             {post.caption ? <Text style={styles.caption}>{post.caption}</Text> : null}
             {post.location_name ? (
               <View style={styles.placeRow}>
@@ -196,7 +219,12 @@ const styles = StyleSheet.create({
   photoBlock: { flex: 1, justifyContent: "space-between", backgroundColor: colors.bg2 },
   scrimTop: { position: "absolute", top: 0, left: 0, right: 0, height: 110, backgroundColor: "rgba(0,0,0,0.45)" },
   scrimBottom: { position: "absolute", bottom: 0, left: 0, right: 0, height: 130, backgroundColor: "rgba(0,0,0,0.45)" },
-  header: { flexDirection: "row", alignItems: "center", gap: 10, padding: space.md },
+  header: { flexDirection: "row", alignItems: "center", gap: 10, padding: space.md, paddingTop: 22 },
+  zoneLeft: { position: "absolute", left: 0, top: 0, bottom: 0, width: "30%" },
+  zoneRight: { position: "absolute", right: 0, top: 0, bottom: 0, width: "70%" },
+  progress: { position: "absolute", top: 8, left: space.md, right: space.md, flexDirection: "row", gap: 4 },
+  progressSeg: { flex: 1, height: 3, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.3)" },
+  progressSegOn: { backgroundColor: "#fff" },
   avatar: { alignItems: "center", justifyContent: "center", backgroundColor: colors.accent },
   avatarInitial: { color: "#2a160c", fontWeight: "800" },
   author: { color: "#fff", fontSize: 15, fontWeight: "800", letterSpacing: -0.2 },

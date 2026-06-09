@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Pressable,
@@ -21,8 +21,10 @@ import { colors, radius, space } from "@/theme/theme";
 
 export default function AddDailyScreen() {
   const router = useRouter();
+  const { pick } = useLocalSearchParams<{ pick?: string }>();
   const { user, canContribute } = useAuth();
   const createDaily = useCreateDailySpot();
+  const autoPicked = useRef(false);
 
   const [caption, setCaption] = useState("");
   const [locationName, setLocationName] = useState("");
@@ -30,6 +32,15 @@ export default function AddDailyScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Launched from the feed camera button (?pick=1): jump straight to the picker.
+  useEffect(() => {
+    if (pick === "1" && canContribute && !autoPicked.current) {
+      autoPicked.current = true;
+      void pickPhoto();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pick, canContribute]);
 
   if (!canContribute) {
     return (
@@ -132,7 +143,7 @@ export default function AddDailyScreen() {
             <Text style={styles.primaryText}>Share</Text>
           )}
         </Pressable>
-        <Text style={styles.note}>Daily photos appear in the feed for 24 hours.</Text>
+        <Text style={styles.note}>Daily photos appear in the feed for 7 days.</Text>
       </ScrollView>
     </Screen>
   );

@@ -21,7 +21,7 @@ export default function FeedScreen() {
   const camera = (
     <Pressable
       style={({ pressed }) => [styles.cameraBtn, pressed && styles.cameraPressed]}
-      onPress={() => router.push("/add-daily")}
+      onPress={() => router.push("/add-daily?pick=1")}
     >
       <Feather name="camera" size={20} color="#fff" />
     </Pressable>
