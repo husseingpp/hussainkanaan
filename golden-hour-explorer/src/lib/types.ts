@@ -65,6 +65,20 @@ export interface DailySpot {
   updated_at: string;
 }
 
+/** Minimal public author info embedded into feed posts/comments. */
+export type AuthorRef = { display_name: string | null; avatar_url: string | null } | null;
+
+export type DailySpotWithAuthor = DailySpot & { author?: AuthorRef };
+
+export interface DailyComment {
+  id: string;
+  daily_spot_id: string;
+  author_id: string | null;
+  body: string;
+  created_at: string;
+  author?: AuthorRef;
+}
+
 export interface Profile {
   user_id: string;
   display_name: string;

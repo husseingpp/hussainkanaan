@@ -40,6 +40,7 @@ export default function RootLayout() {
               >
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="spot/[id]" />
+                <Stack.Screen name="daily/[id]" />
                 <Stack.Screen name="admin" />
                 <Stack.Screen name="settings" />
                 <Stack.Screen name="submit" options={{ presentation: "modal" }} />
