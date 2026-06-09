@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useQuery } from "@tanstack/react-query";
-import { WeatherHeader } from "@/components/WeatherHeader";
+import * as Location from "expo-location";
 import { useApprovedSpots } from "@/lib/db";
 import { MAP_STYLE, DEFAULT_CENTER } from "@/lib/config";
 import { fetchWeather, skyScore, scoreLabel } from "@/lib/weather";
@@ -25,6 +25,32 @@ function ensureMaplibreCSS() {
   link.href = "https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css";
   link.onerror = () => console.warn("Failed to load maplibre-gl CSS");
   document.head.appendChild(link);
+}
+
+// A Feather-style white sun, inlined so it can live inside a raw DOM marker.
+const SUN_ICON =
+  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" ' +
+  'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+  '<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.5 4.5l1.4 1.4' +
+  'M18.1 18.1l1.4 1.4M2 12h2M20 12h2M4.5 19.5l1.4-1.4M18.1 5.9l1.4-1.4"/></svg>';
+
+/** Drop a blue "you are here" marker if location is already granted. */
+async function addUserMarker(
+  map: import("maplibre-gl").Map,
+  Marker: typeof import("maplibre-gl").Marker,
+) {
+  try {
+    const perm = await Location.getForegroundPermissionsAsync();
+    if (!perm.granted) return;
+    const pos = await Location.getCurrentPositionAsync({});
+    const el = document.createElement("div");
+    el.style.cssText =
+      "width:20px;height:20px;border-radius:50%;border:3px solid #fff;background:#2f7ef0;" +
+      "box-shadow:0 0 0 6px rgba(47,126,240,.25);";
+    new Marker({ element: el }).setLngLat([pos.coords.longitude, pos.coords.latitude]).addTo(map);
+  } catch {
+    /* no location — skip the marker */
+  }
 }
 
 /**
@@ -119,7 +145,7 @@ export default function MapScreen() {
     if (!container || mapRef.current) return;
     ensureMaplibreCSS();
 
-    import("maplibre-gl").then(({ Map: MlMap, NavigationControl }) => {
+    import("maplibre-gl").then(({ Map: MlMap, NavigationControl, Marker }) => {
       if (mapRef.current) return;
       const initial = spotsRef.current;
       const center: [number, number] = initial?.length
@@ -143,6 +169,7 @@ export default function MapScreen() {
       resizeObsRef.current = ro;
       mapRef.current = map;
       syncMarkers(map, spotsRef.current ?? []);
+      void addUserMarker(map, Marker);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -161,10 +188,11 @@ export default function MapScreen() {
         const el = document.createElement("button");
         el.type = "button";
         el.title = spot.name;
+        el.innerHTML = SUN_ICON;
         el.style.cssText =
-          `width:16px;height:16px;border-radius:50%;` +
-          `border:2px solid #fff;background:${typeColor[spot.type]};` +
-          `cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.45);padding:0;`;
+          `width:30px;height:30px;border-radius:50%;display:flex;align-items:center;` +
+          `justify-content:center;border:2px solid #fff;background:${typeColor[spot.type]};` +
+          `cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.55);padding:0;`;
         // stopPropagation so the map doesn't see the click and pan away.
         el.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -217,10 +245,6 @@ export default function MapScreen() {
         </View>
       ) : null}
 
-      <View style={styles.weatherOverlay} pointerEvents="box-none">
-        <WeatherHeader />
-      </View>
-
       {selected ? (
         <View style={styles.cardWrap} pointerEvents="box-none">
           <PopupCard
@@ -269,13 +293,6 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   errorText: { color: "#fff", fontSize: 13, fontWeight: "600", textAlign: "center" },
-  weatherOverlay: {
-    position: "absolute",
-    top: space.md,
-    left: space.lg,
-    right: space.lg,
-    zIndex: 10,
-  },
   cardWrap: {
     position: "absolute",
     left: space.lg,

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { colors, fonts, radius, space, typeColor } from "@/theme/theme";
+import { colors, radius, space, typeColor } from "@/theme/theme";
 import { formatDistance } from "@/lib/geo";
 import type { Spot, SpotWithDistance } from "@/lib/types";
 import { TypeBadge } from "./TypeBadge";
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   body: { padding: space.md, gap: 6 },
   top: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   rating: { color: colors.star, fontWeight: "700", fontSize: 14 },
-  name: { fontFamily: fonts.display, color: colors.text, fontSize: 19, fontWeight: "600" },
+  name: { color: colors.text, fontSize: 18, fontWeight: "800", letterSpacing: -0.2 },
   desc: { color: colors.textMuted, fontSize: 13.5, lineHeight: 19 },
   meta: { flexDirection: "row", gap: 6, marginTop: 2 },
   metaText: { color: colors.textFaint, fontSize: 12.5 },

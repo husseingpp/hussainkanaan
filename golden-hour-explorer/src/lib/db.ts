@@ -120,12 +120,12 @@ export function useUserRating(
   });
 }
 
-/** Daily "moments" from the last 24h (the schema has no expires_at column). */
+/** Daily "moments" from the last 7 days (the schema has no expires_at column). */
 export function useDailyFeed(): UseQueryResult<DailySpot[]> {
   return useQuery({
     queryKey: qk.feed,
     queryFn: async () => {
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("daily_spots")
         .select("id,author_id,photo_url,caption,latitude,longitude,location_name,created_at,updated_at")

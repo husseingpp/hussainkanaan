@@ -5,9 +5,9 @@ import { Image } from "expo-image";
 import { useQuery } from "@tanstack/react-query";
 import { Map as MapLibreMap, Camera, Marker } from "@maplibre/maplibre-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Feather from "@expo/vector-icons/Feather";
 import { Screen } from "@/components/Screen";
 import { StateView } from "@/components/StateView";
-import { WeatherHeader } from "@/components/WeatherHeader";
 import { useApprovedSpots } from "@/lib/db";
 import { MAP_STYLE, DEFAULT_CENTER } from "@/lib/config";
 import { fetchWeather, skyScore, scoreLabel } from "@/lib/weather";
@@ -110,7 +110,9 @@ export default function MapScreen() {
             lngLat={[s.longitude, s.latitude]}
             onPress={() => setSelected(s)}
           >
-            <View style={[styles.pin, { backgroundColor: typeColor[s.type] }]} />
+            <View style={[styles.pin, { backgroundColor: typeColor[s.type] }]}>
+              <Feather name="sun" size={15} color="#fff" />
+            </View>
           </Marker>
         ))}
       </MapLibreMap>
@@ -121,12 +123,6 @@ export default function MapScreen() {
           </Text>
         </View>
       ) : null}
-      <View
-        style={[styles.weatherOverlay, { top: insets.top + space.sm }]}
-        pointerEvents="box-none"
-      >
-        <WeatherHeader />
-      </View>
       {selected ? (
         <View style={[styles.cardWrap, { bottom: insets.bottom + 156 }]} pointerEvents="box-none">
           <PopupCard
@@ -163,18 +159,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   errorText: { color: "#fff", fontSize: 13, fontWeight: "600", textAlign: "center" },
-  weatherOverlay: {
-    position: "absolute",
-    left: space.lg,
-    right: space.lg,
-    zIndex: 10,
-  },
   pin: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     borderWidth: 2,
     borderColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
   },
   cardWrap: {
     position: "absolute",
