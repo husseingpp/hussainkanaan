@@ -22,6 +22,7 @@ import type {
   Rating,
   Spot,
   SpotType,
+  SpotWithDistance,
 } from "./types";
 
 export const qk = {
@@ -35,6 +36,8 @@ export const qk = {
   dailyLikes: (id: string, userId: string) => ["daily-likes", id, userId] as const,
   dailyComments: (id: string) => ["daily-comments", id] as const,
   favorites: (userId: string) => ["favorites", userId] as const,
+  nearbySpots: (lat: number, lng: number) =>
+    ["spots", "nearby", lat.toFixed(3), lng.toFixed(3)] as const,
 };
 
 const SPOT_COLS =
@@ -60,6 +63,33 @@ async function fetchApprovedSpots(): Promise<Spot[]> {
 
 export function useApprovedSpots(): UseQueryResult<Spot[]> {
   return useQuery({ queryKey: qk.spots, queryFn: fetchApprovedSpots, staleTime: 60_000 });
+}
+
+/**
+ * Approved spots ordered by distance from `coords`, computed server-side by the
+ * `nearby_spots` PostGIS RPC (GiST KNN). Each row carries `distanceKm`. Only runs
+ * when coords are known and `enabled` (e.g. the "Near me" sort is active).
+ */
+export function useNearbySpots(
+  coords: { latitude: number; longitude: number } | null,
+  opts?: { enabled?: boolean },
+): UseQueryResult<SpotWithDistance[]> {
+  return useQuery({
+    queryKey: coords ? qk.nearbySpots(coords.latitude, coords.longitude) : ["spots", "nearby", "none"],
+    enabled: !!coords && (opts?.enabled ?? true),
+    staleTime: 60_000,
+    queryFn: async (): Promise<SpotWithDistance[]> => {
+      const { data, error } = await supabase.rpc("nearby_spots", {
+        lat: coords!.latitude,
+        lng: coords!.longitude,
+      });
+      if (error) throw error;
+      return ((data ?? []) as (Spot & { distance_m: number })[]).map((r) => ({
+        ...r,
+        distanceKm: r.distance_m / 1000,
+      }));
+    },
+  });
 }
 
 /** Spots awaiting moderation — for the admin queue. RLS SELECT is public, but

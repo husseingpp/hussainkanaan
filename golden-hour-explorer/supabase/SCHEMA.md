@@ -49,3 +49,27 @@ to match it. Only one *additive* change was made: a `spot-images` Storage bucket
 12 well-known approved spots (incl. several in Lebanon — Raouché, Harissa,
 Batroun, the Cedars) were inserted so the map, Explore list and the portfolio's
 live widget look alive out of the box.
+
+`migrations/0003_seed_lebanon_spots.sql` adds ~18 more approved Lebanon spots
+(idempotent — each row is `insert … where not exists` keyed on `name`, so it's
+safe to run alongside the original 12). Photos are Wikimedia Commons
+`Special:FilePath` hotlinks; any that don't resolve fall back to the app's
+placeholder tile.
+
+## Performance & geo (additive migrations)
+
+- `migrations/0004_performance_indexes.sql` — `create index if not exists` on the
+  hot read paths: `spots(status, average_rating desc)` and `spots(status,
+  created_at)`, `comments(spot_id, created_at desc)`, `daily_spots(created_at
+  desc)`, and the unindexed FKs `daily_spot_likes(daily_spot_id)` /
+  `daily_spot_comments(daily_spot_id, created_at)`.
+- `migrations/0005_postgis_nearby.sql` — enables PostGIS, adds a generated
+  `spots.geog geography(Point,4326)` column (auto-maintained from lat/lng) with a
+  GiST index, and a `nearby_spots(lat, lng, max_count)` RPC that returns approved
+  spots ordered by distance (nearest first) with `distance_m`. The app's
+  `useNearbySpots()` hook powers the Explore "Near me" sort; the read hooks select
+  an explicit column list so the new column is invisible to them.
+
+> Applying: these are also kept as files for version control. To apply to the live
+> project, paste each into the Supabase dashboard SQL editor (or run
+> `supabase db push`).

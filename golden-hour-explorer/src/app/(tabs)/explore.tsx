@@ -16,7 +16,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Location from "expo-location";
 import { Screen } from "@/components/Screen";
 import { StateView } from "@/components/StateView";
-import { useApprovedSpots, useFavoriteSpots, useToggleFavorite } from "@/lib/db";
+import { useApprovedSpots, useFavoriteSpots, useNearbySpots, useToggleFavorite } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { haversineKm } from "@/lib/geo";
 import { colors, fonts, radius, space, typeColor } from "@/theme/theme";
@@ -165,7 +165,12 @@ export default function ExploreScreen() {
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [month, setMonth] = useState<string | null>(null);
+  const [sort, setSort] = useState<"top" | "near">("top");
   const [me, setMe] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // Server-side distance ordering (PostGIS RPC) — only runs for the "Near me"
+  // sort once we have a location.
+  const nearby = useNearbySpots(me, { enabled: sort === "near" });
 
   // Distances if location is already granted (no prompt on mount).
   useEffect(() => {
@@ -186,6 +191,18 @@ export default function ExploreScreen() {
     };
   }, []);
 
+  // Explicit tap on "Near me" → prompt for location if we don't have it yet.
+  async function locate() {
+    try {
+      const perm = await Location.requestForegroundPermissionsAsync();
+      if (!perm.granted) return;
+      const pos = await Location.getCurrentPositionAsync({});
+      setMe({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+    } catch {
+      /* ignore */
+    }
+  }
+
   const favIds = useMemo(() => new Set((favorites ?? []).map((f) => f.id)), [favorites]);
 
   const cols = width >= 900 ? 2 : 1;
@@ -196,11 +213,21 @@ export default function ExploreScreen() {
   const GAP = 14;
   const cardW = Math.floor((width - HPAD * 2 - GAP * (cols - 1)) / cols);
 
+  // Base list + ordering. "Near me" uses the server-ordered PostGIS rows when
+  // available, and falls back to a client haversine sort while they load (or if
+  // the RPC isn't reachable), so the sort always works.
+  const base: SpotWithDistance[] = useMemo(() => {
+    if (sort === "near" && me) {
+      if (nearby.data) return nearby.data;
+      return (spots ?? [])
+        .map((s) => ({ ...s, distanceKm: haversineKm(me, s) }))
+        .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+    }
+    return (spots ?? []).map((s) => ({ ...s, distanceKm: me ? haversineKm(me, s) : null }));
+  }, [sort, me, nearby.data, spots]);
+
   const data: SpotWithDistance[] = useMemo(() => {
-    let list: SpotWithDistance[] = (spots ?? []).map((s) => ({
-      ...s,
-      distanceKm: me ? haversineKm(me, s) : null,
-    }));
+    let list: SpotWithDistance[] = base;
     if (typeFilter !== "all") list = list.filter((s) => s.type === typeFilter);
     if (month) {
       const m3 = month.slice(0, 3).toLowerCase();
@@ -209,7 +236,7 @@ export default function ExploreScreen() {
       );
     }
     return list;
-  }, [spots, typeFilter, month, me]);
+  }, [base, typeFilter, month]);
 
   function onToggleFav(spotId: string) {
     if (!user) {
@@ -249,6 +276,23 @@ export default function ExploreScreen() {
             />
           ))}
         </ScrollView>
+        <View style={styles.sortRow}>
+          <FilterPill
+            label="Top rated"
+            active={sort === "top"}
+            variant="light"
+            onPress={() => setSort("top")}
+          />
+          <FilterPill
+            label="Near me"
+            active={sort === "near"}
+            variant="light"
+            onPress={() => {
+              setSort("near");
+              if (!me) void locate();
+            }}
+          />
+        </View>
       </View>
 
       {isLoading ? (
@@ -286,6 +330,7 @@ const styles = StyleSheet.create({
   hero: { color: colors.textFaint, fontSize: 13, fontWeight: "700", letterSpacing: 0.4, marginBottom: 2 },
   typeRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   monthRow: { gap: 8, paddingVertical: 2, paddingRight: space.lg },
+  sortRow: { flexDirection: "row", gap: 8, marginTop: 2 },
   pill: {
     paddingHorizontal: 16,
     paddingVertical: 8,
