@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { runOnJS } from "react-native-reanimated";
 import Feather from "@expo/vector-icons/Feather";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { format } from "date-fns";
@@ -87,6 +89,20 @@ export default function DailyPostScreen() {
     setText("");
   }
 
+  function onSwipe(tx: number) {
+    if (tx <= -40) go(1);
+    else if (tx >= 40) go(-1);
+  }
+  // Horizontal swipe to page between posts (only activates on a clear sideways
+  // drag, so vertical scroll and the tap zones still work).
+  const swipe = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-15, 15])
+    .onEnd((e) => {
+      "worklet";
+      runOnJS(onSwipe)(e.translationX);
+    });
+
   if (!post) {
     return (
       <SafeAreaView style={styles.root} edges={["top"]}>
@@ -121,6 +137,7 @@ export default function DailyPostScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* Story-style photo with overlays */}
+        <GestureDetector gesture={swipe}>
         <View style={styles.photoBlock}>
           <Image source={{ uri: post.photo_url }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
           <View style={styles.scrimTop} pointerEvents="none" />
@@ -160,6 +177,7 @@ export default function DailyPostScreen() {
             ) : null}
           </View>
         </View>
+        </GestureDetector>
 
         {/* Like + comments */}
         <View style={styles.panel}>

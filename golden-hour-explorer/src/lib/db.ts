@@ -432,6 +432,34 @@ export function useAddDailyComment() {
   });
 }
 
+/** Like + comment counts for a set of daily posts, keyed by post id. */
+export function useDailyFeedCounts(
+  ids: string[],
+): UseQueryResult<Record<string, { likes: number; comments: number }>> {
+  return useQuery({
+    queryKey: ["daily-feed-counts", [...ids].sort().join(",")],
+    enabled: ids.length > 0,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const [likesRes, commentsRes] = await Promise.all([
+        supabase.from("daily_spot_likes").select("daily_spot_id").in("daily_spot_id", ids),
+        supabase.from("daily_spot_comments").select("daily_spot_id").in("daily_spot_id", ids),
+      ]);
+      const counts: Record<string, { likes: number; comments: number }> = {};
+      for (const id of ids) counts[id] = { likes: 0, comments: 0 };
+      for (const r of likesRes.data ?? []) {
+        const k = (r as { daily_spot_id: string }).daily_spot_id;
+        if (counts[k]) counts[k].likes += 1;
+      }
+      for (const r of commentsRes.data ?? []) {
+        const k = (r as { daily_spot_id: string }).daily_spot_id;
+        if (counts[k]) counts[k].comments += 1;
+      }
+      return counts;
+    },
+  });
+}
+
 /** Replace a spot's whole photo_urls array (admin photo add/remove). */
 export function useUpdateSpotPhotos() {
   const qc = useQueryClient();
