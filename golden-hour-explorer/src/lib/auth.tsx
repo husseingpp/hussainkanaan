@@ -106,12 +106,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async signInWithGoogle() {
         try {
           if (Platform.OS === "web") {
-            // Return to the exact app URL we're on (origin + path, no query or
-            // hash) so the user lands back in the app — not the site root — and
-            // so this is a concrete URL to add to Supabase's redirect allow-list.
+            // Redirect to the app root, not the /sign-in page — after OAuth,
+            // index.tsx will redirect to /map and detectSessionInUrl will
+            // complete the session there. This also makes the URL a stable
+            // allow-list entry regardless of what path the modal was opened from.
             const redirectTo =
               typeof window !== "undefined"
-                ? window.location.origin + window.location.pathname
+                ? window.location.origin +
+                  (window.location.pathname.replace(/\/sign-in\/?$/, "") || "/")
                 : undefined;
             const { error } = await supabase.auth.signInWithOAuth({
               provider: "google",

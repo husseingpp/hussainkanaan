@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -18,8 +18,16 @@ import { colors, radius, space } from "@/theme/theme";
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle, user, loading } = useAuth();
   const [mode, setMode] = useState<"in" | "up">("in");
+
+  // Handles the web Google OAuth flow: after the provider redirects back,
+  // detectSessionInUrl sets the session asynchronously — this effect is the
+  // only thing that navigates away from the sign-in screen once it lands.
+  // router.replace avoids leaving /sign-in in the back stack.
+  useEffect(() => {
+    if (!loading && user) router.replace("/map");
+  }, [user, loading]); // eslint-disable-line react-hooks/exhaustive-deps
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
