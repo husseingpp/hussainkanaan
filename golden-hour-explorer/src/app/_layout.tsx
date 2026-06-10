@@ -39,7 +39,12 @@ export default function RootLayout() {
                 }}
               >
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="spot/[id]" />
+                {/* Web presents the spot as a dimmed popup (see spot/[id]);
+                    a fade reads better than the default slide for that. */}
+                <Stack.Screen
+                  name="spot/[id]"
+                  options={Platform.OS === "web" ? { animation: "fade" } : undefined}
+                />
                 <Stack.Screen name="daily/[id]" />
                 <Stack.Screen name="admin" />
                 <Stack.Screen name="settings" />

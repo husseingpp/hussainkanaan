@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Tabs } from "expo-router";
-import { Animated, StyleSheet, View, type ColorValue } from "react-native";
+import { Animated, StyleSheet, Text, View, type ColorValue } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
@@ -13,17 +13,22 @@ const ACTIVE_PILL = "rgba(240,146,47,0.16)";
 type FeatherName = keyof typeof Feather.glyphMap;
 
 /**
- * Tab icon with a characterful spring: the line icon sits in a pill that fades
- * in and springs up when its tab is focused. Only the transform uses the native
- * driver (color/background can't), so the scale animates smoothly everywhere
- * while the highlight toggles instantly.
+ * Tab item with a characterful spring: the line icon sits in a pill that fades
+ * in and springs up when its tab is focused, with the label directly beneath.
+ * We render the label ourselves (the tab bar's built-in label is hidden) so the
+ * icon + label are reliably centered in the floating dock — the library's own
+ * stack is top-aligned, which left the glyphs sitting high in the pill. Only the
+ * transform uses the native driver (color/background can't), so the scale
+ * animates smoothly everywhere while the highlight toggles instantly.
  */
 function TabIcon({
   name,
+  label,
   focused,
   color,
 }: {
   name: FeatherName;
+  label: string;
   focused: boolean;
   color: ColorValue;
 }) {
@@ -39,15 +44,20 @@ function TabIcon({
   }, [focused, scale]);
 
   return (
-    <Animated.View
-      style={[
-        styles.iconWrap,
-        focused && styles.iconWrapActive,
-        { transform: [{ scale: scale.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.08] }) }] },
-      ]}
-    >
-      <Feather name={name} size={20} color={color} />
-    </Animated.View>
+    <View style={styles.item}>
+      <Animated.View
+        style={[
+          styles.iconWrap,
+          focused && styles.iconWrapActive,
+          { transform: [{ scale: scale.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.06] }) }] },
+        ]}
+      >
+        <Feather name={name} size={20} color={color} />
+      </Animated.View>
+      <Text style={[styles.label, { color }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
   );
 }
 
@@ -66,6 +76,9 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textFaint,
+        // We draw our own label inside TabIcon so the icon + label sit centered
+        // in the pill; hide the library's (top-aligned) one to avoid doubling.
+        tabBarShowLabel: false,
         // A centered, floating pill — same dock on web and mobile.
         tabBarStyle: {
           position: "absolute",
@@ -75,9 +88,9 @@ export default function TabsLayout() {
           marginHorizontal: "auto",
           maxWidth: 460,
           height: 72,
-          paddingTop: 10,
+          paddingTop: 8,
           paddingBottom: 12,
-          paddingHorizontal: 16,
+          paddingHorizontal: 12,
           borderRadius: 999,
           borderTopWidth: 0,
           borderWidth: StyleSheet.hairlineWidth,
@@ -90,34 +103,27 @@ export default function TabsLayout() {
           elevation: 10,
         },
         tabBarItemStyle: { paddingVertical: 0, borderRadius: 999 },
-        tabBarLabelStyle: {
-          fontSize: 9.5,
-          fontWeight: "700",
-          letterSpacing: 0.8,
-          textTransform: "uppercase",
-          marginTop: 3,
-        },
       }}
     >
       <Tabs.Screen
         name="map"
-        options={{ title: "Map", tabBarIcon: ({ focused, color }) => <TabIcon name="map" focused={focused} color={color} /> }}
+        options={{ title: "Map", tabBarIcon: ({ focused, color }) => <TabIcon name="map" label="Map" focused={focused} color={color} /> }}
       />
       <Tabs.Screen
         name="explore"
-        options={{ title: "Explore", tabBarIcon: ({ focused, color }) => <TabIcon name="compass" focused={focused} color={color} /> }}
+        options={{ title: "Explore", tabBarIcon: ({ focused, color }) => <TabIcon name="compass" label="Explore" focused={focused} color={color} /> }}
       />
       <Tabs.Screen
         name="feed"
-        options={{ title: "Daily", tabBarIcon: ({ focused, color }) => <TabIcon name="camera" focused={focused} color={color} /> }}
+        options={{ title: "Daily", tabBarIcon: ({ focused, color }) => <TabIcon name="camera" label="Daily" focused={focused} color={color} /> }}
       />
       <Tabs.Screen
         name="favorites"
-        options={{ title: "Saved", tabBarIcon: ({ focused, color }) => <TabIcon name="heart" focused={focused} color={color} /> }}
+        options={{ title: "Saved", tabBarIcon: ({ focused, color }) => <TabIcon name="heart" label="Saved" focused={focused} color={color} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: "Profile", tabBarIcon: ({ focused, color }) => <TabIcon name="user" focused={focused} color={color} /> }}
+        options={{ title: "Profile", tabBarIcon: ({ focused, color }) => <TabIcon name="user" label="Profile" focused={focused} color={color} /> }}
       />
         </Tabs>
       </View>
@@ -128,12 +134,22 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   shell: { flex: 1, backgroundColor: colors.bg },
   body: { flex: 1 },
+  // Fills its tab cell and centers the icon + label, so the pair sits vertically
+  // centered in the dock regardless of the library's internal alignment.
+  item: { flex: 1, alignItems: "center", justifyContent: "center", gap: 3 },
   iconWrap: {
-    paddingHorizontal: 13,
-    paddingVertical: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 3,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
   },
   iconWrapActive: { backgroundColor: ACTIVE_PILL },
+  label: {
+    fontSize: 9.5,
+    lineHeight: 12,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
 });

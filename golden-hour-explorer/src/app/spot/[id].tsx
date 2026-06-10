@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
+import Feather from "@expo/vector-icons/Feather";
 import { useQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Glass } from "@/components/Glass";
+import { Lightbox } from "@/components/Lightbox";
 import { StarRating } from "@/components/StarRating";
 import { TypeBadge } from "@/components/TypeBadge";
 import { StateView } from "@/components/StateView";
@@ -55,6 +57,13 @@ export default function SpotDetailScreen() {
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErr, setPhotoErr] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  function openLightbox(i: number) {
+    setLightboxIndex(i);
+    setLightbox(true);
+  }
 
   // Photo management is a web-only admin tool.
   const isWeb = Platform.OS === "web";
@@ -77,7 +86,8 @@ export default function SpotDetailScreen() {
 
   const isFav = !!favs?.some((f) => f.id === spot.id);
   const score = weather.data ? skyScore(weather.data) : null;
-  const cover = spot.photo_urls?.[0] ?? null;
+  const photos = spot.photo_urls ?? [];
+  const cover = photos[0] ?? null;
 
   function requireContributor(action: () => void) {
     if (!canContribute) {
@@ -157,24 +167,36 @@ export default function SpotDetailScreen() {
     }
   }
 
-  return (
-    <SafeAreaView style={styles.root} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.body}>
-        {/* Web: lead with the spot's cover photo as a hero, with Back overlaid. */}
-        {isWeb && cover ? (
-          <View style={styles.heroWrap}>
-            <Image source={{ uri: cover }} style={styles.hero} contentFit="cover" transition={200} />
-            <Pressable onPress={() => router.back()} hitSlop={10} style={styles.heroBack}>
-              <Text style={styles.heroBackText}>‹</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable onPress={() => router.back()} hitSlop={10}>
-            <Text style={styles.back}>‹ Back</Text>
-          </Pressable>
-        )}
+  // Lead with the cover photo as a hero; tapping it opens the full-screen
+  // gallery (swipe through every photo). The hero shows a count/expand hint so
+  // it reads as tappable. With no photo we fall back to a plain Back control.
+  const header = cover ? (
+    <Pressable style={styles.heroWrap} onPress={() => openLightbox(0)}>
+      <Image source={{ uri: cover }} style={styles.hero} contentFit="cover" transition={200} />
+      <View style={styles.heroScrim} pointerEvents="none" />
+      {!isWeb ? (
+        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.heroBack}>
+          <Text style={styles.heroBackText}>‹</Text>
+        </Pressable>
+      ) : null}
+      <View style={styles.heroBadge} pointerEvents="none">
+        <Feather name={photos.length > 1 ? "image" : "maximize-2"} size={13} color="#fff" />
+        {photos.length > 1 ? (
+          <Text style={styles.heroBadgeText}>{photos.length} photos</Text>
+        ) : null}
+      </View>
+    </Pressable>
+  ) : !isWeb ? (
+    <Pressable onPress={() => router.back()} hitSlop={10}>
+      <Text style={styles.back}>‹ Back</Text>
+    </Pressable>
+  ) : null;
 
-        <TypeBadge type={spot.type} />
+  const innerContent = (
+    <>
+      {header}
+
+      <TypeBadge type={spot.type} />
         <Text style={styles.name}>{spot.name}</Text>
         <Text style={styles.coord}>{formatCoord(spot.latitude, spot.longitude)}</Text>
         {spot.description ? <Text style={styles.desc}>{spot.description}</Text> : null}
@@ -329,7 +351,53 @@ export default function SpotDetailScreen() {
         {comments && comments.length === 0 ? (
           <Text style={styles.muted}>No reviews yet — be the first.</Text>
         ) : null}
-      </ScrollView>
+    </>
+  );
+
+  const gallery = (
+    <Lightbox
+      visible={lightbox}
+      images={photos}
+      index={lightboxIndex}
+      onClose={() => setLightbox(false)}
+    />
+  );
+
+  // Web: present the spot as a centered popup over a dimmed backdrop rather than
+  // a full-screen page — click outside (or the ✕) to dismiss.
+  if (isWeb) {
+    return (
+      <View style={styles.webRoot}>
+        <ScrollView
+          style={StyleSheet.absoluteFill}
+          contentContainerStyle={styles.webScroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.webCenter}>
+            {/* Backdrop sits *behind* the card (sibling, not ancestor) so taps on
+                the card's own controls never bubble up and close the popup. */}
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => router.back()}
+              accessibilityLabel="Close"
+            />
+            <View style={styles.webCard}>
+              <View style={styles.body}>{innerContent}</View>
+            </View>
+          </View>
+        </ScrollView>
+        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.webClose}>
+          <Feather name="x" size={20} color="#fff" />
+        </Pressable>
+        {gallery}
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.root} edges={["top"]}>
+      <ScrollView contentContainerStyle={styles.body}>{innerContent}</ScrollView>
+      {gallery}
     </SafeAreaView>
   );
 }
@@ -367,6 +435,62 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   heroBackText: { color: "#fff", fontSize: 26, fontWeight: "700", lineHeight: 28, marginTop: -2 },
+  heroScrim: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 88,
+    backgroundColor: "rgba(0,0,0,0.22)",
+  },
+  heroBadge: {
+    position: "absolute",
+    right: 12,
+    bottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  heroBadgeText: { color: "#fff", fontSize: 12, fontWeight: "700", letterSpacing: 0.3 },
+  webRoot: { flex: 1, backgroundColor: "rgba(6,6,10,0.72)" },
+  webScroll: { flexGrow: 1 },
+  webCenter: {
+    flexGrow: 1,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: space.lg,
+  },
+  webCard: {
+    width: "100%",
+    maxWidth: 720,
+    // Positioned + raised so it paints above the absolute backdrop sibling.
+    position: "relative",
+    zIndex: 1,
+    backgroundColor: colors.bg,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    overflow: "hidden",
+  },
+  webClose: {
+    position: "absolute",
+    top: 18,
+    right: 18,
+    zIndex: 2,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   name: { color: colors.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
   coord: { color: colors.textFaint, fontSize: 13, fontFamily: "monospace" },
   desc: { color: colors.textMuted, fontSize: 15, lineHeight: 22 },

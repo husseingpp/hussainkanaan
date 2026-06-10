@@ -11,7 +11,7 @@ import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { format } from "date-fns";
-import { getSolarTimes } from "@/lib/solar";
+import { getSolarTimes, nextSunEvent } from "@/lib/solar";
 import { fetchWeather } from "@/lib/weather";
 import { colors, fonts, radius, space } from "@/theme/theme";
 
@@ -25,12 +25,8 @@ function conditionLabel(cloudCover: number): string {
   return "Overcast";
 }
 
-/** "3h 40m" until the next sunrise (today's if still ahead, else tomorrow's). */
-function nextSunriseIn(lat: number, lng: number, now: Date): string | null {
-  const today = getSolarTimes(lat, lng, now);
-  const tomorrow = getSolarTimes(lat, lng, new Date(now.getTime() + 86_400_000));
-  const sunrise = today.sunrise.getTime() > now.getTime() ? today.sunrise : tomorrow.sunrise;
-  const ms = sunrise.getTime() - now.getTime();
+/** "3h 40m" formatted from a positive millisecond duration. */
+function formatCountdown(ms: number): string | null {
   if (!Number.isFinite(ms) || ms < 0) return null;
   const h = Math.floor(ms / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
@@ -54,10 +50,11 @@ function Chip({
 
 /**
  * Persistent app header shown above every tab: the SunSpot wordmark with a live
- * "next sunrise" countdown on the left, and sunrise / sunset / weather chips on
- * the right. Location is used only if already granted (no surprise prompt); the
- * chips appear once it resolves. On narrow screens the solar chips collapse to
- * keep the bar to a single row.
+ * countdown to the next sun event — sunrise or sunset, whichever is sooner — on
+ * the left, and sunrise / sunset / weather chips on the right. Location is used
+ * only if already granted (no surprise prompt); the chips appear once it
+ * resolves. On narrow screens the solar chips collapse to keep the bar to a
+ * single row.
  */
 export function TopBar() {
   const router = useRouter();
@@ -110,7 +107,8 @@ export function TopBar() {
   });
 
   const solar = coords ? getSolarTimes(coords.latitude, coords.longitude, now) : null;
-  const countdown = coords ? nextSunriseIn(coords.latitude, coords.longitude, now) : null;
+  const upcoming = coords ? nextSunEvent(coords.latitude, coords.longitude, now) : null;
+  const countdown = upcoming ? formatCountdown(upcoming.at.getTime() - now.getTime()) : null;
 
   return (
     <View style={styles.bar}>
@@ -120,7 +118,7 @@ export function TopBar() {
           <Text style={styles.wordmark}>SunSpot</Text>
         </View>
         <Text style={styles.tagline}>
-          {countdown ? `Next sunrise in ${countdown}` : "Chase the golden hour"}
+          {upcoming && countdown ? `Next ${upcoming.kind} in ${countdown}` : "Chase the golden hour"}
         </Text>
       </View>
 

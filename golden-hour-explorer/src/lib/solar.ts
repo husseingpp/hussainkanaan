@@ -44,6 +44,31 @@ export function nextGoldenHour(
   return null;
 }
 
+/**
+ * The next sun event — sunrise or sunset, whichever comes first from `now`.
+ * Looks across today and tomorrow and returns the soonest upcoming one, so the
+ * header countdown flips from "next sunrise" to "next sunset" as the day turns.
+ */
+export function nextSunEvent(
+  lat: number,
+  lng: number,
+  now: Date = new Date(),
+): { kind: "sunrise" | "sunset"; at: Date } | null {
+  const today = getSolarTimes(lat, lng, now);
+  const tomorrow = getSolarTimes(lat, lng, new Date(now.getTime() + 86_400_000));
+  const candidates: { kind: "sunrise" | "sunset"; at: Date }[] = [
+    { kind: "sunrise", at: today.sunrise },
+    { kind: "sunset", at: today.sunset },
+    { kind: "sunrise", at: tomorrow.sunrise },
+    { kind: "sunset", at: tomorrow.sunset },
+  ];
+  return (
+    candidates
+      .filter((c) => Number.isFinite(c.at.getTime()) && c.at.getTime() > now.getTime())
+      .sort((a, b) => a.at.getTime() - b.at.getTime())[0] ?? null
+  );
+}
+
 export const fmtTime = (d: Date): string => {
   if (Number.isNaN(d.getTime())) return "—";
   return format(d, "HH:mm");

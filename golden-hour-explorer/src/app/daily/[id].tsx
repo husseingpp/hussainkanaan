@@ -139,7 +139,7 @@ export default function DailyPostScreen() {
         {/* Story-style photo with overlays */}
         <GestureDetector gesture={swipe}>
         <View style={styles.photoBlock}>
-          <Image source={{ uri: post.photo_url }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+          <Image source={{ uri: post.photo_url }} style={StyleSheet.absoluteFill} contentFit="contain" transition={200} />
           <View style={styles.scrimTop} pointerEvents="none" />
           <View style={styles.scrimBottom} pointerEvents="none" />
 
@@ -234,7 +234,7 @@ export default function DailyPostScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#000" },
   flex: { flex: 1 },
-  photoBlock: { flex: 1, justifyContent: "space-between", backgroundColor: colors.bg2 },
+  photoBlock: { flex: 1, justifyContent: "space-between", backgroundColor: "#000" },
   scrimTop: { position: "absolute", top: 0, left: 0, right: 0, height: 110, backgroundColor: "rgba(0,0,0,0.45)" },
   scrimBottom: { position: "absolute", bottom: 0, left: 0, right: 0, height: 130, backgroundColor: "rgba(0,0,0,0.45)" },
   header: { flexDirection: "row", alignItems: "center", gap: 10, padding: space.md, paddingTop: 22 },

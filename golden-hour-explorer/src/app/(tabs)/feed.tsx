@@ -32,7 +32,7 @@ export default function FeedScreen() {
   );
 
   return (
-    <Screen title="Daily" accent="Feed" subtitle="Updates from the last 7 days" center right={camera} edges={[]}>
+    <Screen title="Daily" accent="Feed" subtitle="From the last 24 hours" center right={camera} edges={[]}>
       {isLoading ? (
         <StateView loading />
       ) : error ? (
