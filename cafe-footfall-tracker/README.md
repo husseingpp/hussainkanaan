@@ -45,10 +45,11 @@ export CAFE_DATA_NOTE="Demo build — sample dataset, not live Google data."
 python src/load.py && python src/sentiment.py && python src/export.py
 ```
 
-> The version currently published at the live URL above is built from
-> `src/sample_data.py` and is clearly labelled as demo data. Swap in real
-> Beirut cafés anytime by running `src/ingest.py` with a Google Places API
-> key, then re-running load → sentiment → export.
+> The version currently published at the live URL above is built from a real
+> Google Maps scraper Excel export (282 patisseries & bakeries across five
+> Beirut-area neighbourhoods) via `src/import_excel.py`. Add review-text
+> sentiment anytime by running `src/ingest.py` with a Google Places API key,
+> then re-running load → sentiment → export.
 
 ### Importing data from an Excel export (no API key needed)
 
