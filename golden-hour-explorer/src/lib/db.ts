@@ -15,7 +15,6 @@ import { supabase } from "./supabase";
 import { cacheSpots, dedupById, getCachedSpots } from "./cache";
 import type {
   Comment,
-  DailyComment,
   DailySpot,
   DailySpotWithAuthor,
   Favorite,
@@ -33,8 +32,6 @@ export const qk = {
   userRating: (spotId: string, userId: string) => ["rating", spotId, userId] as const,
   feed: ["daily-feed"] as const,
   dailySpot: (id: string) => ["daily-spot", id] as const,
-  dailyLikes: (id: string, userId: string) => ["daily-likes", id, userId] as const,
-  dailyComments: (id: string) => ["daily-comments", id] as const,
   favorites: (userId: string) => ["favorites", userId] as const,
   nearbySpots: (lat: number, lng: number) =>
     ["spots", "nearby", lat.toFixed(3), lng.toFixed(3)] as const,
@@ -360,7 +357,7 @@ export function useCreateDailySpot() {
   });
 }
 
-// ---------- daily feed: single post, likes & comments ----------
+// ---------- daily feed: single post ----------
 
 /** One daily moment with its author's public profile embedded. */
 export function useDailySpot(id: string): UseQueryResult<DailySpotWithAuthor> {
@@ -378,117 +375,6 @@ export function useDailySpot(id: string): UseQueryResult<DailySpotWithAuthor> {
       return data as unknown as DailySpotWithAuthor;
     },
     enabled: !!id,
-  });
-}
-
-/** Like count for a daily post plus whether the current user has liked it. */
-export function useDailyLikes(
-  id: string,
-  userId: string | undefined,
-): UseQueryResult<{ count: number; liked: boolean }> {
-  return useQuery({
-    queryKey: qk.dailyLikes(id, userId ?? "anon"),
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("daily_spot_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("daily_spot_id", id);
-      if (error) throw error;
-      let liked = false;
-      if (userId) {
-        const { data } = await supabase
-          .from("daily_spot_likes")
-          .select("user_id")
-          .eq("daily_spot_id", id)
-          .eq("user_id", userId)
-          .maybeSingle();
-        liked = !!data;
-      }
-      return { count: count ?? 0, liked };
-    },
-    enabled: !!id,
-  });
-}
-
-export function useToggleDailyLike() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: { dailySpotId: string; userId: string; liked: boolean }) => {
-      if (vars.liked) {
-        const { error } = await supabase
-          .from("daily_spot_likes")
-          .delete()
-          .eq("daily_spot_id", vars.dailySpotId)
-          .eq("user_id", vars.userId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("daily_spot_likes")
-          .insert({ daily_spot_id: vars.dailySpotId, user_id: vars.userId });
-        if (error) throw error;
-      }
-    },
-    onSuccess: (_d, vars) =>
-      qc.invalidateQueries({ queryKey: ["daily-likes", vars.dailySpotId] }),
-  });
-}
-
-/** Comments on a daily post, oldest first, with each author's profile embedded. */
-export function useDailyComments(id: string): UseQueryResult<DailyComment[]> {
-  return useQuery({
-    queryKey: qk.dailyComments(id),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("daily_spot_comments")
-        .select("id,daily_spot_id,author_id,body,created_at,author:users(display_name,avatar_url)")
-        .eq("daily_spot_id", id)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as unknown as DailyComment[];
-    },
-    enabled: !!id,
-  });
-}
-
-export function useAddDailyComment() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: { dailySpotId: string; authorId: string; body: string }) => {
-      const { error } = await supabase
-        .from("daily_spot_comments")
-        .insert({ daily_spot_id: vars.dailySpotId, author_id: vars.authorId, body: vars.body });
-      if (error) throw error;
-    },
-    onSuccess: (_d, vars) =>
-      qc.invalidateQueries({ queryKey: qk.dailyComments(vars.dailySpotId) }),
-  });
-}
-
-/** Like + comment counts for a set of daily posts, keyed by post id. */
-export function useDailyFeedCounts(
-  ids: string[],
-): UseQueryResult<Record<string, { likes: number; comments: number }>> {
-  return useQuery({
-    queryKey: ["daily-feed-counts", [...ids].sort().join(",")],
-    enabled: ids.length > 0,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const [likesRes, commentsRes] = await Promise.all([
-        supabase.from("daily_spot_likes").select("daily_spot_id").in("daily_spot_id", ids),
-        supabase.from("daily_spot_comments").select("daily_spot_id").in("daily_spot_id", ids),
-      ]);
-      const counts: Record<string, { likes: number; comments: number }> = {};
-      for (const id of ids) counts[id] = { likes: 0, comments: 0 };
-      for (const r of likesRes.data ?? []) {
-        const k = (r as { daily_spot_id: string }).daily_spot_id;
-        if (counts[k]) counts[k].likes += 1;
-      }
-      for (const r of commentsRes.data ?? []) {
-        const k = (r as { daily_spot_id: string }).daily_spot_id;
-        if (counts[k]) counts[k].comments += 1;
-      }
-      return counts;
-    },
   });
 }
 
