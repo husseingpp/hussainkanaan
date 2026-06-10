@@ -53,6 +53,25 @@
       padding: 2.5rem 1.25rem 4rem;
     }
 
+    /* ---------- demo-data banner ---------- */
+    .data-note {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+      background: rgba(29, 158, 117, 0.10);
+      border: 1px solid rgba(29, 158, 117, 0.35);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 2rem;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    .data-note .dot {
+      color: var(--accent);
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
     /* ---------- metric cards ---------- */
     .metrics {
       display: grid;
@@ -138,6 +157,13 @@
   </header>
 
   <main>
+    {% if data_note %}
+    <div class="data-note">
+      <span class="dot">●</span>
+      <span>{{ data_note }}</span>
+    </div>
+    {% endif %}
+
     <!-- ---------- headline metrics ---------- -->
     <div class="metrics">
       <div class="metric-card">

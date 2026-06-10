@@ -14,6 +14,7 @@ Run:  python src/export.py
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from datetime import datetime, timezone
 
@@ -295,6 +296,9 @@ def main() -> int:
         charts=charts,
         captions=build_captions(results),
         generated_on=datetime.now(timezone.utc).strftime("%d %B %Y"),
+        # Optional honest banner; set CAFE_DATA_NOTE when the figures are
+        # not from a live Google Places run (e.g. the sample demo dataset).
+        data_note=os.environ.get("CAFE_DATA_NOTE", "").strip(),
     )
 
     DOCS_DIR.mkdir(exist_ok=True)

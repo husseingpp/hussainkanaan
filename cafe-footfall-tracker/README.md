@@ -31,12 +31,24 @@ python src/sentiment.py     # VADER + Arabic lexicon → sentiment columns
 python src/export.py        # SQL → Plotly charts → docs/index.html
 ```
 
-### Offline dry-run (no API key needed)
+### Offline demo / dry-run (no API key needed)
 
 ```bash
-python src/mock_data.py     # writes 5 fictional cafés to data/raw/
+# Minimal 5-café fixture for a quick end-to-end smoke test:
+python src/mock_data.py
+
+# OR the richer ~28-café sample dataset used for the published demo page
+# (set CAFE_DATA_NOTE so the report carries an honest "sample data" banner):
+python src/sample_data.py
+export CAFE_DATA_NOTE="Demo build — sample dataset, not live Google data."
+
 python src/load.py && python src/sentiment.py && python src/export.py
 ```
+
+> The version currently published at the live URL above is built from
+> `src/sample_data.py` and is clearly labelled as demo data. Swap in real
+> Beirut cafés anytime by running `src/ingest.py` with a Google Places API
+> key, then re-running load → sentiment → export.
 
 ---
 
