@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lebanese Café Footfall Analysis — Beirut 2024</title>
+  <meta name="description" content="An end-to-end data pipeline: Google Places → PostgreSQL → SQL window functions → multilingual sentiment analysis → this report." />
+  <!-- Single external dependency: plotly.js from the CDN.
+       Every chart div below is exported with include_plotlyjs=False. -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --accent: #1D9E75;
+      --text: #e8e6e3;
+      --muted: #9a9a9a;
+      --border: #2a2a2a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    /* ---------- sticky header ---------- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 15, 15, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 1.5rem;
+    }
+    header h1 {
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    header h1 span { color: var(--accent); }
+    header p {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    /* ---------- metric cards ---------- */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.5rem;
+    }
+    .metric-card .value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.2;
+    }
+    .metric-card .label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ---------- chart sections ---------- */
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    section h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.25rem;
+    }
+    section h2::before {
+      content: "▌";
+      color: var(--accent);
+      margin-right: 0.5rem;
+    }
+    .chart {
+      margin: 1rem 0;
+      min-height: 200px;
+    }
+    .chart > div { width: 100% !important; }
+    .caption {
+      color: var(--muted);
+      font-size: 0.95rem;
+      border-left: 3px solid var(--accent);
+      padding-left: 0.9rem;
+    }
+
+    /* ---------- footer ---------- */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem 3rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      main { padding-top: 1.5rem; }
+      section { padding: 1rem; }
+      .metric-card .value { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Lebanese Café Footfall Analysis — <span>Beirut 2024</span></h1>
+    <p>An end-to-end data pipeline project by Hussein Kanaan</p>
+  </header>
+
+  <main>
+    <!-- ---------- headline metrics ---------- -->
+    <div class="metrics">
+      <div class="metric-card">
+        <div class="value">{{ metrics.total_cafes }}</div>
+        <div class="label">Total cafés analysed</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">{{ metrics.areas_covered }}</div>
+        <div class="label">Areas covered</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">{{ metrics.reviews_processed }}</div>
+        <div class="label">Reviews processed</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">{{ metrics.avg_city_rating }}</div>
+        <div class="label">Avg city rating</div>
+      </div>
+    </div>
+
+    <!-- ---------- 1: zone ranking ---------- -->
+    <section id="zones">
+      <h2>Which neighbourhood does coffee best?</h2>
+      <div class="chart">{{ charts.zone_ranking }}</div>
+      <p class="caption">{{ captions.zone_ranking }}</p>
+    </section>
+
+    <!-- ---------- 2: peak hours heatmap ---------- -->
+    <section id="peak-hours">
+      <h2>Peak hours across the week</h2>
+      <div class="chart">{{ charts.open_matrix }}</div>
+      <p class="caption">{{ captions.open_matrix }}</p>
+    </section>
+
+    <!-- ---------- 3: rating vs popularity scatter ---------- -->
+    <section id="scatter">
+      <h2>Rating vs popularity</h2>
+      <div class="chart">{{ charts.cafe_scatter }}</div>
+      <p class="caption">{{ captions.cafe_scatter }}</p>
+    </section>
+
+    <!-- ---------- 4: sentiment per star bucket ---------- -->
+    <section id="sentiment">
+      <h2>Sentiment vs star ratings</h2>
+      <div class="chart">{{ charts.bucket_sentiment }}</div>
+      <p class="caption">{{ captions.bucket_sentiment }}</p>
+    </section>
+
+    <!-- ---------- 5: underperformers table ---------- -->
+    <section id="underperformers">
+      <h2>Cafés trailing their neighbourhood</h2>
+      <div class="chart">{{ charts.underperformers }}</div>
+      <p class="caption">{{ captions.underperformers }}</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Data: Google Places API · Pipeline: Python + PostgreSQL + Plotly ·
+      Generated {{ generated_on }}
+    </p>
+    <p>
+      <a href="https://github.com/husseingpp/hussainkanaan/tree/main/cafe-footfall-tracker">View the code on GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://husseingpp.github.io/hussainkanaan/">← Back to portfolio</a>
+    </p>
+  </footer>
+
+</body>
+</html>

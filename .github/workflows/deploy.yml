@@ -52,6 +52,11 @@ jobs:
           mkdir -p out/sunspot-app
           cp -r golden-hour-explorer/web-dist/. out/sunspot-app/
 
+      - name: Inject café footfall report into portfolio output
+        run: |
+          mkdir -p out/cafe-footfall-tracker
+          cp -r cafe-footfall-tracker/docs/. out/cafe-footfall-tracker/
+
       - name: Disable Jekyll processing
         run: touch out/.nojekyll
 
