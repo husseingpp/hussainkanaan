@@ -1,4 +1,5 @@
 import "react-native-url-polyfill/auto";
+import { Platform } from "react-native";
 import { createClient } from "@supabase/supabase-js";
 import * as SecureStore from "expo-secure-store";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
@@ -14,11 +15,35 @@ const SecureStoreAdapter = {
   removeItem: (key: string) => SecureStore.deleteItemAsync(key),
 };
 
+/**
+ * On web, expo-secure-store has no implementation — persist to localStorage
+ * instead so the session survives reloads and the OAuth redirect can complete.
+ */
+const WebStorageAdapter = {
+  getItem: (key: string) =>
+    Promise.resolve(
+      typeof localStorage !== "undefined" ? localStorage.getItem(key) : null,
+    ),
+  setItem: (key: string, value: string) => {
+    if (typeof localStorage !== "undefined") localStorage.setItem(key, value);
+    return Promise.resolve();
+  },
+  removeItem: (key: string) => {
+    if (typeof localStorage !== "undefined") localStorage.removeItem(key);
+    return Promise.resolve();
+  },
+};
+
+const isWeb = Platform.OS === "web";
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    storage: SecureStoreAdapter,
+    storage: isWeb ? WebStorageAdapter : SecureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // On web the Google OAuth redirect returns the tokens in the URL hash —
+    // let supabase-js parse and store them so the session completes. Native
+    // handles the redirect manually in signInWithGoogle().
+    detectSessionInUrl: isWeb,
   },
 });

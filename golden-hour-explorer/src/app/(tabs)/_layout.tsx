@@ -1,16 +1,14 @@
 import { useEffect, useRef } from "react";
 import { Tabs } from "expo-router";
 import { Animated, StyleSheet, Text, View, type ColorValue } from "react-native";
-import Feather from "@expo/vector-icons/Feather";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { TopBar } from "@/components/TopBar";
+import { TabGlyph, type TabGlyphName } from "@/components/TabGlyph";
 import { colors } from "@/theme/theme";
 
 // Translucent brand amber used for the active-tab pill. A fixed rgba (rather
 // than the themed accent var) so it reads correctly in both light and dark.
 const ACTIVE_PILL = "rgba(240,146,47,0.16)";
-
-type FeatherName = keyof typeof Feather.glyphMap;
 
 /**
  * Tab item with a characterful spring: the line icon sits in a pill that fades
@@ -27,7 +25,7 @@ function TabIcon({
   focused,
   color,
 }: {
-  name: FeatherName;
+  name: TabGlyphName;
   label: string;
   focused: boolean;
   color: ColorValue;
@@ -52,7 +50,7 @@ function TabIcon({
           { transform: [{ scale: scale.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.06] }) }] },
         ]}
       >
-        <Feather name={name} size={20} color={color} />
+        <TabGlyph name={name} size={20} color={color} />
       </Animated.View>
       <Text style={[styles.label, { color }]} numberOfLines={1}>
         {label}
