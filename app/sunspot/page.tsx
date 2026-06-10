@@ -211,15 +211,25 @@ export default function SunspotPage() {
               </span>
             ))}
           </div>
+          <div className="gh-stats-row">
+            {([
+              { n: "20+", l: "Spots seeded" },
+              { n: "3",   l: "Platforms" },
+              { n: "0",   l: "Paid APIs" },
+              { n: "OSS", l: "Open source" },
+            ] as const).map(({ n, l }) => (
+              <div key={l} className="gh-stat">
+                <span className="gh-stat-n">{n}</span>
+                <span className="gh-stat-l">{l}</span>
+              </div>
+            ))}
+          </div>
           <div className="gh-cta-row">
             <a className="gh-btn gh-btn-solid" href={WEB_APP_URL} target="_blank" rel="noreferrer">
               <Icons.globe /> Open web app
             </a>
             <a className="gh-btn gh-btn-android" href={APK_URL}>
               <Icons.phone /> Download Android APK
-            </a>
-            <a className="gh-btn gh-btn-ghost" href="#live">
-              <Icons.map /> Explore the live map
             </a>
             <a className="gh-btn gh-btn-ghost" href={SOURCE_URL} target="_blank" rel="noreferrer">
               <Icons.github /> View source
@@ -279,11 +289,6 @@ export default function SunspotPage() {
             </div>
           ))}
         </div>
-        <p className="gh-note">
-          Designed mockups — real device screenshots drop in once the native dev client is
-          built locally (MapLibre requires a native build, so it can’t run in this hosted
-          environment or in Expo Go).
-        </p>
       </section>
 
       {/* architecture */}

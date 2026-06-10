@@ -160,6 +160,46 @@
   border: 1px solid rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(4px);
 }
+/* ---------- hero stats strip ---------- */
+.gh-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 36px;
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+.gh-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 14px 24px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+.gh-stat:last-child {
+  border-right: none;
+}
+.gh-stat-n {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.gh-stat-l {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 244, 230, 0.58);
+  font-family: var(--font-mono);
+  margin-top: 5px;
+}
+
 .gh-cta-row {
   display: flex;
   flex-wrap: wrap;
@@ -423,7 +463,6 @@
 }
 .gh-feature:hover {
   border-color: var(--accent);
-  transform: translateY(-3px);
 }
 .gh-feature-ico {
   display: inline-grid;
@@ -474,7 +513,7 @@
   padding: 10px;
   background: #14110f;
   border: 1px solid #2a2520;
-  box-shadow: var(--shadow-lift, 0 18px 44px rgba(0, 0, 0, 0.2));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
   overflow: hidden;
 }
 .gh-phone-screen {
@@ -574,16 +613,22 @@
 .gh-arch {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  gap: 16px;
   margin-top: 30px;
 }
+.gh-arch-col {
+  padding: 24px 26px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+}
 .gh-arch-col h3 {
-  font-size: 14px;
+  font-size: 13px;
   font-family: var(--font-mono);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
-  margin: 0 0 12px;
+  margin: 0 0 16px;
 }
 .gh-arch-col ul {
   list-style: none;
@@ -591,7 +636,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .gh-arch-col li {
   font-size: 14px;
@@ -605,10 +650,11 @@
   position: absolute;
   left: 0;
   top: 8px;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 999px;
   background: var(--accent);
+  opacity: 0.7;
 }
 .gh-arch-col strong { color: var(--text); font-weight: 600; }
 
