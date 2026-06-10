@@ -5,6 +5,9 @@
 data/raw/*
 !data/raw/.gitkeep
 
+# Archived Excel imports (real business data — keep out of git)
+data/imports/
+
 # Python
 __pycache__/
 *.pyc

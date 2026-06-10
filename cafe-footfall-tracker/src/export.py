@@ -252,7 +252,11 @@ def build_captions(r: dict) -> dict[str, str]:
             "clicking another — those gaps feed the contradiction analysis."
         )
     else:
-        captions["bucket_sentiment"] = "Run the pipeline to populate sentiment data."
+        captions["bucket_sentiment"] = (
+            "No scored review texts in the current dataset — Excel scraper exports "
+            "carry review counts but not review bodies, so sentiment charts populate "
+            "only when data comes from the Places API (or another source with text)."
+        )
 
     up = r["underperformers"]
     if not up.empty:

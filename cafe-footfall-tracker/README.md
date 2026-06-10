@@ -50,6 +50,26 @@ python src/load.py && python src/sentiment.py && python src/export.py
 > Beirut cafés anytime by running `src/ingest.py` with a Google Places API
 > key, then re-running load → sentiment → export.
 
+### Importing data from an Excel export (no API key needed)
+
+Got a Google Maps scraper export instead? (`.xlsx` with columns like
+`place_id`, `name`, `rating`, `reviews`, `link`, `query` — one row per place.)
+
+```bash
+python src/import_excel.py path/to/export.xlsx          # area parsed from 'query'
+python src/import_excel.py path/to/export.xlsx --area "Hamra"   # or force one area
+python src/load.py && python src/sentiment.py && python src/export.py
+```
+
+The importer converts each row into the same raw-JSON shape `src/ingest.py`
+produces (lat/lng recovered from the Maps `link`, 24/7 detection from
+`workday_timing`, `rating` nulled for unrated places), so the rest of the
+pipeline runs unchanged and `load.py` dedups on `place_id` across both
+sources. The source workbook is archived to `data/imports/` (gitignored).
+
+**Limitation:** scraper exports carry review *counts* but not review texts,
+so the sentiment charts only populate when Places API data is loaded too.
+
 ---
 
 ## Deploying to GitHub Pages
