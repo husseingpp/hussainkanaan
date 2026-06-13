@@ -244,6 +244,10 @@ canvas.addEventListener('pointerup', (e) => {
 
 // ── Keyboard hotkeys (BLUEPRINT.md §5.5) ────────────────────────────────────
 window.addEventListener('keydown', (e) => {
+  // Ignore game hotkeys while typing in a text field or before the match starts.
+  if (e.target instanceof HTMLInputElement) return;
+  if (!gameStarted) return;
+
   const key = e.key.toLowerCase();
 
   if (key === 'h') {
@@ -258,6 +262,12 @@ window.addEventListener('keydown', (e) => {
 
   if (key === 'd') {
     renderer.showTerritoryDebug = !renderer.showTerritoryDebug;
+    return;
+  }
+
+  if (key === '`') {
+    const dh = document.getElementById('debug-hud') as HTMLDivElement;
+    dh.style.display = dh.style.display === 'block' ? 'none' : 'block';
     return;
   }
 
@@ -291,6 +301,34 @@ window.addEventListener('keydown', (e) => {
 // ── Pause support (Space) ────────────────────────────────────────────────────
 let loopPaused = false;
 
+// ── Start screen ──────────────────────────────────────────────────────────────
+let gameStarted = false;
+const startScreen = document.getElementById('start-screen') as HTMLDivElement;
+const btnPlay = document.getElementById('btn-play') as HTMLButtonElement;
+const seedInput = document.getElementById('seed-input') as HTMLInputElement;
+seedInput.value = String(seed);
+
+function startGame(): void {
+  const entered = seedInput.value.trim();
+  // A different seed means a different map — reload to regenerate from scratch.
+  if (entered !== '' && entered !== String(seed)) {
+    window.location.href = `?seed=${encodeURIComponent(entered)}`;
+    return;
+  }
+  gameStarted = true;
+  startScreen.style.display = 'none';
+  // Re-center on the player capital in case stray input nudged the camera.
+  if (playerCapital) {
+    camera.x = playerCapital.pos.x;
+    camera.y = playerCapital.pos.y;
+  }
+}
+
+btnPlay.addEventListener('click', startGame);
+seedInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') startGame();
+});
+
 // ── End screen ───────────────────────────────────────────────────────────────
 const endScreen = document.getElementById('end-screen') as HTMLDivElement;
 const endTitle = document.getElementById('end-title') as HTMLDivElement;
@@ -318,7 +356,12 @@ function maybeShowEndScreen(): void {
 }
 
 // ── HUD ──────────────────────────────────────────────────────────────────────
-const hud = document.getElementById('debug-hud') as HTMLDivElement;
+const hudTimer = document.getElementById('hud-timer') as HTMLDivElement;
+const hudMoney = document.getElementById('hud-money') as HTMLSpanElement;
+const hudSupply = document.getElementById('hud-supply') as HTMLSpanElement;
+const hudCities = document.getElementById('hud-cities') as HTMLSpanElement;
+const hudWarn = document.getElementById('hud-warn') as HTMLDivElement;
+const debugHud = document.getElementById('debug-hud') as HTMLDivElement;
 let fpsSmoothed = 0;
 
 function formatTime(s: number): string {
@@ -326,36 +369,48 @@ function formatTime(s: number): string {
   return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
-// ── Game loop ─────────────────────────────────────────────────────────────────
-const loop = new GameLoop({
-  simTick: (dt) => {
-    if (!loopPaused && state.matchPhase === 'playing') stepSimulation(state, hash, dt);
-  },
-  render: (alpha, frameDtMs) => {
-    camera.update(frameDtMs);
-    renderer.render(state, hash, alpha, overlays);
-    maybeShowEndScreen();
+function updateHud(frameDtMs: number): void {
+  if (frameDtMs > 0) {
+    const fps = 1000 / frameDtMs;
+    fpsSmoothed = fpsSmoothed === 0 ? fps : fpsSmoothed * 0.9 + fps * 0.1;
+  }
 
-    if (frameDtMs > 0) {
-      const fps = 1000 / frameDtMs;
-      fpsSmoothed = fpsSmoothed === 0 ? fps : fpsSmoothed * 0.9 + fps * 0.1;
-    }
-    const sel = selectedUnits().length;
+  const { fieldWeight: pField, capacity: pCap } = computeSupply(state.units, state.cities, 'player');
+  const blueCities = state.cities.filter((c) => c.owner === 'player').length;
+  const pPockets = state.territory?.regions.filter((r) => r.owner === 'player' && r.isPocket).length ?? 0;
+
+  hudTimer.textContent = `${formatTime(state.matchTime)}${loopPaused ? ' · PAUSED' : ''}`;
+  hudMoney.textContent = `💰 ${Math.floor(state.money.player)}`;
+  hudSupply.textContent = `▦ ${pField}/${pCap}`;
+  hudSupply.style.color = pField > pCap ? '#e5484d' : '#4a4a4a';
+  hudCities.textContent = `⌂ ${blueCities}`;
+  hudWarn.textContent = pPockets > 0 ? `⚠ ${pPockets} squad${pPockets > 1 ? 's' : ''} cut off — starving` : '';
+
+  if (debugHud.style.display === 'block') {
     let blue = 0;
     let red = 0;
     for (const u of state.units) {
       if (u.owner === 'player') blue++;
       else if (u.owner === 'enemy') red++;
     }
-    const { fieldWeight: pField, capacity: pCap } = computeSupply(state.units, state.cities, 'player');
-    const blueCities = state.cities.filter((c) => c.owner === 'player').length;
-    const pPockets = state.territory?.regions.filter((r) => r.owner === 'player' && r.isPocket).length ?? 0;
-    hud.textContent =
-      `DOTFRONT M6 · seed ${seed} · ${formatTime(state.matchTime)}${loopPaused ? ' · PAUSED' : ''}\n` +
-      `${Math.round(fpsSmoothed)} fps · blue ${blue} vs red ${red} · ${sel} selected · tick ${state.tick}\n` +
-      `💰 ${Math.floor(state.money.player)} · supply ${pField}/${pCap} · cities ${blueCities}${pPockets > 0 ? ` · ⚠ ${pPockets} pocket(s)` : ''}\n` +
-      `click city=produce · click=move · drag=lasso · drag w/sel=path · S=stop · Esc=deselect\n` +
-      `[T=terrain] [H=hash] [D=territory] · WASD/arrows/edges pan · wheel zooms`;
+    const sel = selectedUnits().length;
+    debugHud.textContent =
+      `seed ${seed} · ${Math.round(fpsSmoothed)} fps · tick ${state.tick}\n` +
+      `blue ${blue} vs red ${red} · ${sel} selected\n` +
+      `[T] terrain · [H] hash · [D] territory`;
+  }
+}
+
+// ── Game loop ─────────────────────────────────────────────────────────────────
+const loop = new GameLoop({
+  simTick: (dt) => {
+    if (gameStarted && !loopPaused && state.matchPhase === 'playing') stepSimulation(state, hash, dt);
+  },
+  render: (alpha, frameDtMs) => {
+    camera.update(frameDtMs);
+    renderer.render(state, hash, alpha, overlays);
+    if (gameStarted) maybeShowEndScreen();
+    updateHud(frameDtMs);
   },
 });
 loop.start();

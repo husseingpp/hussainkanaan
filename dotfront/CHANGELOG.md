@@ -1,5 +1,28 @@
 # Changelog
 
+## M7 — Ship it
+
+- **Start screen**: title, tagline, a 4-line "How to play · 60 seconds" card,
+  and a seed input (pre-filled from the URL / default). Play button or Enter
+  starts the match; entering a different seed reloads the map. The sim is
+  paused until the player hits Play (the generated map renders behind the
+  overlay as a preview).
+- **HUD polish**: replaced the debug text block with a clean top-left panel —
+  big match timer, then 💰 money · ▦ supply (turns red when over cap) · ⌂ city
+  count, with a "⚠ N squads cut off — starving" pocket warning. A subtle
+  bottom controls hint. The old developer stats (fps/tick/seed/overlay keys)
+  moved to a top-right debug box toggled with the **`** (backtick) key, off by
+  default.
+- **Favicon**: inline SVG (one blue dot, one red dot) — no asset request.
+- **Social/meta**: description, `theme-color`, and Open Graph / Twitter card
+  tags so a shared link previews cleanly.
+- **Input guards**: game hotkeys and camera panning are suppressed while typing
+  in the seed field and before the match starts.
+- **README**: rewritten for the shipped game — play link, 60-second how-to-play,
+  full controls, and the deploy note (Vite `base: './'` for the Pages subpath).
+- **Deploy**: already wired in `deploy.yml` (builds `dotfront/` → `out/dotfront/`
+  on GitHub Pages). Bundle: **13.9 KB gzipped** (budget 150 KB). ✓
+
 ## M6 — AI Opponent
 
 - **Strategist** (`ai/strategist.ts`): evaluates game state every ~1 s (same
