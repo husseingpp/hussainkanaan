@@ -12,11 +12,11 @@ multiplayer stay feasible later.
 
 ## Status
 
-**M2 — Terrain & Map Generation.** Procedurally generated maps (seeded noise →
-plains/forest/hills/water/mountain), city + capital placement with land-
-connectivity validation, terrain-aware movement (heavies bog down in forest,
-mountains block), lasso selection + path orders, fixed-timestep deterministic
-sim with interpolated render.
+**M3 — Combat & Morale.** Auto-attack engagement, damage with the attacker
+penalty, morale/rout, healing, an enemy army to fight, plus HP bars and combat
+juice — on top of procedurally generated terrain maps, lasso selection + path
+orders, and a fixed-timestep deterministic sim with interpolated render. Full
+sim tick profiles at ~3ms with 400 units engaged (budget 8ms).
 
 ## Develop
 
@@ -31,8 +31,9 @@ npm run lint     # ESLint (incl. sim determinism guardrails)
 
 ## Controls (M0)
 
-- **Left-drag** — lasso-select your units; **left-drag with a selection** — draw
-  a path for them to follow
+- **Left-drag** — lasso-select your units; **click** — quick move order;
+  **left-drag with a selection** — draw a precise path to follow
+- Units auto-fight enemies in range; march the blue army into the red one
 - **S** stop · **C** clear orders · **Esc** deselect · **Space** pause
 - **WASD / arrow keys** or **screen edges** — pan the camera
 - **Mouse wheel** — zoom (0.5×–2×, anchored on the cursor)

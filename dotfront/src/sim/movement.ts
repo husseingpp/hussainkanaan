@@ -47,15 +47,10 @@ function desiredVel(unit: Unit, speed: number): Vec2 {
   return { x: (dx / dist) * topSpeed, y: (dy / dist) * topSpeed };
 }
 
+/** Apply steering + integration for one tick. Assumes prevPos has been
+ *  snapshotted and `hash` already holds the live units (see simulate.ts). */
 export function stepMovement(state: GameState, hash: SpatialHash<Unit>, dt: number): void {
   const { units, world, terrain } = state;
-
-  for (const unit of units) {
-    unit.prevPos.x = unit.pos.x;
-    unit.prevPos.y = unit.pos.y;
-  }
-
-  hash.rebuild(units);
 
   const relax = Math.min(SPEED_RELAX_RATE * dt, 1);
   const maxSpd = CONFIG.UNIT.LIGHT_SPEED * 1.8;
@@ -107,8 +102,6 @@ export function stepMovement(state: GameState, hash: SpatialHash<Unit>, dt: numb
     if (unit.pos.y < unit.radius) { unit.pos.y = unit.radius; unit.vel.y = Math.abs(unit.vel.y); }
     else if (unit.pos.y > world.height - unit.radius) { unit.pos.y = world.height - unit.radius; unit.vel.y = -Math.abs(unit.vel.y); }
   }
-
-  state.tick++;
 }
 
 /** Stop a unit in place and clear its orders. */

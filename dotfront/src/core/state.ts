@@ -28,6 +28,25 @@ export interface Unit {
   waypointIdx: number;
   stopped: boolean;
   selected: boolean;
+
+  // ── Combat state (M3) ──
+  hp: number;
+  maxHp: number;
+  /** Base damage per second on plains at full morale. */
+  dps: number;
+  morale: number;
+  /** True this tick if an enemy is within attack range. */
+  inCombat: boolean;
+  /** True this tick if engaging while under a move order (attacker penalty). */
+  attacking: boolean;
+  /** Seconds of forced rout remaining (uncontrollable, fleeing). >0 = routing. */
+  routTimer: number;
+  /** Damage accumulated this tick, applied at end of the combat step. */
+  dmgTaken: number;
+  /** White hit-flash timer, seconds (visual). */
+  flashTimer: number;
+  /** Current attack target this tick (transient; recomputed each tick). */
+  target: Unit | null;
 }
 
 export interface City {
@@ -49,7 +68,9 @@ export interface GameState {
 
 let nextUnitId = 0;
 
-function makeUnit(owner: Owner, kind: UnitKind, x: number, y: number): Unit {
+export function makeUnit(owner: Owner, kind: UnitKind, x: number, y: number): Unit {
+  const heavy = kind === 'heavy';
+  const maxHp = heavy ? CONFIG.UNIT.HEAVY_HP : CONFIG.UNIT.LIGHT_HP;
   return {
     id: nextUnitId++,
     owner,
@@ -57,11 +78,21 @@ function makeUnit(owner: Owner, kind: UnitKind, x: number, y: number): Unit {
     pos: { x, y },
     prevPos: { x, y },
     vel: { x: 0, y: 0 },
-    radius: kind === 'heavy' ? CONFIG.UNIT.HEAVY_RADIUS : CONFIG.UNIT.LIGHT_RADIUS,
+    radius: heavy ? CONFIG.UNIT.HEAVY_RADIUS : CONFIG.UNIT.LIGHT_RADIUS,
     waypoints: [],
     waypointIdx: 0,
     stopped: true,
     selected: false,
+    hp: maxHp,
+    maxHp,
+    dps: heavy ? CONFIG.UNIT.HEAVY_DPS : CONFIG.UNIT.LIGHT_DPS,
+    morale: CONFIG.COMBAT.MORALE_MAX,
+    inCombat: false,
+    attacking: false,
+    routTimer: 0,
+    dmgTaken: 0,
+    flashTimer: 0,
+    target: null,
   };
 }
 
@@ -99,10 +130,14 @@ export function createInitialState(seed: number): GameState {
 
   const playerCapital =
     map.cities.find((c) => c.owner === 'player' && c.isCapital) ?? map.cities[0]!;
+  const enemyCapital =
+    map.cities.find((c) => c.owner === 'enemy' && c.isCapital) ?? map.cities[map.cities.length - 1]!;
 
   const units: Unit[] = [];
   spawnArmy(units, rng, map.grid, playerCapital.pos, 'player', 'light', CONFIG.MAP.START_LIGHT);
   spawnArmy(units, rng, map.grid, playerCapital.pos, 'player', 'heavy', CONFIG.MAP.START_HEAVY);
+  spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'light', CONFIG.MAP.START_LIGHT);
+  spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'heavy', CONFIG.MAP.START_HEAVY);
 
   return { tick: 0, rng, units, cities: map.cities, terrain: map.grid, world };
 }

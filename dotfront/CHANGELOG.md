@@ -1,5 +1,28 @@
 # Changelog
 
+## M3 — Combat & Morale
+
+- **Combat** (`sim/combat.ts`): units auto-attack the nearest enemy within
+  range via the spatial hash; damage scales by morale and terrain (heavies
+  −60% in forest/hills, −40% in water).
+- **Attacker penalty** (§5.2): engaging while under a move order flags a unit
+  "attacking" — it takes +30% incoming damage and loses morale 2× faster,
+  creating the defend-bait-counterattack meta.
+- **Morale**: drains in combat, regenerates out; below 30 damage halves; at 0
+  the unit routs (uncontrollable, flees to the nearest friendly city for 3s).
+- **Healing**: +2 HP/s in the field when no enemy within 150px, +4 HP/s inside
+  a friendly city radius; water saps 1 HP/s.
+- **Enemy army** now spawns at the red capital, so there's something to fight.
+- **Tick orchestration** (`sim/simulate.ts`): one shared spatial-hash rebuild,
+  combat → remove dead → movement, in a single deterministic pass.
+- **Render juice** (§7): HP bars (green→red, only when damaged), white hit-flash,
+  combat shake, routing units flicker.
+- **Input**: routing/dead units can't be ordered.
+- **Tests**: damage math (morale, terrain, attacker penalty) + scripted
+  skirmishes — 30 light vs 12 heavy is even on plains, a lopsided light win in
+  forest, and attackers take more net damage than equal defenders.
+- **Perf** (§8): full sim tick **~3.0ms at 400 units** all engaged (budget 8ms).
+
 ## M2 — Terrain & Map Generation
 
 - **Seeded noise** (`sim/noise.ts`): Perlin + fBm with a permutation table

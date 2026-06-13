@@ -11,7 +11,8 @@ import { PathCapture, resamplePath } from './input/orders';
 import { Camera } from './input/camera-input';
 import { Renderer, type RenderOverlays } from './render/renderer';
 import { createTerrainCanvas } from './render/terrain-layer';
-import { assignPath, stepMovement, stopUnit } from './sim/movement';
+import { assignPath, stopUnit } from './sim/movement';
+import { stepSimulation } from './sim/simulate';
 
 // ── Seed ─────────────────────────────────────────────────────────────────────
 function resolveSeed(): number {
@@ -60,6 +61,11 @@ function selectedUnits(): Unit[] {
   return state.units.filter((u) => u.selected);
 }
 
+/** Units the player may currently order (selected, alive, not routing). */
+function controllableSelected(): Unit[] {
+  return state.units.filter((u) => u.selected && u.routTimer <= 0 && u.hp > 0);
+}
+
 function hasSelection(): boolean {
   return state.units.some((u) => u.selected);
 }
@@ -71,7 +77,7 @@ function deselectAll(): void {
 
 /** Quick move order: send every selected unit toward a single target point. */
 function issueMoveOrder(tx: number, ty: number): void {
-  const sel = selectedUnits();
+  const sel = controllableSelected();
   if (sel.length === 0) return;
   let cx = 0;
   let cy = 0;
@@ -155,10 +161,10 @@ canvas.addEventListener('pointerup', (e) => {
   if (dragMode === 'lasso') {
     const poly = lasso.end();
     if (poly) {
-      // Select all friendly units inside the lasso polygon.
+      // Select all friendly (player) units inside the lasso polygon.
       let count = 0;
       for (const u of state.units) {
-        u.selected = u.owner === 'player' && pointInPolygon(u.pos.x, u.pos.y, poly);
+        u.selected = u.owner === 'player' && u.hp > 0 && pointInPolygon(u.pos.x, u.pos.y, poly);
         if (u.selected) count++;
       }
       if (count === 0) deselectAll();
@@ -166,7 +172,7 @@ canvas.addEventListener('pointerup', (e) => {
   } else if (dragMode === 'path') {
     const wps = pathCapture.end(CONFIG.INPUT.PATH_WAYPOINT_SPACING);
     if (wps) {
-      for (const u of selectedUnits()) assignPath(u, wps.map((p) => ({ ...p })));
+      for (const u of controllableSelected()) assignPath(u, wps.map((p) => ({ ...p })));
       overlays.groupPath = wps;
     }
   }
@@ -206,16 +212,9 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (key === 's') {
-    // Stop selected units in place.
-    for (const u of selectedUnits()) stopUnit(u);
-    overlays.groupPath = [];
-    return;
-  }
-
-  if (key === 'c') {
-    // Clear orders: stop the units but keep them selected.
-    for (const u of selectedUnits()) stopUnit(u);
+  if (key === 's' || key === 'c') {
+    // Stop / clear orders for controllable selected units (keep them selected).
+    for (const u of controllableSelected()) stopUnit(u);
     overlays.groupPath = [];
     return;
   }
@@ -231,7 +230,7 @@ let fpsSmoothed = 0;
 // ── Game loop ─────────────────────────────────────────────────────────────────
 const loop = new GameLoop({
   simTick: (dt) => {
-    if (!loopPaused) stepMovement(state, hash, dt);
+    if (!loopPaused) stepSimulation(state, hash, dt);
   },
   render: (alpha, frameDtMs) => {
     camera.update(frameDtMs);
@@ -242,11 +241,16 @@ const loop = new GameLoop({
       fpsSmoothed = fpsSmoothed === 0 ? fps : fpsSmoothed * 0.9 + fps * 0.1;
     }
     const sel = selectedUnits().length;
+    let blue = 0;
+    let red = 0;
+    for (const u of state.units) {
+      if (u.owner === 'player') blue++;
+      else if (u.owner === 'enemy') red++;
+    }
     hud.textContent =
-      `DOTFRONT M2 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
-      `${Math.round(fpsSmoothed)} fps · ${state.units.length} units · ${state.cities.length} cities · tick ${state.tick}\n` +
-      `${sel} selected · ` +
-      `[drag=lasso] [drag w/sel=path] [S=stop] [C=clear] [Esc=deselect] [Space=pause]\n` +
+      `DOTFRONT M3 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
+      `${Math.round(fpsSmoothed)} fps · blue ${blue} vs red ${red} · ${sel} selected · tick ${state.tick}\n` +
+      `click=move · drag=lasso · drag w/sel=path · S=stop · Esc=deselect · Space=pause\n` +
       `[T=terrain grid] [H=hash] · WASD/arrows/edges pan · wheel zooms`;
   },
 });

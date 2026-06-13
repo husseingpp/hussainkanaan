@@ -171,10 +171,18 @@ export class Renderer {
 
   private drawUnits(state: GameState, alpha: number): void {
     const ctx = this.ctx;
+    const amp = CONFIG.COMBAT.SHAKE_AMPLITUDE;
+
     for (const unit of state.units) {
-      const x = unit.prevPos.x + (unit.pos.x - unit.prevPos.x) * alpha;
-      const y = unit.prevPos.y + (unit.pos.y - unit.prevPos.y) * alpha;
+      let x = unit.prevPos.x + (unit.pos.x - unit.prevPos.x) * alpha;
+      let y = unit.prevPos.y + (unit.pos.y - unit.prevPos.y) * alpha;
       const color = OWNER_COLOR[unit.owner];
+
+      // Combat shake (visual only; render may use Math.random — not sim).
+      if (unit.inCombat) {
+        x += (Math.random() - 0.5) * amp;
+        y += (Math.random() - 0.5) * amp;
+      }
 
       if (unit.selected) {
         ctx.beginPath();
@@ -188,17 +196,41 @@ export class Renderer {
 
       ctx.beginPath();
       ctx.arc(x, y, unit.radius, 0, Math.PI * 2);
-      ctx.fillStyle = color;
+      // Routing units flicker/fade (§7 starvation-style juice).
+      ctx.globalAlpha = unit.routTimer > 0 ? 0.4 + 0.2 * Math.sin(state.tick) : 1;
+      ctx.fillStyle = unit.flashTimer > 0 ? '#FFFFFF' : color;
       ctx.fill();
+      ctx.globalAlpha = 1;
 
       // Heavy units get an inner ring (§5.1).
       if (unit.kind === 'heavy') {
         ctx.beginPath();
         ctx.arc(x, y, unit.radius * 0.45, 0, Math.PI * 2);
-        ctx.fillStyle = CONFIG.COLORS.BACKGROUND;
+        ctx.fillStyle = unit.flashTimer > 0 ? color : CONFIG.COLORS.BACKGROUND;
         ctx.fill();
       }
+
+      // HP bar, only when damaged (§5.2).
+      if (unit.hp < unit.maxHp && unit.hp > 0) {
+        this.drawHpBar(x, y, unit.radius, unit.hp / unit.maxHp);
+      }
     }
+  }
+
+  private drawHpBar(x: number, y: number, radius: number, frac: number): void {
+    const ctx = this.ctx;
+    const z = this.camera.zoom;
+    const w = 14 / z;
+    const h = 2.5 / z;
+    const bx = x - w / 2;
+    const by = y - radius - 5 / z;
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(bx, by, w, h);
+    // Green → red as HP drops.
+    const r = Math.round(229 + (46 - 229) * frac);
+    const g = Math.round(72 + (160 - 72) * frac);
+    ctx.fillStyle = `rgb(${r},${g},90)`;
+    ctx.fillRect(bx, by, w * frac, h);
   }
 
   private drawLasso(poly: readonly Vec2[]): void {

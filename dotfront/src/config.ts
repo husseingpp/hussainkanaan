@@ -23,8 +23,44 @@ export const CONFIG = {
     /** Base march speed on plains, px/s (§5.1). */
     LIGHT_SPEED: 60,
     HEAVY_SPEED: 35,
+    /** Hit points (§5.1). */
+    LIGHT_HP: 100,
+    HEAVY_HP: 250,
+    /** Damage per second on plains, full morale (§5.1). */
+    LIGHT_DPS: 10,
+    HEAVY_DPS: 25,
     /** Auto-attack engagement range (§5.1) — also the separation radius. */
     INTERACTION_RADIUS: 14,
+    /** A unit auto-attacks the nearest enemy within this range (§5.1). */
+    ATTACK_RANGE: 14,
+  },
+
+  /** Combat, morale & healing (BLUEPRINT.md §5.2). */
+  COMBAT: {
+    /** Attacking units take +30% incoming damage. */
+    ATTACKER_DAMAGE_MULT: 1.3,
+    /** Attacking units lose morale ~2× faster. */
+    ATTACKER_MORALE_MULT: 2,
+    MORALE_MAX: 100,
+    /** Morale lost per second while in combat (defending baseline). */
+    MORALE_DRAIN: 8,
+    /** Morale regained per second out of combat. */
+    MORALE_REGEN: 12,
+    /** Below this morale, damage output halves. */
+    MORALE_LOW: 30,
+    LOW_MORALE_DAMAGE_MULT: 0.5,
+    /** At morale 0 a unit routs: uncontrollable, flees to nearest friendly city. */
+    ROUT_DURATION: 3,
+    ROUT_RECOVER_MORALE: 35,
+    /** Healing per second: in the field (no enemy within HEAL_SAFE_RADIUS). */
+    HEAL_FIELD: 2,
+    /** Healing per second inside a friendly city radius. */
+    HEAL_CITY: 4,
+    HEAL_SAFE_RADIUS: 150,
+    /** White hit-flash duration, seconds (visual). */
+    FLASH_DURATION: 0.12,
+    /** Combat shake amplitude, world px (visual). */
+    SHAKE_AMPLITUDE: 1.4,
   },
 
   MOVEMENT: {
