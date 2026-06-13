@@ -1,5 +1,30 @@
 # Changelog
 
+## M5 — Territory & Encirclement
+
+- **Territory flood fill** (`sim/territory.ts`): every 20 ticks (≈1 s), a
+  64 px coarse grid is built. Cells within 80 px of any alive unit or city
+  (that aren't mountain) become anchors; BFS finds connected components per
+  player — these are their **regions**.
+- **Pocket detection**: a region with no friendly city gets `isPocket = true`
+  and `supplyCapacity = 0`. Units in pockets starve immediately at
+  STARVATION_DPS regardless of the owner's global city count.
+- **Per-region supply** (`sim/economy.ts`): when territory data is present,
+  starvation is computed per connected region instead of globally. Units
+  outside any friendly territory also starve. Falls back to global supply
+  (M4 logic) on the first tick before territory is computed.
+- **Territory render** (`render/renderer.ts`): faint 8%-opacity coloured
+  fills over owned cells, plus a 1.5px front-line border wherever ownership
+  changes between adjacent cells.
+- **Debug overlay** (`D` key): each connected component tinted with a
+  distinct golden-angle hue; pocket regions are desaturated.
+- **HUD**: pocket count warning (⚠ N pocket(s)) shown when player has
+  isolated regions.
+- **Tests** (9 new): player/enemy cell ownership, contested cells, dead units
+  excluded, city-only anchors, city-connected non-pocket vs isolated pocket,
+  dual-city supply capacity, mountain column splits regions.
+- **Bundle**: 12.28 KB gzipped (budget 150 KB). ✓
+
 ## M4 — Economy, Production & Capture
 
 - **City income** (`sim/economy.ts`): each owned city generates +10 money/s;

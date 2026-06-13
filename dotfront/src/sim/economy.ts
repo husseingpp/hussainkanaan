@@ -12,7 +12,7 @@
 
 import { CONFIG } from '../config';
 import type { SpatialHash } from '../core/spatial-hash';
-import { makeUnit, type City, type GameState, type Owner, type Unit } from '../core/state';
+import { makeUnit, type City, type GameState, type Owner, type TerritoryData, type Unit } from '../core/state';
 import { assignPath } from './movement';
 
 const E = CONFIG.ECONOMY;
@@ -63,14 +63,12 @@ export function computeSupply(
 function applyUpkeepAndStarvation(state: GameState, dt: number): void {
   for (const owner of ['player', 'enemy'] as const) {
     const ownedCities = state.cities.filter((c) => c.owner === owner);
-    const capacity = ownedCities.length * E.SUPPLY_PER_CITY;
 
     // Collect field units (alive, outside all friendly city radii).
     const fieldUnits: Unit[] = [];
     for (const u of state.units) {
       if (u.owner !== owner || u.hp <= 0) continue;
-      const inCity = ownedCities.some((c) => isInsideCity(u, c));
-      if (!inCity) fieldUnits.push(u);
+      if (!ownedCities.some((c) => isInsideCity(u, c))) fieldUnits.push(u);
     }
 
     // Money upkeep (floors at 0).
@@ -78,53 +76,106 @@ function applyUpkeepAndStarvation(state: GameState, dt: number): void {
       (s, u) => s + (u.kind === 'heavy' ? E.HEAVY_MONEY_UPKEEP : E.LIGHT_MONEY_UPKEEP) * dt,
       0,
     );
-    if (owner === 'player') {
-      state.money.player = Math.max(0, state.money.player - moneyDrain);
-    } else {
-      state.money.enemy = Math.max(0, state.money.enemy - moneyDrain);
-    }
-
-    // Supply starvation: units beyond capacity take damage (farthest first).
-    const fieldWeight = fieldUnits.reduce(
-      (s, u) => s + (u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP),
-      0,
-    );
+    if (owner === 'player') state.money.player = Math.max(0, state.money.player - moneyDrain);
+    else state.money.enemy = Math.max(0, state.money.enemy - moneyDrain);
 
     // Clear last tick's starving flags.
     for (const u of fieldUnits) u.starving = false;
 
-    if (fieldWeight > capacity) {
-      const overWeight = fieldWeight - capacity;
-
-      // Sort field units by distance to nearest friendly city (farthest first).
-      fieldUnits.sort((a, b) => {
-        const nearA =
-          ownedCities.length > 0
-            ? Math.min(...ownedCities.map((c) => distSq(a.pos.x, a.pos.y, c.pos.x, c.pos.y)))
-            : Infinity;
-        const nearB =
-          ownedCities.length > 0
-            ? Math.min(...ownedCities.map((c) => distSq(b.pos.x, b.pos.y, c.pos.x, c.pos.y)))
-            : Infinity;
-        return nearB - nearA; // farthest first
-      });
-
-      let covered = 0;
-      for (const u of fieldUnits) {
-        const w = u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP;
-        if (covered < overWeight) {
-          u.starving = true;
-          u.hp -= E.STARVATION_DPS * dt;
-          covered += w;
-        }
-      }
+    if (state.territory) {
+      applyRegionalStarvation(owner, fieldUnits, ownedCities, state.territory, dt);
+    } else {
+      applyGlobalStarvation(owner, fieldUnits, ownedCities, dt);
     }
   }
 
   // Units in friendly cities are never starving.
   for (const u of state.units) {
-    const inFriendlyCity = state.cities.some((c) => c.owner === u.owner && isInsideCity(u, c));
-    if (inFriendlyCity) u.starving = false;
+    if (state.cities.some((c) => c.owner === u.owner && isInsideCity(u, c))) u.starving = false;
+  }
+}
+
+/** M4 fallback: global supply from all owned cities. */
+function applyGlobalStarvation(
+  _owner: Owner,
+  fieldUnits: Unit[],
+  ownedCities: City[],
+  dt: number,
+): void {
+  const capacity = ownedCities.length * E.SUPPLY_PER_CITY;
+  const fieldWeight = fieldUnits.reduce(
+    (s, u) => s + (u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP), 0,
+  );
+  if (fieldWeight <= capacity) return;
+  starveOverCap(fieldUnits, fieldWeight - capacity, ownedCities, dt);
+}
+
+/** M5: per-region supply — pocketed units have zero capacity. */
+function applyRegionalStarvation(
+  owner: 'player' | 'enemy',
+  fieldUnits: Unit[],
+  ownedCities: City[],
+  territory: TerritoryData,
+  dt: number,
+): void {
+  const map = owner === 'player' ? territory.playerMap : territory.enemyMap;
+  const { cols, rows, cellSize, regions } = territory;
+
+  // Group field units by their territory region.
+  const byRegion = new Map<number, Unit[]>();
+  const unconnected: Unit[] = [];
+
+  for (const u of fieldUnits) {
+    const col = Math.min(Math.max(Math.floor(u.pos.x / cellSize), 0), cols - 1);
+    const row = Math.min(Math.max(Math.floor(u.pos.y / cellSize), 0), rows - 1);
+    const rId = map[row * cols + col] ?? -1;
+    if (rId < 0) {
+      unconnected.push(u);
+    } else {
+      const arr = byRegion.get(rId);
+      if (arr) arr.push(u);
+      else byRegion.set(rId, [u]);
+    }
+  }
+
+  // Units outside any territory → pocket with zero supply.
+  for (const u of unconnected) {
+    u.starving = true;
+    u.hp -= E.STARVATION_DPS * dt;
+  }
+
+  // Per-region starvation.
+  for (const [rId, units] of byRegion) {
+    const region = regions[rId];
+    if (!region) continue;
+    const capacity = region.supplyCapacity; // 0 for pockets
+    const fieldWeight = units.reduce(
+      (s, u) => s + (u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP), 0,
+    );
+    if (fieldWeight > capacity) {
+      starveOverCap(units, fieldWeight - capacity, ownedCities, dt);
+    }
+  }
+}
+
+/** Apply starvation to the `overWeight` excess, farthest-from-city first. */
+function starveOverCap(units: Unit[], overWeight: number, cities: City[], dt: number): void {
+  units.sort((a, b) => {
+    const dA = cities.length > 0
+      ? Math.min(...cities.map((c) => distSq(a.pos.x, a.pos.y, c.pos.x, c.pos.y)))
+      : Infinity;
+    const dB = cities.length > 0
+      ? Math.min(...cities.map((c) => distSq(b.pos.x, b.pos.y, c.pos.x, c.pos.y)))
+      : Infinity;
+    return dB - dA;
+  });
+  let covered = 0;
+  for (const u of units) {
+    if (covered >= overWeight) break;
+    const w = u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP;
+    u.starving = true;
+    u.hp -= E.STARVATION_DPS * dt;
+    covered += w;
   }
 }
 

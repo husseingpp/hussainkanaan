@@ -4,7 +4,7 @@
 
 import { CONFIG } from '../config';
 import type { SpatialHash } from '../core/spatial-hash';
-import type { GameState, Owner, Unit, Vec2 } from '../core/state';
+import type { GameState, Owner, TerritoryData, Unit, Vec2 } from '../core/state';
 import type { Camera } from '../input/camera-input';
 
 export interface RenderOverlays {
@@ -29,6 +29,7 @@ export class Renderer {
 
   showHashOverlay = false;
   showTerrainGrid = false;
+  showTerritoryDebug = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -73,6 +74,12 @@ export class Renderer {
     }
     this.drawWorldBorder(state);
 
+    // Territory tint drawn above terrain, below units (§5.6 / §7).
+    if (state.territory) {
+      if (this.showTerritoryDebug) this.drawTerritoryDebug(state.territory);
+      else this.drawTerritoryTint(state.territory);
+    }
+
     if (this.showTerrainGrid) this.drawTerrainGrid(state);
     if (this.showHashOverlay) this.drawHashOverlay(hash);
 
@@ -82,6 +89,86 @@ export class Renderer {
 
     if (overlays.lassoPolygon.length > 1) this.drawLasso(overlays.lassoPolygon);
     if (overlays.pathPreview.length > 1) this.drawPathPreview(overlays.pathPreview);
+  }
+
+  /** Faint coloured fill (8% opacity) + 1.5px front-line border (§7). */
+  private drawTerritoryTint(t: TerritoryData): void {
+    const ctx = this.ctx;
+    const { cols, rows, cellSize, ownership } = t;
+    const z = this.camera.zoom;
+    const borderW = 1.5 / z;
+
+    ctx.globalAlpha = 0.08;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const code = ownership[r * cols + c]!;
+        if (code === 0) continue; // neutral
+        ctx.fillStyle = code === 1 ? CONFIG.COLORS.PLAYER : CONFIG.COLORS.ENEMY;
+        ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // Front-line border: draw between cells of different ownership.
+    ctx.lineWidth = borderW;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const code = ownership[r * cols + c]!;
+        if (code === 0 || code === 3) continue; // neutral or contested — no border from here
+        const color = code === 1 ? CONFIG.COLORS.PLAYER : CONFIG.COLORS.ENEMY;
+        // Check right neighbour.
+        if (c + 1 < cols) {
+          const right = ownership[r * cols + c + 1]!;
+          if (right !== code) {
+            ctx.strokeStyle = color;
+            ctx.globalAlpha = 0.35;
+            ctx.beginPath();
+            ctx.moveTo((c + 1) * cellSize, r * cellSize);
+            ctx.lineTo((c + 1) * cellSize, (r + 1) * cellSize);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        }
+        // Check bottom neighbour.
+        if (r + 1 < rows) {
+          const below = ownership[(r + 1) * cols + c]!;
+          if (below !== code) {
+            ctx.strokeStyle = color;
+            ctx.globalAlpha = 0.35;
+            ctx.beginPath();
+            ctx.moveTo(c * cellSize, (r + 1) * cellSize);
+            ctx.lineTo((c + 1) * cellSize, (r + 1) * cellSize);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+    }
+  }
+
+  /** Debug overlay (D key): each region tinted a distinct hue. */
+  private drawTerritoryDebug(t: TerritoryData): void {
+    const ctx = this.ctx;
+    const { cols, rows, cellSize, playerMap, enemyMap, regions } = t;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c;
+        const pId = playerMap[idx]!;
+        const eId = enemyMap[idx]!;
+        const rId = pId >= 0 ? pId : eId >= 0 ? eId : -1;
+        if (rId < 0) continue;
+        const region = regions[rId];
+        if (!region) continue;
+        // Hue: golden-angle steps; pocket regions are desaturated.
+        const hue = (rId * 137) % 360;
+        const sat = region.isPocket ? 30 : 70;
+        ctx.fillStyle = `hsl(${hue},${sat}%,60%)`;
+        ctx.globalAlpha = 0.35;
+        ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+        ctx.globalAlpha = 1;
+      }
+    }
   }
 
   private drawWorldBorder(state: GameState): void {

@@ -74,6 +74,31 @@ export interface City {
   productionQueue: ProductionJob[];
 }
 
+// ── Territory (M5) ───────────────────────────────────────────────────────────
+
+export interface TerritoryRegion {
+  id: number;
+  owner: 'player' | 'enemy';
+  /** True when the region has no friendly city (pocket → zero supply). */
+  isPocket: boolean;
+  /** Total supply weight capacity from cities inside this region. */
+  supplyCapacity: number;
+}
+
+export interface TerritoryData {
+  cols: number;
+  rows: number;
+  cellSize: number;
+  /** 0=neutral · 1=player · 2=enemy · 3=contested */
+  ownership: Uint8Array;
+  /** Global region id for cells inside player territory; −1 otherwise. */
+  playerMap: Int16Array;
+  /** Global region id for cells inside enemy territory; −1 otherwise. */
+  enemyMap: Int16Array;
+  /** All regions (both owners) indexed by global id. */
+  regions: TerritoryRegion[];
+}
+
 export interface GameState {
   tick: number;
   rng: Rng;
@@ -83,6 +108,8 @@ export interface GameState {
   world: { width: number; height: number };
   /** Money held by each owner (M4). */
   money: { player: number; enemy: number };
+  /** Territory connected-component data; recomputed every ~1 s (M5). */
+  territory: TerritoryData | null;
 }
 
 let nextUnitId = 0;
@@ -160,5 +187,5 @@ export function createInitialState(seed: number): GameState {
   spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'heavy', CONFIG.MAP.START_HEAVY);
 
   const money = { player: CONFIG.ECONOMY.START_MONEY, enemy: CONFIG.ECONOMY.START_MONEY };
-  return { tick: 0, rng, units, cities: map.cities, terrain: map.grid, world, money };
+  return { tick: 0, rng, units, cities: map.cities, terrain: map.grid, world, money, territory: null };
 }

@@ -256,6 +256,11 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
+  if (key === 'd') {
+    renderer.showTerritoryDebug = !renderer.showTerritoryDebug;
+    return;
+  }
+
   if (key === ' ') {
     e.preventDefault();
     // Pause handled in loop (Space): toggle.
@@ -312,12 +317,13 @@ const loop = new GameLoop({
     }
     const { fieldWeight: pField, capacity: pCap } = computeSupply(state.units, state.cities, 'player');
     const blueCities = state.cities.filter((c) => c.owner === 'player').length;
+    const pPockets = state.territory?.regions.filter((r) => r.owner === 'player' && r.isPocket).length ?? 0;
     hud.textContent =
-      `DOTFRONT M4 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
+      `DOTFRONT M5 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
       `${Math.round(fpsSmoothed)} fps · blue ${blue} vs red ${red} · ${sel} selected · tick ${state.tick}\n` +
-      `💰 ${Math.floor(state.money.player)} · supply ${pField}/${pCap} · cities ${blueCities}\n` +
+      `💰 ${Math.floor(state.money.player)} · supply ${pField}/${pCap} · cities ${blueCities}${pPockets > 0 ? ` · ⚠ ${pPockets} pocket(s)` : ''}\n` +
       `click city=produce · click=move · drag=lasso · drag w/sel=path · S=stop · Esc=deselect\n` +
-      `[T=terrain grid] [H=hash] · WASD/arrows/edges pan · wheel zooms`;
+      `[T=terrain] [H=hash] [D=territory] · WASD/arrows/edges pan · wheel zooms`;
   },
 });
 loop.start();

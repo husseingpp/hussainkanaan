@@ -21,6 +21,7 @@ function makeState(units: Unit[], terrain: TerrainGrid): GameState {
     terrain,
     world: { width: CONFIG.WORLD.WIDTH, height: CONFIG.WORLD.HEIGHT },
     money: { player: 0, enemy: 0 },
+    territory: null,
   };
 }
 

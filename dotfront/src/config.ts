@@ -152,6 +152,16 @@ export const CONFIG = {
     SPAWN_RADIUS: 140,
   },
 
+  /** Territory & encirclement (BLUEPRINT.md §5.6). */
+  TERRITORY: {
+    /** Coarse grid cell size, px. Larger = faster flood fill. */
+    CELL_SIZE: 64,
+    /** A coarse cell is claimed if any unit/city is within this radius, px. */
+    REACH: 80,
+    /** Re-run territory computation every N sim ticks (~1s at 20 TPS). */
+    STAGGER: 20,
+  },
+
   /** Economy, production & capture (BLUEPRINT.md §5.3). */
   ECONOMY: {
     /** Money earned per owned city per second. */
