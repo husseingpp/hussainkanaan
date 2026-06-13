@@ -28,6 +28,8 @@ function makeState(units: Unit[], cities: City[], terrain = uniformGrid()): Game
     world: { width: CONFIG.WORLD.WIDTH, height: CONFIG.WORLD.HEIGHT },
     money: { player: 0, enemy: 0 },
     territory: null,
+    matchPhase: 'playing',
+    matchTime: 0,
   };
 }
 

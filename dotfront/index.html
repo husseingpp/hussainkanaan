@@ -58,11 +58,50 @@
       #city-menu button:hover:not(:disabled) { background: #e8f0fe; border-color: #2e6cf6; }
       #city-menu button:disabled { opacity: 0.4; cursor: default; }
       #btn-close { background: none; border: none; align-self: flex-end; font-size: 15px; padding: 0; }
+      #end-screen {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(242,239,233,0.93);
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 18px;
+        z-index: 20;
+      }
+      #end-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        color: #1a1a1a;
+      }
+      #end-title.won  { color: #2E6CF6; }
+      #end-title.lost { color: #E5484D; }
+      #end-title.draw { color: #9B9B9B; }
+      #end-stats { font-size: 1rem; color: #6b6b6b; letter-spacing: 0.04em; }
+      #btn-restart {
+        margin-top: 8px;
+        padding: 10px 28px;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        background: #2E6CF6;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      #btn-restart:hover { background: #1a55d4; }
     </style>
   </head>
   <body>
     <canvas id="game"></canvas>
     <div id="debug-hud"></div>
+    <div id="end-screen">
+      <div id="end-title">VICTORY</div>
+      <div id="end-stats"></div>
+      <button id="btn-restart">Play Again</button>
+    </div>
     <div id="city-menu">
       <button id="btn-close">✕</button>
       <button id="btn-light">Light</button>

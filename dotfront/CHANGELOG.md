@@ -1,5 +1,35 @@
 # Changelog
 
+## M6 — AI Opponent
+
+- **Strategist** (`ai/strategist.ts`): evaluates game state every ~1 s (same
+  STAGGER tick as territory). Scores four intents:
+  - **DEFEND** — player units within 220 px of an enemy city (highest urgency,
+    scales with threat size)
+  - **EXPAND** — neutral cities, prioritised by proximity to the enemy capital
+  - **ATTACK** — player cities where enemy has ≥1.3× local force ratio or ≥12
+    units nearby; capital assaults use a curved flanking path
+  - **FALLBACK** — march idle units toward the nearest player city when no
+    other target exists
+  - **Economy**: queues light or heavy units at empty cities, maintaining a
+    ~3:1 light:heavy ratio, keeping a 150-money reserve
+- **Commander** (`ai/commander.ts`): assigns nearest idle enemy units to the
+  top-4 priority targets; defend orders override idle check. Capital assaults
+  get a perpendicular-offset midpoint (encircle flank) using `state.rng`.
+- **Win conditions** (`sim/win.ts`): capture the enemy capital AND own ≥80% of
+  all cities → win. After 15 min (MATCH_DURATION=900 s), most cities wins;
+  equal = draw.
+- **Match timer**: `state.matchTime` accumulated each tick; displayed as MM:SS
+  in the HUD.
+- **End screen**: VICTORY / DEFEAT / DRAW overlay with final stats; "Play
+  Again" generates a fresh random seed.
+- **Sim guards**: `stepSimulation` and `stepAI` skip when `matchPhase !==
+  'playing'` — final state is held for the end screen.
+- **Tests** (8 new — `sim/win.test.ts`): mid-game null, player/enemy capital +
+  80% win, capital-only not enough, timer player win, timer enemy win, timer
+  draw, timer not yet expired.
+- **Bundle**: 13.65 KB gzipped (budget 150 KB). ✓
+
 ## M5 — Territory & Encirclement
 
 - **Territory flood fill** (`sim/territory.ts`): every 20 ticks (≈1 s), a

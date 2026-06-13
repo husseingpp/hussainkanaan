@@ -152,6 +152,34 @@ export const CONFIG = {
     SPAWN_RADIUS: 140,
   },
 
+  /** AI Strategist + Commander (BLUEPRINT.md §6). */
+  AI: {
+    /** Radius to check for player units threatening an enemy city. */
+    DEFEND_RADIUS: 220,
+    /** Radius to count local units for attack-odds calculation. */
+    ATTACK_RADIUS: 350,
+    /** Enemy:player force ratio required to commit to an attack. */
+    FORCE_THRESHOLD: 1.3,
+    /** Minimum enemy units nearby to initiate attack even below ratio. */
+    ATTACK_MIN_FORCE: 12,
+    /** Units sent in a squad to claim a neutral city. */
+    EXPAND_SQUAD: 8,
+    /** Money the AI always keeps in reserve before spending on production. */
+    MONEY_RESERVE: 150,
+    /** Max simultaneous active orders (defend/expand/attack groups). */
+    MAX_ACTIVE_TARGETS: 4,
+    /** Perpendicular offset as a fraction of path length for curved flanks. */
+    ENCIRCLE_OFFSET: 0.35,
+  },
+
+  /** Win / match-timer conditions (BLUEPRINT.md §5.7). */
+  WIN: {
+    /** Fraction of all cities required (alongside capital capture) to win. */
+    CITY_THRESHOLD: 0.8,
+    /** Match duration in seconds; city count decides winner at timeout. */
+    MATCH_DURATION: 900,
+  },
+
   /** Territory & encirclement (BLUEPRINT.md §5.6). */
   TERRITORY: {
     /** Coarse grid cell size, px. Larger = faster flood fill. */

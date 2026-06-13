@@ -291,18 +291,50 @@ window.addEventListener('keydown', (e) => {
 // ── Pause support (Space) ────────────────────────────────────────────────────
 let loopPaused = false;
 
+// ── End screen ───────────────────────────────────────────────────────────────
+const endScreen = document.getElementById('end-screen') as HTMLDivElement;
+const endTitle = document.getElementById('end-title') as HTMLDivElement;
+const endStats = document.getElementById('end-stats') as HTMLDivElement;
+const btnRestart = document.getElementById('btn-restart') as HTMLButtonElement;
+
+btnRestart.addEventListener('click', () => {
+  // New random seed for a fresh map.
+  window.location.href = `?seed=${Math.floor(Math.random() * 0xFFFFFF)}`;
+});
+
+function maybeShowEndScreen(): void {
+  if (state.matchPhase === 'playing' || endScreen.style.display === 'flex') return;
+  const labels = { won: 'VICTORY', lost: 'DEFEAT', draw: 'DRAW' } as const;
+  const phase = state.matchPhase as 'won' | 'lost' | 'draw';
+  endTitle.textContent = labels[phase];
+  endTitle.className = phase;
+  const mins = Math.floor(state.matchTime / 60);
+  const secs = String(Math.floor(state.matchTime % 60)).padStart(2, '0');
+  const blue = state.units.filter((u) => u.owner === 'player' && u.hp > 0).length;
+  const blueCities = state.cities.filter((c) => c.owner === 'player').length;
+  const total = state.cities.length;
+  endStats.textContent = `${mins}:${secs} · ${blue} units left · ${blueCities}/${total} cities`;
+  endScreen.style.display = 'flex';
+}
+
 // ── HUD ──────────────────────────────────────────────────────────────────────
 const hud = document.getElementById('debug-hud') as HTMLDivElement;
 let fpsSmoothed = 0;
 
+function formatTime(s: number): string {
+  const m = Math.floor(s / 60);
+  return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+}
+
 // ── Game loop ─────────────────────────────────────────────────────────────────
 const loop = new GameLoop({
   simTick: (dt) => {
-    if (!loopPaused) stepSimulation(state, hash, dt);
+    if (!loopPaused && state.matchPhase === 'playing') stepSimulation(state, hash, dt);
   },
   render: (alpha, frameDtMs) => {
     camera.update(frameDtMs);
     renderer.render(state, hash, alpha, overlays);
+    maybeShowEndScreen();
 
     if (frameDtMs > 0) {
       const fps = 1000 / frameDtMs;
@@ -319,7 +351,7 @@ const loop = new GameLoop({
     const blueCities = state.cities.filter((c) => c.owner === 'player').length;
     const pPockets = state.territory?.regions.filter((r) => r.owner === 'player' && r.isPocket).length ?? 0;
     hud.textContent =
-      `DOTFRONT M5 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
+      `DOTFRONT M6 · seed ${seed} · ${formatTime(state.matchTime)}${loopPaused ? ' · PAUSED' : ''}\n` +
       `${Math.round(fpsSmoothed)} fps · blue ${blue} vs red ${red} · ${sel} selected · tick ${state.tick}\n` +
       `💰 ${Math.floor(state.money.player)} · supply ${pField}/${pCap} · cities ${blueCities}${pPockets > 0 ? ` · ⚠ ${pPockets} pocket(s)` : ''}\n` +
       `click city=produce · click=move · drag=lasso · drag w/sel=path · S=stop · Esc=deselect\n` +

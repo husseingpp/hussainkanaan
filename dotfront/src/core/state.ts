@@ -12,6 +12,7 @@ export interface Vec2 {
 }
 
 export type Owner = 'player' | 'enemy' | 'neutral';
+export type MatchPhase = 'playing' | 'won' | 'lost' | 'draw';
 export type UnitKind = 'light' | 'heavy';
 
 export interface Unit {
@@ -110,6 +111,9 @@ export interface GameState {
   money: { player: number; enemy: number };
   /** Territory connected-component data; recomputed every ~1 s (M5). */
   territory: TerritoryData | null;
+  /** Match phase and elapsed time in seconds (M6). */
+  matchPhase: MatchPhase;
+  matchTime: number;
 }
 
 let nextUnitId = 0;
@@ -187,5 +191,8 @@ export function createInitialState(seed: number): GameState {
   spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'heavy', CONFIG.MAP.START_HEAVY);
 
   const money = { player: CONFIG.ECONOMY.START_MONEY, enemy: CONFIG.ECONOMY.START_MONEY };
-  return { tick: 0, rng, units, cities: map.cities, terrain: map.grid, world, money, territory: null };
+  return {
+    tick: 0, rng, units, cities: map.cities, terrain: map.grid, world, money,
+    territory: null, matchPhase: 'playing', matchTime: 0,
+  };
 }
