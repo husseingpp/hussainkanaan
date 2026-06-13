@@ -69,6 +69,21 @@ function deselectAll(): void {
   overlays.groupPath = [];
 }
 
+/** Quick move order: send every selected unit toward a single target point. */
+function issueMoveOrder(tx: number, ty: number): void {
+  const sel = selectedUnits();
+  if (sel.length === 0) return;
+  let cx = 0;
+  let cy = 0;
+  for (const u of sel) {
+    assignPath(u, [{ x: tx, y: ty }]);
+    cx += u.pos.x;
+    cy += u.pos.y;
+  }
+  // Draw a line from the group's centroid to the target as feedback.
+  overlays.groupPath = [{ x: cx / sel.length, y: cy / sel.length }, { x: tx, y: ty }];
+}
+
 // ── Pointer events ────────────────────────────────────────────────────────────
 canvas.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
@@ -123,8 +138,12 @@ canvas.addEventListener('pointerup', (e) => {
   if (e.button !== 0) return;
 
   if (!dragging) {
-    // Plain click: deselect if something was selected, otherwise nothing.
-    if (hasSelection()) deselectAll();
+    // Plain click with a selection = quick move order to that point.
+    // (Drag draws a precise path; Esc deselects.)
+    if (hasSelection()) {
+      const { x: wx, y: wy } = camera.screenToWorld(e.clientX, e.clientY);
+      issueMoveOrder(wx, wy);
+    }
     dragMode = 'none';
     return;
   }
