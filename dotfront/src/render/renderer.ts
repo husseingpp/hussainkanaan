@@ -136,6 +136,42 @@ export class Renderer {
       ctx.strokeStyle = color;
       ctx.stroke();
       if (city.isCapital) this.drawStar(city.pos, city.radius * 0.55, color);
+
+      // Capture progress ring (§5.3): arc drawn by the captor's colour.
+      if (city.captureBy !== null && city.captureProgress > 0) {
+        const frac = city.captureProgress / CONFIG.ECONOMY.CAPTURE_TIME;
+        const captorColor = OWNER_COLOR[city.captureBy];
+        ctx.beginPath();
+        ctx.arc(
+          city.pos.x,
+          city.pos.y,
+          city.radius + 5 / this.camera.zoom,
+          -Math.PI / 2,
+          -Math.PI / 2 + frac * Math.PI * 2,
+        );
+        ctx.strokeStyle = captorColor;
+        ctx.lineWidth = 3 / this.camera.zoom;
+        ctx.globalAlpha = 0.85;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      // Production progress bar below city.
+      if (city.productionQueue.length > 0) {
+        const job = city.productionQueue[0]!;
+        const frac = job.progress / CONFIG.ECONOMY.SPAWN_TIME;
+        const z = this.camera.zoom;
+        const w = city.radius * 2;
+        const h = 3 / z;
+        const bx = city.pos.x - w / 2;
+        const by = city.pos.y + city.radius + 4 / z;
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fillRect(bx, by, w, h);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.75;
+        ctx.fillRect(bx, by, w * frac, h);
+        ctx.globalAlpha = 1;
+      }
     }
   }
 
@@ -196,8 +232,11 @@ export class Renderer {
 
       ctx.beginPath();
       ctx.arc(x, y, unit.radius, 0, Math.PI * 2);
-      // Routing units flicker/fade (§7 starvation-style juice).
-      ctx.globalAlpha = unit.routTimer > 0 ? 0.4 + 0.2 * Math.sin(state.tick) : 1;
+      // Routing units flicker/fade; starving units fade differently (§7).
+      let unitAlpha = 1;
+      if (unit.routTimer > 0) unitAlpha = 0.4 + 0.2 * Math.sin(state.tick);
+      else if (unit.starving) unitAlpha = 0.5 + 0.15 * Math.sin(state.tick * 3);
+      ctx.globalAlpha = unitAlpha;
       ctx.fillStyle = unit.flashTimer > 0 ? '#FFFFFF' : color;
       ctx.fill();
       ctx.globalAlpha = 1;

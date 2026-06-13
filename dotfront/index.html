@@ -30,11 +30,44 @@
         pointer-events: none;
         white-space: pre;
       }
+      #city-menu {
+        display: none;
+        position: fixed;
+        flex-direction: column;
+        gap: 6px;
+        background: rgba(242,239,233,0.97);
+        border: 1.5px solid #d8d2c6;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        z-index: 10;
+      }
+      #city-menu button {
+        cursor: pointer;
+        border: 1.5px solid #d8d2c6;
+        border-radius: 5px;
+        padding: 5px 10px;
+        background: #fff;
+        font: inherit;
+        text-align: left;
+        transition: background 0.1s;
+      }
+      #city-menu button:hover:not(:disabled) { background: #e8f0fe; border-color: #2e6cf6; }
+      #city-menu button:disabled { opacity: 0.4; cursor: default; }
+      #btn-close { background: none; border: none; align-self: flex-end; font-size: 15px; padding: 0; }
     </style>
   </head>
   <body>
     <canvas id="game"></canvas>
     <div id="debug-hud"></div>
+    <div id="city-menu">
+      <button id="btn-close">✕</button>
+      <button id="btn-light">Light</button>
+      <button id="btn-heavy">Heavy</button>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

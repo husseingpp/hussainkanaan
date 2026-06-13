@@ -1,5 +1,31 @@
 # Changelog
 
+## M4 — Economy, Production & Capture
+
+- **City income** (`sim/economy.ts`): each owned city generates +10 money/s;
+  money floors at 0 but never blocks the sim.
+- **Supply system** (§5.3): each owned city provides 5 supply weight. Field
+  units (outside friendly city radii) consume supply weight (light 1, heavy 2).
+  Over-cap units take 2 HP/s starvation and flicker visually; the farthest
+  units from friendly cities starve first.
+- **Money upkeep**: field units also drain money (light 1/s, heavy 2/s) in
+  addition to supply weight — keeps the economy under pressure late game.
+- **City capture**: a unit holding an enemy/neutral city radius uncontested for
+  5 s converts it; capture resets instantly if contested. Progress ring drawn
+  in the captor's colour around the city border.
+- **Production** (§5.3): click an owned city → DOM menu with Light (200) /
+  Heavy (400) cost buttons (greyed out when funds are insufficient). Units
+  spawn at the city edge after 2 s using the seeded RNG; optional rally-point
+  field on `ProductionJob` is wired through for future AI use.
+- **Render juice** (§7): capture progress arc, production bar below city,
+  starving units flicker at a faster frequency than routing units.
+- **HUD**: money, supply field/cap, and city count shown each frame.
+- **Tests** (15 new): income scaling, neutral-city no-income, `computeSupply`
+  field-weight + city-shelter + capacity, starvation on/off, unit-in-city
+  immunity, capture progress + contested reset, multi-tick accumulation,
+  production spawn + rally point + neutral-city block.
+- **Bundle**: 10.99 KB gzipped (budget 150 KB). ✓
+
 ## M3 — Combat & Morale
 
 - **Combat** (`sim/combat.ts`): units auto-attack the nearest enemy within

@@ -152,6 +152,34 @@ export const CONFIG = {
     SPAWN_RADIUS: 140,
   },
 
+  /** Economy, production & capture (BLUEPRINT.md §5.3). */
+  ECONOMY: {
+    /** Money earned per owned city per second. */
+    CITY_INCOME: 10,
+    /** Supply weight capacity each owned city provides. */
+    SUPPLY_PER_CITY: 5,
+    /** Supply weight of a light unit in the field. */
+    LIGHT_UPKEEP: 1,
+    /** Supply weight of a heavy unit in the field. */
+    HEAVY_UPKEEP: 2,
+    /** Money upkeep drained per light field unit per second. */
+    LIGHT_MONEY_UPKEEP: 1,
+    /** Money upkeep drained per heavy field unit per second. */
+    HEAVY_MONEY_UPKEEP: 2,
+    /** HP/s drained from over-supply-cap field units. */
+    STARVATION_DPS: 2,
+    /** Seconds a unit must hold a city uncontested to capture it. */
+    CAPTURE_TIME: 5,
+    /** Money cost to produce a light unit. */
+    LIGHT_COST: 200,
+    /** Money cost to produce a heavy unit. */
+    HEAVY_COST: 400,
+    /** Seconds to produce a unit at a city. */
+    SPAWN_TIME: 2,
+    /** Starting money for each player. */
+    START_MONEY: 300,
+  },
+
   COLORS: {
     BACKGROUND: '#F2EFE9',
     PLAYER: '#2E6CF6',

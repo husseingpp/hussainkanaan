@@ -88,6 +88,13 @@ export class Camera {
       y: (sy - this.viewH / 2) / this.zoom + this.y,
     };
   }
+
+  worldToScreen(wx: number, wy: number): { x: number; y: number } {
+    return {
+      x: (wx - this.x) * this.zoom + this.viewW / 2,
+      y: (wy - this.y) * this.zoom + this.viewH / 2,
+    };
+  }
 }
 
 function clamp(v: number, min: number, max: number): number {

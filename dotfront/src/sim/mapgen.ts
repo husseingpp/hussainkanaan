@@ -106,7 +106,10 @@ function attempt(seed: number, cols: number, rows: number): MapData | null {
   let nextId = 0;
   const addCity = (col: number, row: number, owner: City['owner'], isCapital: boolean): City => {
     const pos = cellCenter(grid, col, row);
-    const city: City = { id: nextId++, owner, pos, radius: m.CITY_RADIUS, isCapital };
+    const city: City = {
+      id: nextId++, owner, pos, radius: m.CITY_RADIUS, isCapital,
+      captureProgress: 0, captureBy: null, productionQueue: [],
+    };
     stampCity(grid, pos, m.CITY_RADIUS);
     cities.push(city);
     return city;
@@ -148,8 +151,8 @@ export function generateMap(seed: number): MapData {
   if (!lastResort) {
     const grid = makeGrid(cols, rows, CONFIG.TERRAIN.CELL_SIZE); // all plains (code 0)
     const cities: City[] = [
-      { id: 0, owner: 'player', pos: cellCenter(grid, 2, Math.floor(rows / 2)), radius: CONFIG.MAP.CITY_RADIUS, isCapital: true },
-      { id: 1, owner: 'enemy', pos: cellCenter(grid, cols - 3, Math.floor(rows / 2)), radius: CONFIG.MAP.CITY_RADIUS, isCapital: true },
+      { id: 0, owner: 'player', pos: cellCenter(grid, 2, Math.floor(rows / 2)), radius: CONFIG.MAP.CITY_RADIUS, isCapital: true, captureProgress: 0, captureBy: null, productionQueue: [] },
+      { id: 1, owner: 'enemy', pos: cellCenter(grid, cols - 3, Math.floor(rows / 2)), radius: CONFIG.MAP.CITY_RADIUS, isCapital: true, captureProgress: 0, captureBy: null, productionQueue: [] },
     ];
     lastResort = { grid, cities, attempts: CONFIG.MAP.MAX_REROLLS };
   }

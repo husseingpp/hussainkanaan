@@ -47,6 +47,16 @@ export interface Unit {
   flashTimer: number;
   /** Current attack target this tick (transient; recomputed each tick). */
   target: Unit | null;
+  /** True this tick if the unit is over the supply cap and losing HP. */
+  starving: boolean;
+}
+
+export interface ProductionJob {
+  kind: UnitKind;
+  /** Seconds elapsed toward SPAWN_TIME. */
+  progress: number;
+  /** Optional point units march to after spawning. */
+  rallyPoint: { x: number; y: number } | null;
 }
 
 export interface City {
@@ -55,6 +65,13 @@ export interface City {
   pos: Vec2;
   radius: number;
   isCapital: boolean;
+  // ── Economy (M4) ──
+  /** Seconds accumulated by the current captor (0 if not being captured). */
+  captureProgress: number;
+  /** Who is currently contesting this city (null if uncontested or idle). */
+  captureBy: Owner | null;
+  /** Units queued for production; first entry is currently being produced. */
+  productionQueue: ProductionJob[];
 }
 
 export interface GameState {
@@ -64,6 +81,8 @@ export interface GameState {
   cities: City[];
   terrain: TerrainGrid;
   world: { width: number; height: number };
+  /** Money held by each owner (M4). */
+  money: { player: number; enemy: number };
 }
 
 let nextUnitId = 0;
@@ -93,6 +112,7 @@ export function makeUnit(owner: Owner, kind: UnitKind, x: number, y: number): Un
     dmgTaken: 0,
     flashTimer: 0,
     target: null,
+    starving: false,
   };
 }
 
@@ -139,5 +159,6 @@ export function createInitialState(seed: number): GameState {
   spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'light', CONFIG.MAP.START_LIGHT);
   spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'heavy', CONFIG.MAP.START_HEAVY);
 
-  return { tick: 0, rng, units, cities: map.cities, terrain: map.grid, world };
+  const money = { player: CONFIG.ECONOMY.START_MONEY, enemy: CONFIG.ECONOMY.START_MONEY };
+  return { tick: 0, rng, units, cities: map.cities, terrain: map.grid, world, money };
 }

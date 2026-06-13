@@ -5,6 +5,7 @@
 import type { SpatialHash } from '../core/spatial-hash';
 import type { GameState, Unit } from '../core/state';
 import { stepCombat } from './combat';
+import { stepEconomy } from './economy';
 import { stepMovement } from './movement';
 
 export function stepSimulation(state: GameState, hash: SpatialHash<Unit>, dt: number): void {
@@ -24,5 +25,6 @@ export function stepSimulation(state: GameState, hash: SpatialHash<Unit>, dt: nu
   }
 
   stepMovement(state, hash, dt);
+  stepEconomy(state, hash, dt);
   state.tick++;
 }

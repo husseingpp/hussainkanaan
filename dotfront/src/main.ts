@@ -5,12 +5,13 @@ import { CONFIG } from './config';
 import { GameLoop } from './core/loop';
 import { hashSeed } from './core/rng';
 import { SpatialHash } from './core/spatial-hash';
-import { createInitialState, type Unit } from './core/state';
+import { createInitialState, type City, type Unit } from './core/state';
 import { LassoCapture, pointInPolygon } from './input/lasso';
 import { PathCapture, resamplePath } from './input/orders';
 import { Camera } from './input/camera-input';
 import { Renderer, type RenderOverlays } from './render/renderer';
 import { createTerrainCanvas } from './render/terrain-layer';
+import { computeSupply } from './sim/economy';
 import { assignPath, stopUnit } from './sim/movement';
 import { stepSimulation } from './sim/simulate';
 
@@ -56,6 +57,52 @@ let dragStartScreen = { x: 0, y: 0 };
 let dragging = false; // true once we've passed the drag threshold
 type DragMode = 'lasso' | 'path' | 'none';
 let dragMode: DragMode = 'none';
+
+// ── Production menu ───────────────────────────────────────────────────────────
+let cityMenu: City | null = null;
+const prodMenu = document.getElementById('city-menu') as HTMLDivElement;
+const btnLight = document.getElementById('btn-light') as HTMLButtonElement;
+const btnHeavy = document.getElementById('btn-heavy') as HTMLButtonElement;
+const btnClose = document.getElementById('btn-close') as HTMLButtonElement;
+
+function updateMenuButtons(): void {
+  if (!cityMenu) return;
+  const m = state.money.player;
+  btnLight.textContent = `Light (${CONFIG.ECONOMY.LIGHT_COST}💰)`;
+  btnHeavy.textContent = `Heavy (${CONFIG.ECONOMY.HEAVY_COST}💰)`;
+  btnLight.disabled = m < CONFIG.ECONOMY.LIGHT_COST;
+  btnHeavy.disabled = m < CONFIG.ECONOMY.HEAVY_COST;
+}
+
+function openCityMenu(city: City): void {
+  cityMenu = city;
+  const screen = camera.worldToScreen(city.pos.x, city.pos.y);
+  prodMenu.style.left = `${screen.x + 30}px`;
+  prodMenu.style.top = `${screen.y - 30}px`;
+  prodMenu.style.display = 'flex';
+  updateMenuButtons();
+}
+
+function closeCityMenu(): void {
+  cityMenu = null;
+  prodMenu.style.display = 'none';
+}
+
+btnClose.addEventListener('click', closeCityMenu);
+
+btnLight.addEventListener('click', () => {
+  if (!cityMenu || state.money.player < CONFIG.ECONOMY.LIGHT_COST) return;
+  state.money.player -= CONFIG.ECONOMY.LIGHT_COST;
+  cityMenu.productionQueue.push({ kind: 'light', progress: 0, rallyPoint: null });
+  closeCityMenu();
+});
+
+btnHeavy.addEventListener('click', () => {
+  if (!cityMenu || state.money.player < CONFIG.ECONOMY.HEAVY_COST) return;
+  state.money.player -= CONFIG.ECONOMY.HEAVY_COST;
+  cityMenu.productionQueue.push({ kind: 'heavy', progress: 0, rallyPoint: null });
+  closeCityMenu();
+});
 
 function selectedUnits(): Unit[] {
   return state.units.filter((u) => u.selected);
@@ -144,10 +191,25 @@ canvas.addEventListener('pointerup', (e) => {
   if (e.button !== 0) return;
 
   if (!dragging) {
+    const { x: wx, y: wy } = camera.screenToWorld(e.clientX, e.clientY);
+
+    // Click on an owned city → open production menu (takes priority over move).
+    const clickedCity = state.cities.find((c) => {
+      if (c.owner !== 'player') return false;
+      const dx = c.pos.x - wx;
+      const dy = c.pos.y - wy;
+      return Math.sqrt(dx * dx + dy * dy) <= c.radius;
+    });
+    if (clickedCity) {
+      openCityMenu(clickedCity);
+      dragMode = 'none';
+      return;
+    }
+
+    closeCityMenu();
+
     // Plain click with a selection = quick move order to that point.
-    // (Drag draws a precise path; Esc deselects.)
     if (hasSelection()) {
-      const { x: wx, y: wy } = camera.screenToWorld(e.clientX, e.clientY);
       issueMoveOrder(wx, wy);
     }
     dragMode = 'none';
@@ -202,6 +264,7 @@ window.addEventListener('keydown', (e) => {
   }
 
   if (key === 'escape') {
+    closeCityMenu();
     deselectAll();
     lasso.cancel();
     pathCapture.cancel();
@@ -247,10 +310,13 @@ const loop = new GameLoop({
       if (u.owner === 'player') blue++;
       else if (u.owner === 'enemy') red++;
     }
+    const { fieldWeight: pField, capacity: pCap } = computeSupply(state.units, state.cities, 'player');
+    const blueCities = state.cities.filter((c) => c.owner === 'player').length;
     hud.textContent =
-      `DOTFRONT M3 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
+      `DOTFRONT M4 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
       `${Math.round(fpsSmoothed)} fps · blue ${blue} vs red ${red} · ${sel} selected · tick ${state.tick}\n` +
-      `click=move · drag=lasso · drag w/sel=path · S=stop · Esc=deselect · Space=pause\n` +
+      `💰 ${Math.floor(state.money.player)} · supply ${pField}/${pCap} · cities ${blueCities}\n` +
+      `click city=produce · click=move · drag=lasso · drag w/sel=path · S=stop · Esc=deselect\n` +
       `[T=terrain grid] [H=hash] · WASD/arrows/edges pan · wheel zooms`;
   },
 });
