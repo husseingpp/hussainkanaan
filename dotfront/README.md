@@ -12,8 +12,11 @@ multiplayer stay feasible later.
 
 ## Status
 
-**M0 — Skeleton.** Fixed-timestep loop with interpolated render, seeded RNG,
-spatial hash, camera pan/zoom, and 50 drifting dots with separation steering.
+**M2 — Terrain & Map Generation.** Procedurally generated maps (seeded noise →
+plains/forest/hills/water/mountain), city + capital placement with land-
+connectivity validation, terrain-aware movement (heavies bog down in forest,
+mountains block), lasso selection + path orders, fixed-timestep deterministic
+sim with interpolated render.
 
 ## Develop
 
@@ -28,9 +31,12 @@ npm run lint     # ESLint (incl. sim determinism guardrails)
 
 ## Controls (M0)
 
+- **Left-drag** — lasso-select your units; **left-drag with a selection** — draw
+  a path for them to follow
+- **S** stop · **C** clear orders · **Esc** deselect · **Space** pause
 - **WASD / arrow keys** or **screen edges** — pan the camera
 - **Mouse wheel** — zoom (0.5×–2×, anchored on the cursor)
-- **H** — toggle the spatial-hash occupancy debug overlay
+- **T** — terrain-grid debug overlay · **H** — spatial-hash occupancy overlay
 
 Append `?seed=<value>` to the URL to reproduce a specific drift pattern; the
 same seed always yields the same simulation.

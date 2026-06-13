@@ -1,6 +1,6 @@
 // Canvas 2D renderer (BLUEPRINT.md §4, §7). Reads state only — never mutates
 // it. Interpolates each unit's drawn position between prevPos and pos by alpha.
-// Everything drawn procedurally; no images or sprites.
+// Everything drawn procedurally; the terrain is a pre-rendered image.
 
 import { CONFIG } from '../config';
 import type { SpatialHash } from '../core/spatial-hash';
@@ -8,17 +8,14 @@ import type { GameState, Owner, Unit, Vec2 } from '../core/state';
 import type { Camera } from '../input/camera-input';
 
 export interface RenderOverlays {
-  /** Active lasso polygon being drawn (world coords). */
   lassoPolygon: readonly Vec2[];
-  /** Active path stroke being drawn (world coords). */
   pathPreview: readonly Vec2[];
-  /** Last confirmed waypoint path for the selected group. */
   groupPath: readonly Vec2[];
 }
 
 const OWNER_COLOR: Record<Owner, string> = {
   player: CONFIG.COLORS.PLAYER,
-  enemy:  CONFIG.COLORS.ENEMY,
+  enemy: CONFIG.COLORS.ENEMY,
   neutral: CONFIG.COLORS.NEUTRAL,
 };
 
@@ -28,7 +25,10 @@ export class Renderer {
   cssWidth = 1;
   cssHeight = 1;
 
+  private terrainCanvas: HTMLCanvasElement | null = null;
+
   showHashOverlay = false;
+  showTerrainGrid = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -38,6 +38,10 @@ export class Renderer {
     if (!ctx) throw new Error('Canvas 2D context unavailable');
     this.ctx = ctx;
     this.resize();
+  }
+
+  setTerrain(canvas: HTMLCanvasElement): void {
+    this.terrainCanvas = canvas;
   }
 
   resize(): void {
@@ -51,12 +55,7 @@ export class Renderer {
     this.camera.setViewport(this.cssWidth, this.cssHeight);
   }
 
-  render(
-    state: GameState,
-    hash: SpatialHash<Unit>,
-    alpha: number,
-    overlays: RenderOverlays,
-  ): void {
+  render(state: GameState, hash: SpatialHash<Unit>, alpha: number, overlays: RenderOverlays): void {
     const ctx = this.ctx;
     const cam = this.camera;
 
@@ -68,15 +67,19 @@ export class Renderer {
     ctx.scale(cam.zoom, cam.zoom);
     ctx.translate(-cam.x, -cam.y);
 
+    if (this.terrainCanvas) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(this.terrainCanvas, 0, 0);
+    }
     this.drawWorldBorder(state);
+
+    if (this.showTerrainGrid) this.drawTerrainGrid(state);
     if (this.showHashOverlay) this.drawHashOverlay(hash);
 
-    // Group path (confirmed waypoints for selected units).
+    this.drawCities(state);
     if (overlays.groupPath.length > 1) this.drawGroupPath(overlays.groupPath);
-
     this.drawUnits(state, alpha);
 
-    // Overlays drawn on top of units.
     if (overlays.lassoPolygon.length > 1) this.drawLasso(overlays.lassoPolygon);
     if (overlays.pathPreview.length > 1) this.drawPathPreview(overlays.pathPreview);
   }
@@ -86,6 +89,23 @@ export class Renderer {
     ctx.lineWidth = 2 / this.camera.zoom;
     ctx.strokeStyle = CONFIG.COLORS.WORLD_BORDER;
     ctx.strokeRect(0, 0, state.world.width, state.world.height);
+  }
+
+  private drawTerrainGrid(state: GameState): void {
+    const ctx = this.ctx;
+    const { cellSize, cols, rows } = state.terrain;
+    ctx.strokeStyle = CONFIG.COLORS.DEBUG_TERRAIN_GRID;
+    ctx.lineWidth = 0.5 / this.camera.zoom;
+    ctx.beginPath();
+    for (let c = 0; c <= cols; c++) {
+      ctx.moveTo(c * cellSize, 0);
+      ctx.lineTo(c * cellSize, rows * cellSize);
+    }
+    for (let r = 0; r <= rows; r++) {
+      ctx.moveTo(0, r * cellSize);
+      ctx.lineTo(cols * cellSize, r * cellSize);
+    }
+    ctx.stroke();
   }
 
   private drawHashOverlay(hash: SpatialHash<Unit>): void {
@@ -104,6 +124,37 @@ export class Renderer {
     }
   }
 
+  private drawCities(state: GameState): void {
+    const ctx = this.ctx;
+    for (const city of state.cities) {
+      const color = OWNER_COLOR[city.owner];
+      ctx.beginPath();
+      ctx.arc(city.pos.x, city.pos.y, city.radius, 0, Math.PI * 2);
+      ctx.fillStyle = CONFIG.COLORS.CITY_FILL;
+      ctx.fill();
+      ctx.lineWidth = 2.5 / this.camera.zoom;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+      if (city.isCapital) this.drawStar(city.pos, city.radius * 0.55, color);
+    }
+  }
+
+  private drawStar(c: Vec2, r: number, color: string): void {
+    const ctx = this.ctx;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const rad = i % 2 === 0 ? r : r * 0.45;
+      const ang = (Math.PI / 5) * i - Math.PI / 2;
+      const x = c.x + Math.cos(ang) * rad;
+      const y = c.y + Math.sin(ang) * rad;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
   private drawGroupPath(path: readonly Vec2[]): void {
     const ctx = this.ctx;
     ctx.beginPath();
@@ -120,16 +171,15 @@ export class Renderer {
 
   private drawUnits(state: GameState, alpha: number): void {
     const ctx = this.ctx;
-
     for (const unit of state.units) {
       const x = unit.prevPos.x + (unit.pos.x - unit.prevPos.x) * alpha;
       const y = unit.prevPos.y + (unit.pos.y - unit.prevPos.y) * alpha;
+      const color = OWNER_COLOR[unit.owner];
 
-      // Selection ring drawn first (under the dot).
       if (unit.selected) {
         ctx.beginPath();
         ctx.arc(x, y, unit.radius + 3.5, 0, Math.PI * 2);
-        ctx.strokeStyle = OWNER_COLOR[unit.owner];
+        ctx.strokeStyle = color;
         ctx.lineWidth = 1.5 / this.camera.zoom;
         ctx.globalAlpha = 0.5;
         ctx.stroke();
@@ -138,8 +188,16 @@ export class Renderer {
 
       ctx.beginPath();
       ctx.arc(x, y, unit.radius, 0, Math.PI * 2);
-      ctx.fillStyle = OWNER_COLOR[unit.owner];
+      ctx.fillStyle = color;
       ctx.fill();
+
+      // Heavy units get an inner ring (§5.1).
+      if (unit.kind === 'heavy') {
+        ctx.beginPath();
+        ctx.arc(x, y, unit.radius * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = CONFIG.COLORS.BACKGROUND;
+        ctx.fill();
+      }
     }
   }
 
@@ -149,12 +207,10 @@ export class Renderer {
     ctx.moveTo(poly[0]!.x, poly[0]!.y);
     for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i]!.x, poly[i]!.y);
     ctx.closePath();
-    // Faint fill so the enclosed area is obvious.
     ctx.fillStyle = CONFIG.COLORS.PLAYER;
     ctx.globalAlpha = 0.06;
     ctx.fill();
     ctx.globalAlpha = 1;
-    // Dashed outline.
     ctx.setLineDash([5 / this.camera.zoom, 4 / this.camera.zoom]);
     ctx.strokeStyle = CONFIG.COLORS.PLAYER;
     ctx.lineWidth = 1.5 / this.camera.zoom;
@@ -176,7 +232,6 @@ export class Renderer {
     ctx.lineCap = 'round';
     ctx.stroke();
     ctx.globalAlpha = 1;
-    // Arrow tip at the end.
     const a = path[path.length - 2]!;
     const b = path[path.length - 1]!;
     this.drawArrow(a.x, a.y, b.x, b.y);

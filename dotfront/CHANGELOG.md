@@ -1,5 +1,29 @@
 # Changelog
 
+## M2 — Terrain & Map Generation
+
+- **Seeded noise** (`sim/noise.ts`): Perlin + fBm with a permutation table
+  shuffled by the seeded RNG — no external dependency, deterministic.
+- **Terrain grid** (`sim/terrain.ts`): 5 MVP types (plains/forest/hills/water/
+  mountain) as a `Uint8Array`, with per-type/per-kind speed & damage modifier
+  tables and a land-connectivity BFS.
+- **Map generation** (`sim/mapgen.ts`): fBm elevation + moisture → terrain
+  classification; capitals placed at opposite edge bands; 8–12 neutral cities
+  by spacing-constrained rejection sampling; validated by capital↔capital land
+  connectivity with deterministic re-rolls on failure. City footprints are
+  stamped to plains (safe/passable).
+- **Terrain-aware movement**: heavy units are halved in forest/hills, both
+  slowed in water; mountains are walls — units slide along them (axis-separated
+  collision).
+- **Units now have a kind** (light/heavy); the start army (36 light + 12 heavy)
+  spawns around the player capital.
+- **Render**: terrain pre-rendered once to an offscreen world-sized canvas;
+  cities drawn with capital stars; heavy units drawn with an inner ring;
+  `T` toggles the terrain-grid debug overlay.
+- **Tests**: terrain modifiers + flood-fill connectivity (synthetic walls);
+  `generateMap` validated for 10 seeds (all connected, spaced, capitals on
+  land) plus determinism.
+
 ## M1 — Selection & Orders
 
 - **Lasso select:** freehand left-drag draws a polygon; release selects all

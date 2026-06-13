@@ -10,6 +10,7 @@ import { LassoCapture, pointInPolygon } from './input/lasso';
 import { PathCapture, resamplePath } from './input/orders';
 import { Camera } from './input/camera-input';
 import { Renderer, type RenderOverlays } from './render/renderer';
+import { createTerrainCanvas } from './render/terrain-layer';
 import { assignPath, stepMovement, stopUnit } from './sim/movement';
 
 // ── Seed ─────────────────────────────────────────────────────────────────────
@@ -29,7 +30,15 @@ const canvas = document.getElementById('game') as HTMLCanvasElement;
 const camera = new Camera(state.world.width, state.world.height);
 camera.attach(canvas);
 const renderer = new Renderer(canvas, camera);
+renderer.setTerrain(createTerrainCanvas(state.terrain));
 window.addEventListener('resize', () => renderer.resize());
+
+// Center the camera on the player capital so the army is on screen at start.
+const playerCapital = state.cities.find((c) => c.owner === 'player' && c.isCapital);
+if (playerCapital) {
+  camera.x = playerCapital.pos.x;
+  camera.y = playerCapital.pos.y;
+}
 
 // ── Input state ──────────────────────────────────────────────────────────────
 const lasso = new LassoCapture();
@@ -155,6 +164,11 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
+  if (key === 't') {
+    renderer.showTerrainGrid = !renderer.showTerrainGrid;
+    return;
+  }
+
   if (key === ' ') {
     e.preventDefault();
     // Pause handled in loop (Space): toggle.
@@ -210,11 +224,11 @@ const loop = new GameLoop({
     }
     const sel = selectedUnits().length;
     hud.textContent =
-      `DOTFRONT M1 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
-      `${Math.round(fpsSmoothed)} fps · ${state.units.length} dots · tick ${state.tick}\n` +
+      `DOTFRONT M2 · seed ${seed}${loopPaused ? ' · PAUSED' : ''}\n` +
+      `${Math.round(fpsSmoothed)} fps · ${state.units.length} units · ${state.cities.length} cities · tick ${state.tick}\n` +
       `${sel} selected · ` +
-      `[drag=lasso] [drag w/sel=path] [S=stop] [C=clear] [Esc=deselect] [Space=pause] [H=hash]\n` +
-      `WASD/arrows/edges pan · wheel zooms`;
+      `[drag=lasso] [drag w/sel=path] [S=stop] [C=clear] [Esc=deselect] [Space=pause]\n` +
+      `[T=terrain grid] [H=hash] · WASD/arrows/edges pan · wheel zooms`;
   },
 });
 loop.start();
