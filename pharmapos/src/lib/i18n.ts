@@ -1,0 +1,56 @@
+// Minimal i18n layer. Phase 1 ships English only, but every user-facing string
+// is routed through `t()` so Arabic (and RTL) can be added later without a rewrite.
+
+const en = {
+  app_title: "PharmaPOS",
+  tagline: "Offline-first pharmacy POS",
+  products: "Products",
+  add_product: "Add product",
+  edit_product: "Edit product",
+  search_placeholder: "Search by name, generic, or barcode…",
+  scan_placeholder: "Scan or type a barcode, then Enter",
+  scan_label: "Barcode scanner",
+  no_products: "No products yet. Add your first product or scan a barcode.",
+  no_results: "No products match your search.",
+  name: "Name",
+  generic_name: "Generic name",
+  barcode: "Barcode",
+  form: "Form",
+  strength: "Strength",
+  category: "Category",
+  manufacturer: "Manufacturer",
+  requires_rx: "Requires prescription",
+  controlled: "Controlled substance",
+  vat_rate: "VAT rate (%)",
+  batches: "Batches",
+  add_batch: "Add batch",
+  edit_batch: "Edit batch",
+  batch_no: "Batch number",
+  expiry_date: "Expiry date",
+  currency: "Currency",
+  cost_price: "Cost price",
+  sell_price: "Sell price",
+  qty_on_hand: "Quantity on hand",
+  supplier_id: "Supplier reference",
+  no_batches: "No batches yet for this product.",
+  save: "Save",
+  cancel: "Cancel",
+  delete: "Delete",
+  back: "Back",
+  settings: "Settings",
+  currency_settings: "Currency & VAT",
+  main_currency: "Main currency",
+  fx_rate: "Exchange rate (LBP per 1 USD)",
+  default_vat: "Default VAT rate (%)",
+  device_id: "Device",
+  rx: "Rx",
+  expired: "Expired",
+} as const;
+
+export type TKey = keyof typeof en;
+
+export function t(key: TKey): string {
+  return en[key];
+}
+
+export default en;

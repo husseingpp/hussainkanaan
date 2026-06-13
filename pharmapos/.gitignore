@@ -1,0 +1,15 @@
+# dependencies
+node_modules
+
+# build output
+dist
+dist-ssr
+
+# Tauri / Rust
+src-tauri/target
+src-tauri/gen
+
+# logs & misc
+*.log
+.DS_Store
+*.local

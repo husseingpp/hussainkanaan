@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability set for the PharmaPOS main window. App-defined commands are always available; this only grants core APIs.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

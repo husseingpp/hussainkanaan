@@ -1,0 +1,31 @@
+[package]
+name = "pharmapos"
+version = "0.1.0"
+description = "PharmaPOS — offline-first pharmacy POS"
+authors = ["Hussein Kanaan"]
+edition = "2021"
+rust-version = "1.77"
+
+# The Tauri app is split into a library (so it can be reused/tested and built for
+# mobile later) plus a thin binary entrypoint in `main.rs`.
+[lib]
+name = "pharmapos_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# rusqlite with bundled SQLite → no system sqlite dependency, clean offline/Windows packaging.
+rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite_migration = "1"
+uuid = { version = "1", features = ["v4"] }
+time = { version = "0.3", features = ["formatting"] }
+thiserror = "1"
+
+[features]
+# This feature is used for production builds where `devUrl` is unset.
+custom-protocol = ["tauri/custom-protocol"]
