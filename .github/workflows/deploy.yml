@@ -6,6 +6,7 @@ on:
       - main
       - claude/beautiful-lovelace-rcjqT
       - claude/upbeat-babbage-5CAxl
+      - claude/adoring-edison-63fbb1
   workflow_dispatch:
 
 permissions:
@@ -56,6 +57,19 @@ jobs:
         run: |
           mkdir -p out/cafe-footfall-tracker
           cp -r cafe-footfall-tracker/docs/. out/cafe-footfall-tracker/
+
+      - name: Install DOTFRONT dependencies
+        working-directory: dotfront
+        run: npm ci
+
+      - name: Build DOTFRONT game
+        working-directory: dotfront
+        run: npm run build
+
+      - name: Inject DOTFRONT game into portfolio output
+        run: |
+          mkdir -p out/dotfront
+          cp -r dotfront/dist/. out/dotfront/
 
       - name: Disable Jekyll processing
         run: touch out/.nojekyll
