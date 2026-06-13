@@ -3,8 +3,11 @@
 
 import { CONFIG } from '../config';
 import { generateMap } from '../sim/mapgen';
+import { UNIT_TYPES, type UnitKind } from '../sim/unit-types';
 import { isPassable, type TerrainGrid } from '../sim/terrain';
 import { mulberry32, randRange, type Rng } from './rng';
+
+export type { UnitKind } from '../sim/unit-types';
 
 export interface Vec2 {
   x: number;
@@ -13,7 +16,19 @@ export interface Vec2 {
 
 export type Owner = 'player' | 'enemy' | 'neutral';
 export type MatchPhase = 'playing' | 'won' | 'lost' | 'draw';
-export type UnitKind = 'light' | 'heavy';
+export type FormationType = 'line' | 'column' | 'wedge' | 'box';
+
+export interface Squad {
+  id: number;           // 1–9
+  owner: Owner;
+  formation: FormationType;
+}
+
+export interface Tracer {
+  from: Vec2;
+  to: Vec2;
+  ageMs: number;        // increased by renderer each frame; removed when >= TRACER_DURATION_MS
+}
 
 export interface Unit {
   id: number;
@@ -30,10 +45,14 @@ export interface Unit {
   stopped: boolean;
   selected: boolean;
 
+  // ── Squad / formation (M8) ──
+  squadId: number | null;
+  squadSlot: number;
+
   // ── Combat state (M3) ──
   hp: number;
   maxHp: number;
-  /** Base damage per second on plains at full morale. */
+  /** Base damage per second at optimal range on plains at full morale. */
   dps: number;
   morale: number;
   /** True this tick if an enemy is within attack range. */
@@ -54,7 +73,7 @@ export interface Unit {
 
 export interface ProductionJob {
   kind: UnitKind;
-  /** Seconds elapsed toward SPAWN_TIME. */
+  /** Seconds elapsed toward the unit's spawnTime. */
   progress: number;
   /** Optional point units march to after spawning. */
   rallyPoint: { x: number; y: number } | null;
@@ -114,13 +133,16 @@ export interface GameState {
   /** Match phase and elapsed time in seconds (M6). */
   matchPhase: MatchPhase;
   matchTime: number;
+  /** Numbered squads — player assigns with Ctrl+1–9 (M8). */
+  squads: Squad[];
+  /** Short-lived gun-fire tracer lines; aged and cleared by the renderer (M8). */
+  tracers: Tracer[];
 }
 
 let nextUnitId = 0;
 
 export function makeUnit(owner: Owner, kind: UnitKind, x: number, y: number): Unit {
-  const heavy = kind === 'heavy';
-  const maxHp = heavy ? CONFIG.UNIT.HEAVY_HP : CONFIG.UNIT.LIGHT_HP;
+  const def = UNIT_TYPES[kind];
   return {
     id: nextUnitId++,
     owner,
@@ -128,14 +150,16 @@ export function makeUnit(owner: Owner, kind: UnitKind, x: number, y: number): Un
     pos: { x, y },
     prevPos: { x, y },
     vel: { x: 0, y: 0 },
-    radius: heavy ? CONFIG.UNIT.HEAVY_RADIUS : CONFIG.UNIT.LIGHT_RADIUS,
+    radius: def.radius,
     waypoints: [],
     waypointIdx: 0,
     stopped: true,
     selected: false,
-    hp: maxHp,
-    maxHp,
-    dps: heavy ? CONFIG.UNIT.HEAVY_DPS : CONFIG.UNIT.LIGHT_DPS,
+    squadId: null,
+    squadSlot: 0,
+    hp: def.maxHp,
+    maxHp: def.maxHp,
+    dps: def.dps,
     morale: CONFIG.COMBAT.MORALE_MAX,
     inCombat: false,
     attacking: false,
@@ -184,15 +208,21 @@ export function createInitialState(seed: number): GameState {
   const enemyCapital =
     map.cities.find((c) => c.owner === 'enemy' && c.isCapital) ?? map.cities[map.cities.length - 1]!;
 
+  const { START_INFANTRY, START_TANKS, START_ARTILLERY, START_DRONES } = CONFIG.MAP;
   const units: Unit[] = [];
-  spawnArmy(units, rng, map.grid, playerCapital.pos, 'player', 'light', CONFIG.MAP.START_LIGHT);
-  spawnArmy(units, rng, map.grid, playerCapital.pos, 'player', 'heavy', CONFIG.MAP.START_HEAVY);
-  spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'light', CONFIG.MAP.START_LIGHT);
-  spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'heavy', CONFIG.MAP.START_HEAVY);
+  spawnArmy(units, rng, map.grid, playerCapital.pos, 'player', 'infantry', START_INFANTRY);
+  spawnArmy(units, rng, map.grid, playerCapital.pos, 'player', 'tank', START_TANKS);
+  spawnArmy(units, rng, map.grid, playerCapital.pos, 'player', 'artillery', START_ARTILLERY);
+  spawnArmy(units, rng, map.grid, playerCapital.pos, 'player', 'drone', START_DRONES);
+  spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'infantry', START_INFANTRY);
+  spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'tank', START_TANKS);
+  spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'artillery', START_ARTILLERY);
+  spawnArmy(units, rng, map.grid, enemyCapital.pos, 'enemy', 'drone', START_DRONES);
 
   const money = { player: CONFIG.ECONOMY.START_MONEY, enemy: CONFIG.ECONOMY.START_MONEY };
   return {
     tick: 0, rng, units, cities: map.cities, terrain: map.grid, world, money,
     territory: null, matchPhase: 'playing', matchTime: 0,
+    squads: [], tracers: [],
   };
 }

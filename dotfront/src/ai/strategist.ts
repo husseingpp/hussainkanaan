@@ -4,10 +4,10 @@
 
 import { CONFIG } from '../config';
 import type { GameState, Owner, Vec2 } from '../core/state';
+import { UNIT_TYPES, type UnitKind } from '../sim/unit-types';
 import { runCommander } from './commander';
 
 const AI = CONFIG.AI;
-const EC = CONFIG.ECONOMY;
 
 export interface AiTarget {
   pos: Vec2;
@@ -28,21 +28,43 @@ export function stepAI(state: GameState): void {
 
 // ── Economy ──────────────────────────────────────────────────────────────────
 
+// Target army composition: infantry 50%, tanks 25%, artillery 15%, drones 10%
+const COMPOSITION: [UnitKind, number][] = [
+  ['infantry', 0.50],
+  ['tank',     0.25],
+  ['artillery',0.15],
+  ['drone',    0.10],
+];
+
 function runEconomy(state: GameState): void {
-  const lights = state.units.filter((u) => u.owner === 'enemy' && u.kind === 'light' && u.hp > 0).length;
-  const heavies = state.units.filter((u) => u.owner === 'enemy' && u.kind === 'heavy' && u.hp > 0).length;
-  // Aim for ~3:1 light:heavy ratio.
-  const wantHeavy = heavies === 0 || lights / heavies >= 3;
+  const enemyUnits = state.units.filter((u) => u.owner === 'enemy' && u.hp > 0);
+  const total = enemyUnits.length || 1;
+
+  // Find the unit kind that is most under its target fraction.
+  let wantKind: UnitKind = 'infantry';
+  let worstShortfall = -Infinity;
+  for (const [kind, target] of COMPOSITION) {
+    const current = enemyUnits.filter((u) => u.kind === kind).length / total;
+    const shortfall = target - current;
+    if (shortfall > worstShortfall) { worstShortfall = shortfall; wantKind = kind; }
+  }
 
   for (const city of state.cities) {
     if (city.owner !== 'enemy' || city.productionQueue.length > 0) continue;
-
-    if (wantHeavy && state.money.enemy >= EC.HEAVY_COST + AI.MONEY_RESERVE) {
-      state.money.enemy -= EC.HEAVY_COST;
-      city.productionQueue.push({ kind: 'heavy', progress: 0, rallyPoint: null });
-    } else if (state.money.enemy >= EC.LIGHT_COST + AI.MONEY_RESERVE) {
-      state.money.enemy -= EC.LIGHT_COST;
-      city.productionQueue.push({ kind: 'light', progress: 0, rallyPoint: null });
+    const def = UNIT_TYPES[wantKind];
+    if (state.money.enemy >= def.cost + AI.MONEY_RESERVE) {
+      state.money.enemy -= def.cost;
+      city.productionQueue.push({ kind: wantKind, progress: 0, rallyPoint: null });
+    } else {
+      // Fall back to cheapest affordable unit.
+      const affordable = COMPOSITION
+        .map(([k]) => k)
+        .filter((k) => state.money.enemy >= UNIT_TYPES[k].cost + AI.MONEY_RESERVE)
+        .sort((a, b) => UNIT_TYPES[a].cost - UNIT_TYPES[b].cost)[0];
+      if (affordable) {
+        state.money.enemy -= UNIT_TYPES[affordable].cost;
+        city.productionQueue.push({ kind: affordable, progress: 0, rallyPoint: null });
+      }
     }
   }
 }

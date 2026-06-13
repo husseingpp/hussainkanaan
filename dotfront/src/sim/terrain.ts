@@ -2,7 +2,7 @@
 // and grid sampling only, no DOM/canvas. Terrain codes are numeric so the grid
 // can be a Uint8Array (typed array, §8).
 
-import { CONFIG } from '../config';
+import type { UnitTypeDef } from './unit-types';
 
 export const Terrain = {
   Plains: 0,
@@ -51,12 +51,13 @@ export function isLandType(t: TerrainType): boolean {
   return t === Terrain.Plains || t === Terrain.Forest || t === Terrain.Hills;
 }
 
-export function speedMul(t: TerrainType, isHeavy: boolean): number {
-  return (isHeavy ? CONFIG.TERRAIN.SPEED_HEAVY : CONFIG.TERRAIN.SPEED_LIGHT)[t]!;
+export function speedMul(t: TerrainType, def: UnitTypeDef): number {
+  if (def.flying) return t === Terrain.Mountain ? 0 : 1;
+  return def.terrainSpeed[t] ?? 0;
 }
 
-export function damageMul(t: TerrainType, isHeavy: boolean): number {
-  return (isHeavy ? CONFIG.TERRAIN.DAMAGE_HEAVY : CONFIG.TERRAIN.DAMAGE_LIGHT)[t]!;
+export function damageMul(t: TerrainType, def: UnitTypeDef): number {
+  return def.terrainDamage[t] ?? 1;
 }
 
 /**

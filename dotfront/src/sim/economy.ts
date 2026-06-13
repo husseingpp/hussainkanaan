@@ -13,6 +13,7 @@
 import { CONFIG } from '../config';
 import type { SpatialHash } from '../core/spatial-hash';
 import { makeUnit, type City, type GameState, type Owner, type TerritoryData, type Unit } from '../core/state';
+import { UNIT_TYPES } from './unit-types';
 import { assignPath } from './movement';
 
 const E = CONFIG.ECONOMY;
@@ -54,7 +55,7 @@ export function computeSupply(
     // Units inside a friendly city radius cost no upkeep.
     const inCity = ownedCities.some((c) => isInsideCity(u, c));
     if (!inCity) {
-      fieldWeight += u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP;
+      fieldWeight += UNIT_TYPES[u.kind].supplyWeight;
     }
   }
   return { fieldWeight, capacity };
@@ -73,7 +74,7 @@ function applyUpkeepAndStarvation(state: GameState, dt: number): void {
 
     // Money upkeep (floors at 0).
     const moneyDrain = fieldUnits.reduce(
-      (s, u) => s + (u.kind === 'heavy' ? E.HEAVY_MONEY_UPKEEP : E.LIGHT_MONEY_UPKEEP) * dt,
+      (s, u) => s + UNIT_TYPES[u.kind].moneyUpkeep * dt,
       0,
     );
     if (owner === 'player') state.money.player = Math.max(0, state.money.player - moneyDrain);
@@ -104,7 +105,7 @@ function applyGlobalStarvation(
 ): void {
   const capacity = ownedCities.length * E.SUPPLY_PER_CITY;
   const fieldWeight = fieldUnits.reduce(
-    (s, u) => s + (u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP), 0,
+    (s, u) => s + UNIT_TYPES[u.kind].supplyWeight, 0,
   );
   if (fieldWeight <= capacity) return;
   starveOverCap(fieldUnits, fieldWeight - capacity, ownedCities, dt);
@@ -150,7 +151,7 @@ function applyRegionalStarvation(
     if (!region) continue;
     const capacity = region.supplyCapacity; // 0 for pockets
     const fieldWeight = units.reduce(
-      (s, u) => s + (u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP), 0,
+      (s, u) => s + UNIT_TYPES[u.kind].supplyWeight, 0,
     );
     if (fieldWeight > capacity) {
       starveOverCap(units, fieldWeight - capacity, ownedCities, dt);
@@ -172,7 +173,7 @@ function starveOverCap(units: Unit[], overWeight: number, cities: City[], dt: nu
   let covered = 0;
   for (const u of units) {
     if (covered >= overWeight) break;
-    const w = u.kind === 'heavy' ? E.HEAVY_UPKEEP : E.LIGHT_UPKEEP;
+    const w = UNIT_TYPES[u.kind].supplyWeight;
     u.starving = true;
     u.hp -= E.STARVATION_DPS * dt;
     covered += w;
@@ -241,7 +242,7 @@ function stepProduction(state: GameState, dt: number): void {
     const job = city.productionQueue[0]!;
     job.progress += dt;
 
-    if (job.progress >= E.SPAWN_TIME) {
+    if (job.progress >= UNIT_TYPES[job.kind].spawnTime) {
       // Spawn on a random edge of the city using the seeded RNG.
       const angle = state.rng() * Math.PI * 2;
       const sx = city.pos.x + Math.cos(angle) * (city.radius + 8);

@@ -1,24 +1,27 @@
 // Combat, morale, healing (BLUEPRINT.md §5.2). Pure: reads/writes GameState,
 // no DOM/canvas/Date.now/Math.random. Runs before movement each tick.
 //
-// Key rule (§5.2): a unit "attacking" (engaging while under a move order) takes
-// +30% incoming damage and loses morale 2× faster — this creates the
-// defend-bait-counterattack meta. Terrain cuts damage too (§5.4).
+// M8 ranged combat: each unit type has short/medium/long range bands; damage
+// falls off by range. Artillery deals 50% splash in a radius around the target.
+// Tracer lines are pushed to state.tracers for the renderer to display.
 
 import { CONFIG } from '../config';
 import type { SpatialHash } from '../core/spatial-hash';
 import type { City, GameState, Unit } from '../core/state';
+import { UNIT_TYPES, maxRange, rangeBandMul } from './unit-types';
 import { Terrain, damageMul, terrainAt, type TerrainType } from './terrain';
 
 const C = CONFIG.COMBAT;
 
 // Reused scratch arrays — zero allocation in the hot loop (BLUEPRINT.md §8).
 const inRange: Unit[] = [];
+const splashTargets: Unit[] = [];
 
-/** Damage per second this unit outputs, after morale and terrain modifiers. */
-export function attackOutput(unit: Unit, terrain: TerrainType): number {
+/** Damage per second this unit outputs at `dist` px, after morale and terrain. */
+export function attackOutput(unit: Unit, terrain: TerrainType, dist: number): number {
+  const def = UNIT_TYPES[unit.kind];
   const moraleMul = unit.morale < C.MORALE_LOW ? C.LOW_MORALE_DAMAGE_MULT : 1;
-  return unit.dps * moraleMul * damageMul(terrain, unit.kind === 'heavy');
+  return unit.dps * moraleMul * rangeBandMul(def, dist) * damageMul(terrain, def);
 }
 
 /** Multiplier on damage a unit receives (attackers are more exposed). */
@@ -26,8 +29,9 @@ export function incomingMult(target: Unit): number {
   return target.attacking ? C.ATTACKER_DAMAGE_MULT : 1;
 }
 
-/** Nearest enemy of `unit` within `range`, or null. Uses the spatial hash. */
-function nearestEnemy(unit: Unit, hash: SpatialHash<Unit>, range: number): Unit | null {
+/** Nearest enemy of `unit` within its max range, or null. Uses the spatial hash. */
+function nearestEnemy(unit: Unit, hash: SpatialHash<Unit>): { enemy: Unit; dist: number } | null {
+  const range = maxRange(UNIT_TYPES[unit.kind]);
   hash.queryRadius(unit.pos.x, unit.pos.y, range, inRange);
   let best: Unit | null = null;
   let bestD2 = Infinity;
@@ -41,7 +45,8 @@ function nearestEnemy(unit: Unit, hash: SpatialHash<Unit>, range: number): Unit 
       best = other;
     }
   }
-  return best;
+  if (!best) return null;
+  return { enemy: best, dist: Math.sqrt(bestD2) };
 }
 
 /** Is any living enemy within `radius` of the unit? (For "safe to heal".) */
@@ -80,9 +85,12 @@ function nearestFriendlyCity(unit: Unit, cities: readonly City[]): City | null {
   return best;
 }
 
+// Per-unit attack-distance cache (populated in Pass 1, consumed in Pass 2).
+const attackDist = new Map<number, number>();
+
 export function stepCombat(state: GameState, hash: SpatialHash<Unit>, dt: number): void {
   const { units, cities, terrain } = state;
-  const range = CONFIG.UNIT.ATTACK_RANGE;
+  attackDist.clear();
 
   // Pass 1: targeting + engagement flags. Must finish before damage so each
   // target's `attacking` flag is known when computing incoming damage.
@@ -93,20 +101,41 @@ export function stepCombat(state: GameState, hash: SpatialHash<Unit>, dt: number
     u.target = null;
     if (u.hp <= 0) continue;
 
-    const enemy = nearestEnemy(u, hash, range);
-    if (enemy) {
-      u.target = enemy;
+    const found = nearestEnemy(u, hash);
+    if (found) {
+      u.target = found.enemy;
       u.inCombat = true;
-      // Engaging while moving into contact = attacking (§5.1).
       u.attacking = u.waypoints.length > 0 && u.routTimer <= 0;
+      attackDist.set(u.id, found.dist);
     }
   }
 
   // Pass 2: accumulate damage onto targets.
   for (const u of units) {
     if (!u.target) continue;
-    const out = attackOutput(u, terrainAt(terrain, u.pos.x, u.pos.y));
-    u.target.dmgTaken += out * incomingMult(u.target) * dt;
+    const dist = attackDist.get(u.id) ?? 0;
+    const out = attackOutput(u, terrainAt(terrain, u.pos.x, u.pos.y), dist);
+    const dmg = out * incomingMult(u.target) * dt;
+    u.target.dmgTaken += dmg;
+
+    // Artillery splash: 50% of the hit spreads to nearby enemies.
+    const def = UNIT_TYPES[u.kind];
+    if (def.splashRadius > 0 && dmg > 0) {
+      hash.queryRadius(u.target.pos.x, u.target.pos.y, def.splashRadius, splashTargets);
+      for (const splash of splashTargets) {
+        if (splash === u.target || splash.owner === u.owner || splash.hp <= 0) continue;
+        splash.dmgTaken += dmg * 0.5;
+      }
+    }
+
+    // Push a tracer line for the renderer.
+    if (dmg > 0) {
+      state.tracers.push({
+        from: { x: u.pos.x, y: u.pos.y },
+        to:   { x: u.target.pos.x, y: u.target.pos.y },
+        ageMs: 0,
+      });
+    }
   }
 
   // Pass 3: apply damage, morale, rout, water drain, healing, flash decay.

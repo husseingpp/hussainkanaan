@@ -16,23 +16,12 @@ export const CONFIG = {
   },
 
   UNIT: {
-    /** Light unit visual radius (§5.1). */
-    LIGHT_RADIUS: 4,
-    /** Heavy unit visual radius (§5.1) — drawn with an inner ring. */
-    HEAVY_RADIUS: 6,
-    /** Base march speed on plains, px/s (§5.1). */
-    LIGHT_SPEED: 60,
-    HEAVY_SPEED: 35,
-    /** Hit points (§5.1). */
-    LIGHT_HP: 100,
-    HEAVY_HP: 250,
-    /** Damage per second on plains, full morale (§5.1). */
-    LIGHT_DPS: 10,
-    HEAVY_DPS: 25,
-    /** Auto-attack engagement range (§5.1) — also the separation radius. */
-    INTERACTION_RADIUS: 14,
-    /** A unit auto-attacks the nearest enemy within this range (§5.1). */
-    ATTACK_RANGE: 14,
+    /** Boids separation radius — units closer than this push apart, px. */
+    INTERACTION_RADIUS: 20,
+    /** Visual duration of a gun-fire tracer flash, ms (M8). */
+    TRACER_DURATION_MS: 200,
+    /** Spacing between adjacent formation slots, world px (M8). */
+    FORMATION_SPACING: 18,
   },
 
   /** Combat, morale & healing (BLUEPRINT.md §5.2). */
@@ -107,18 +96,9 @@ export const CONFIG = {
     DEFAULT_SEED: 1337,
   },
 
-  /** Terrain grid + per-type modifiers (BLUEPRINT.md §5.4, MVP set). Speed and
-   *  damage multipliers are indexed by terrain code (see sim/terrain.ts). */
+  /** Terrain grid (BLUEPRINT.md §5.4). Per-unit modifiers moved to unit-types.ts. */
   TERRAIN: {
     CELL_SIZE: 32,
-    /** Speed multiplier [plains, forest, hills, water, mountain] for light units. */
-    SPEED_LIGHT: [1, 1, 1, 0.5, 0],
-    /** Speed multiplier for heavy units (forest/hills −50%). */
-    SPEED_HEAVY: [1, 0.5, 0.5, 0.5, 0],
-    /** Damage multiplier for light units (used from M3). */
-    DAMAGE_LIGHT: [1, 1, 1, 0.6, 1],
-    /** Damage multiplier for heavy units (forest/hills −60%). */
-    DAMAGE_HEAVY: [1, 0.4, 0.4, 0.6, 1],
     /** Water HP drain per second (from M3). */
     WATER_HP_DRAIN: 1,
   },
@@ -146,8 +126,10 @@ export const CONFIG = {
     /** Max whole-map re-rolls before accepting the best effort. */
     MAX_REROLLS: 40,
     /** Starting army spawned near the player capital (M2 demo). */
-    START_LIGHT: 36,
-    START_HEAVY: 12,
+    START_INFANTRY: 30,
+    START_TANKS: 8,
+    START_ARTILLERY: 4,
+    START_DRONES: 6,
     /** Radius around the capital within which the start army spawns. */
     SPAWN_RADIUS: 140,
   },
@@ -196,26 +178,12 @@ export const CONFIG = {
     CITY_INCOME: 10,
     /** Supply weight capacity each owned city provides. */
     SUPPLY_PER_CITY: 5,
-    /** Supply weight of a light unit in the field. */
-    LIGHT_UPKEEP: 1,
-    /** Supply weight of a heavy unit in the field. */
-    HEAVY_UPKEEP: 2,
-    /** Money upkeep drained per light field unit per second. */
-    LIGHT_MONEY_UPKEEP: 1,
-    /** Money upkeep drained per heavy field unit per second. */
-    HEAVY_MONEY_UPKEEP: 2,
     /** HP/s drained from over-supply-cap field units. */
     STARVATION_DPS: 2,
     /** Seconds a unit must hold a city uncontested to capture it. */
     CAPTURE_TIME: 5,
-    /** Money cost to produce a light unit. */
-    LIGHT_COST: 200,
-    /** Money cost to produce a heavy unit. */
-    HEAVY_COST: 400,
-    /** Seconds to produce a unit at a city. */
-    SPAWN_TIME: 2,
     /** Starting money for each player. */
-    START_MONEY: 300,
+    START_MONEY: 600,
   },
 
   COLORS: {

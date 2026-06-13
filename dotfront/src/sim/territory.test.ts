@@ -34,6 +34,8 @@ function makeState(units: Unit[], cities: City[], terrain?: TerrainGrid): GameSt
     territory: null,
     matchPhase: 'playing',
     matchTime: 0,
+    squads: [],
+    tracers: [],
   };
 }
 
@@ -41,7 +43,7 @@ function makeState(units: Unit[], cities: City[], terrain?: TerrainGrid): GameSt
 
 describe('territory ownership', () => {
   it('a player unit marks nearby cells as player territory', () => {
-    const u = makeUnit('player', 'light', 200, 200);
+    const u = makeUnit('player', 'infantry', 200, 200);
     const state = makeState([u], []);
     const t = computeTerritories(state);
 
@@ -52,7 +54,7 @@ describe('territory ownership', () => {
   });
 
   it('an enemy unit marks cells as enemy territory', () => {
-    const u = makeUnit('enemy', 'light', 800, 600);
+    const u = makeUnit('enemy', 'infantry', 800, 600);
     const state = makeState([u], []);
     const t = computeTerritories(state);
 
@@ -62,8 +64,8 @@ describe('territory ownership', () => {
   });
 
   it('overlapping units from both sides mark cells contested', () => {
-    const p = makeUnit('player', 'light', 400, 400);
-    const e = makeUnit('enemy', 'light', 400, 400);
+    const p = makeUnit('player', 'infantry', 400, 400);
+    const e = makeUnit('enemy', 'infantry', 400, 400);
     const state = makeState([p, e], []);
     const t = computeTerritories(state);
 
@@ -74,7 +76,7 @@ describe('territory ownership', () => {
   });
 
   it('dead units do not create territory', () => {
-    const u = makeUnit('player', 'light', 300, 300);
+    const u = makeUnit('player', 'infantry', 300, 300);
     u.hp = 0;
     const state = makeState([u], []);
     const t = computeTerritories(state);
@@ -101,7 +103,7 @@ describe('region detection', () => {
   it('a unit connected to a city region is NOT a pocket', () => {
     // City at (500, 500); unit at (500, 500) — same cell, same region.
     const city = makeCity(0, 'player', 500, 500);
-    const u = makeUnit('player', 'light', 500, 500);
+    const u = makeUnit('player', 'infantry', 500, 500);
     const state = makeState([u], [city]);
     const t = computeTerritories(state);
 
@@ -116,7 +118,7 @@ describe('region detection', () => {
   it('an isolated unit far from any city IS a pocket', () => {
     // City near left edge; unit near right edge (far apart).
     const city = makeCity(0, 'player', 100, 800);
-    const u = makeUnit('player', 'light', 2300, 800); // >2000px away
+    const u = makeUnit('player', 'infantry', 2300, 800); // >2000px away
     const state = makeState([u], [city]);
     const t = computeTerritories(state);
 
@@ -133,7 +135,7 @@ describe('region detection', () => {
   it('a region with two cities has doubled supply capacity', () => {
     const cityA = makeCity(0, 'player', 400, 400);
     const cityB = makeCity(1, 'player', 500, 400); // close enough to share a region
-    const u = makeUnit('player', 'light', 450, 400);
+    const u = makeUnit('player', 'infantry', 450, 400);
     const state = makeState([u], [cityA, cityB]);
     const t = computeTerritories(state);
 
@@ -159,8 +161,8 @@ describe('mountain blocking', () => {
     const midCol = Math.floor(1200 / CONFIG.TERRAIN.CELL_SIZE);
     for (let r = 0; r < terrainRows; r++) setCell(grid, midCol, r, Terrain.Mountain);
 
-    const left = makeUnit('player', 'light', 1000, 800);
-    const right = makeUnit('player', 'light', 1400, 800);
+    const left = makeUnit('player', 'infantry', 1000, 800);
+    const right = makeUnit('player', 'infantry', 1400, 800);
     const state = makeState([left, right], [], grid);
     const t = computeTerritories(state);
 

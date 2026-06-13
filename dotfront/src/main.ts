@@ -5,7 +5,7 @@ import { CONFIG } from './config';
 import { GameLoop } from './core/loop';
 import { hashSeed } from './core/rng';
 import { SpatialHash } from './core/spatial-hash';
-import { createInitialState, type City, type Unit } from './core/state';
+import { createInitialState, type City, type FormationType, type Unit } from './core/state';
 import { LassoCapture, pointInPolygon } from './input/lasso';
 import { PathCapture, resamplePath } from './input/orders';
 import { Camera } from './input/camera-input';
@@ -13,6 +13,8 @@ import { Renderer, type RenderOverlays } from './render/renderer';
 import { createTerrainCanvas } from './render/terrain-layer';
 import { computeSupply } from './sim/economy';
 import { assignPath, stopUnit } from './sim/movement';
+import { formationWaypoint } from './sim/formations';
+import { UNIT_TYPES, type UnitKind } from './sim/unit-types';
 import { stepSimulation } from './sim/simulate';
 
 // ── Seed ─────────────────────────────────────────────────────────────────────
@@ -61,17 +63,24 @@ let dragMode: DragMode = 'none';
 // ── Production menu ───────────────────────────────────────────────────────────
 let cityMenu: City | null = null;
 const prodMenu = document.getElementById('city-menu') as HTMLDivElement;
-const btnLight = document.getElementById('btn-light') as HTMLButtonElement;
-const btnHeavy = document.getElementById('btn-heavy') as HTMLButtonElement;
 const btnClose = document.getElementById('btn-close') as HTMLButtonElement;
+
+const PROD_KINDS: UnitKind[] = ['infantry', 'tank', 'artillery', 'drone'];
+const prodBtns: Record<UnitKind, HTMLButtonElement> = {
+  infantry:  document.getElementById('btn-infantry')  as HTMLButtonElement,
+  tank:      document.getElementById('btn-tank')      as HTMLButtonElement,
+  artillery: document.getElementById('btn-artillery') as HTMLButtonElement,
+  drone:     document.getElementById('btn-drone')     as HTMLButtonElement,
+};
 
 function updateMenuButtons(): void {
   if (!cityMenu) return;
   const m = state.money.player;
-  btnLight.textContent = `Light (${CONFIG.ECONOMY.LIGHT_COST}💰)`;
-  btnHeavy.textContent = `Heavy (${CONFIG.ECONOMY.HEAVY_COST}💰)`;
-  btnLight.disabled = m < CONFIG.ECONOMY.LIGHT_COST;
-  btnHeavy.disabled = m < CONFIG.ECONOMY.HEAVY_COST;
+  for (const kind of PROD_KINDS) {
+    const def = UNIT_TYPES[kind];
+    prodBtns[kind].textContent = `${def.displayName} (${def.cost}💰)`;
+    prodBtns[kind].disabled = m < def.cost;
+  }
 }
 
 function openCityMenu(city: City): void {
@@ -90,19 +99,15 @@ function closeCityMenu(): void {
 
 btnClose.addEventListener('click', closeCityMenu);
 
-btnLight.addEventListener('click', () => {
-  if (!cityMenu || state.money.player < CONFIG.ECONOMY.LIGHT_COST) return;
-  state.money.player -= CONFIG.ECONOMY.LIGHT_COST;
-  cityMenu.productionQueue.push({ kind: 'light', progress: 0, rallyPoint: null });
-  closeCityMenu();
-});
-
-btnHeavy.addEventListener('click', () => {
-  if (!cityMenu || state.money.player < CONFIG.ECONOMY.HEAVY_COST) return;
-  state.money.player -= CONFIG.ECONOMY.HEAVY_COST;
-  cityMenu.productionQueue.push({ kind: 'heavy', progress: 0, rallyPoint: null });
-  closeCityMenu();
-});
+for (const kind of PROD_KINDS) {
+  prodBtns[kind].addEventListener('click', () => {
+    const def = UNIT_TYPES[kind];
+    if (!cityMenu || state.money.player < def.cost) return;
+    state.money.player -= def.cost;
+    cityMenu.productionQueue.push({ kind, progress: 0, rallyPoint: null });
+    closeCityMenu();
+  });
+}
 
 function selectedUnits(): Unit[] {
   return state.units.filter((u) => u.selected);
@@ -122,19 +127,84 @@ function deselectAll(): void {
   overlays.groupPath = [];
 }
 
-/** Quick move order: send every selected unit toward a single target point. */
+// ── Squad helpers ────────────────────────────────────────────────────────────
+
+function assignSquad(units: Unit[], squadId: number): void {
+  let squad = state.squads.find((s) => s.id === squadId);
+  if (!squad) {
+    squad = { id: squadId, owner: 'player', formation: 'line' };
+    state.squads.push(squad);
+  }
+  // Reassign only the provided units; preserve existing slots for others.
+  let slot = 0;
+  for (const u of units) {
+    u.squadId = squadId;
+    u.squadSlot = slot++;
+  }
+}
+
+function selectSquad(squadId: number): void {
+  deselectAll();
+  for (const u of state.units) {
+    if (u.owner === 'player' && u.hp > 0 && u.squadId === squadId) u.selected = true;
+  }
+  overlays.groupPath = [];
+}
+
+function selectedSquadId(): number | null {
+  const sel = state.units.filter((u) => u.selected && u.owner === 'player');
+  if (sel.length === 0) return null;
+  const id = sel[0]!.squadId;
+  if (id === null) return null;
+  return sel.every((u) => u.squadId === id) ? id : null;
+}
+
+function cycleFormation(squadId: number | null): void {
+  if (squadId === null) return;
+  const squad = state.squads.find((s) => s.id === squadId);
+  if (!squad) return;
+  const order: FormationType[] = ['line', 'column', 'wedge', 'box'];
+  const idx = order.indexOf(squad.formation);
+  squad.formation = order[(idx + 1) % order.length]!;
+}
+
+/** Quick move order: send every selected unit toward a target point.
+ *  If all selected units share a squad, their waypoints are offset into formation. */
 function issueMoveOrder(tx: number, ty: number): void {
   const sel = controllableSelected();
   if (sel.length === 0) return;
+
   let cx = 0;
   let cy = 0;
+  for (const u of sel) { cx += u.pos.x; cy += u.pos.y; }
+  cx /= sel.length;
+  cy /= sel.length;
+
+  // Compute facing vector from centroid to target.
+  const dx = tx - cx;
+  const dy = ty - cy;
+  const len = Math.hypot(dx, dy);
+  const fx = len > 0 ? dx / len : 0;
+  const fy = len > 0 ? dy / len : 1;
+
+  // Formation: apply if all selected units share one squad.
+  const squadId = selectedSquadId();
+  const squad = squadId !== null ? state.squads.find((s) => s.id === squadId) : null;
+
   for (const u of sel) {
-    assignPath(u, [{ x: tx, y: ty }]);
-    cx += u.pos.x;
-    cy += u.pos.y;
+    let wp: { x: number; y: number };
+    if (squad) {
+      wp = formationWaypoint(
+        { x: tx, y: ty }, fx, fy,
+        u.squadSlot, sel.length, squad.formation, CONFIG.UNIT.FORMATION_SPACING,
+      );
+    } else {
+      wp = { x: tx, y: ty };
+    }
+    assignPath(u, [wp]);
   }
-  // Draw a line from the group's centroid to the target as feedback.
-  overlays.groupPath = [{ x: cx / sel.length, y: cy / sel.length }, { x: tx, y: ty }];
+
+  overlays.groupPath = [{ x: cx, y: cy }, { x: tx, y: ty }];
 }
 
 // ── Pointer events ────────────────────────────────────────────────────────────
@@ -234,7 +304,24 @@ canvas.addEventListener('pointerup', (e) => {
   } else if (dragMode === 'path') {
     const wps = pathCapture.end(CONFIG.INPUT.PATH_WAYPOINT_SPACING);
     if (wps) {
-      for (const u of controllableSelected()) assignPath(u, wps.map((p) => ({ ...p })));
+      const sel = controllableSelected();
+      const squadId = selectedSquadId();
+      const squad = squadId !== null ? state.squads.find((s) => s.id === squadId) : null;
+      const last = wps[wps.length - 1]!;
+      const prev = wps[wps.length - 2] ?? wps[0]!;
+      const dx = last.x - prev.x;
+      const dy = last.y - prev.y;
+      const len = Math.hypot(dx, dy);
+      const fx = len > 0 ? dx / len : 0;
+      const fy = len > 0 ? dy / len : 1;
+      for (const u of sel) {
+        const path = wps.slice(0, -1).map((p) => ({ ...p }));
+        const finalWp = squad
+          ? formationWaypoint(last, fx, fy, u.squadSlot, sel.length, squad.formation, CONFIG.UNIT.FORMATION_SPACING)
+          : { ...last };
+        path.push(finalWp);
+        assignPath(u, path);
+      }
       overlays.groupPath = wps;
     }
   }
@@ -247,6 +334,18 @@ window.addEventListener('keydown', (e) => {
   // Ignore game hotkeys while typing in a text field or before the match starts.
   if (e.target instanceof HTMLInputElement) return;
   if (!gameStarted) return;
+
+  // Ctrl+1–9: assign selected units to a numbered squad.
+  if (e.ctrlKey && e.key >= '1' && e.key <= '9') {
+    e.preventDefault();
+    assignSquad(selectedUnits().filter((u) => u.owner === 'player'), Number(e.key));
+    return;
+  }
+  // 1–9: select an existing squad.
+  if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key >= '1' && e.key <= '9') {
+    selectSquad(Number(e.key));
+    return;
+  }
 
   const key = e.key.toLowerCase();
 
@@ -262,6 +361,11 @@ window.addEventListener('keydown', (e) => {
 
   if (key === 'd') {
     renderer.showTerritoryDebug = !renderer.showTerritoryDebug;
+    return;
+  }
+
+  if (key === 'f') {
+    cycleFormation(selectedSquadId());
     return;
   }
 
@@ -384,7 +488,14 @@ function updateHud(frameDtMs: number): void {
   hudSupply.textContent = `▦ ${pField}/${pCap}`;
   hudSupply.style.color = pField > pCap ? '#e5484d' : '#4a4a4a';
   hudCities.textContent = `⌂ ${blueCities}`;
-  hudWarn.textContent = pPockets > 0 ? `⚠ ${pPockets} squad${pPockets > 1 ? 's' : ''} cut off — starving` : '';
+  const squadId = selectedSquadId();
+  const squadInfo = squadId !== null
+    ? state.squads.find((s) => s.id === squadId)
+    : null;
+  const formationLabel = squadInfo ? ` · [F] ${squadInfo.formation}` : '';
+  hudWarn.textContent = pPockets > 0
+    ? `⚠ ${pPockets} squad${pPockets > 1 ? 's' : ''} cut off — starving${formationLabel}`
+    : formationLabel.slice(3); // strip ' · ' prefix when no pocket warning
 
   if (debugHud.style.display === 'block') {
     let blue = 0;
@@ -408,7 +519,7 @@ const loop = new GameLoop({
   },
   render: (alpha, frameDtMs) => {
     camera.update(frameDtMs);
-    renderer.render(state, hash, alpha, overlays);
+    renderer.render(state, hash, alpha, overlays, frameDtMs);
     if (gameStarted) maybeShowEndScreen();
     updateHud(frameDtMs);
   },

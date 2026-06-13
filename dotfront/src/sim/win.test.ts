@@ -27,6 +27,8 @@ function makeState(cities: City[], matchTime = 0): GameState {
     territory: null,
     matchPhase: 'playing',
     matchTime,
+    squads: [],
+    tracers: [],
   };
 }
 

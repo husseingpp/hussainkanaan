@@ -11,28 +11,40 @@ import {
   speedMul,
   terrainAt,
 } from './terrain';
+import { UNIT_TYPES } from './unit-types';
+
+const infantry = UNIT_TYPES.infantry;
+const tank     = UNIT_TYPES.tank;
+const drone    = UNIT_TYPES.drone;
 
 describe('terrain modifiers', () => {
-  it('heavy units are slowed in forest and hills, light are not', () => {
-    expect(speedMul(Terrain.Forest, true)).toBe(0.5);
-    expect(speedMul(Terrain.Forest, false)).toBe(1);
-    expect(speedMul(Terrain.Hills, true)).toBe(0.5);
-    expect(speedMul(Terrain.Hills, false)).toBe(1);
+  it('tanks are slower than infantry in forest and hills', () => {
+    expect(speedMul(Terrain.Forest, tank)).toBeCloseTo(0.5);
+    expect(speedMul(Terrain.Forest, infantry)).toBeCloseTo(0.75);
+    expect(speedMul(Terrain.Hills, tank)).toBeCloseTo(0.6);
+    expect(speedMul(Terrain.Hills, infantry)).toBeCloseTo(0.8);
   });
 
-  it('both unit types are slowed in water', () => {
-    expect(speedMul(Terrain.Water, false)).toBe(0.5);
-    expect(speedMul(Terrain.Water, true)).toBe(0.5);
+  it('both infantry and tanks are slowed in water', () => {
+    expect(speedMul(Terrain.Water, infantry)).toBeLessThan(1);
+    expect(speedMul(Terrain.Water, tank)).toBeLessThan(1);
   });
 
   it('mountains are impassable (zero speed)', () => {
-    expect(speedMul(Terrain.Mountain, false)).toBe(0);
-    expect(speedMul(Terrain.Mountain, true)).toBe(0);
+    expect(speedMul(Terrain.Mountain, infantry)).toBe(0);
+    expect(speedMul(Terrain.Mountain, tank)).toBe(0);
   });
 
-  it('heavy damage is cut in forest/hills (§5.4)', () => {
-    expect(damageMul(Terrain.Forest, true)).toBeCloseTo(0.4);
-    expect(damageMul(Terrain.Plains, true)).toBe(1);
+  it('drones ignore terrain speed (flying) except mountains', () => {
+    expect(speedMul(Terrain.Forest, drone)).toBe(1);
+    expect(speedMul(Terrain.Water, drone)).toBe(1);
+    expect(speedMul(Terrain.Mountain, drone)).toBe(0);
+  });
+
+  it('tank damage is cut in forest; infantry less so', () => {
+    expect(damageMul(Terrain.Forest, tank)).toBeCloseTo(0.6);
+    expect(damageMul(Terrain.Plains, tank)).toBe(1.0);
+    expect(damageMul(Terrain.Forest, infantry)).toBeCloseTo(0.8);
   });
 });
 

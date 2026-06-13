@@ -5,6 +5,7 @@
 import { CONFIG } from '../config';
 import type { SpatialHash } from '../core/spatial-hash';
 import type { GameState, Unit, Vec2 } from '../core/state';
+import { UNIT_TYPES } from './unit-types';
 import { isPassable, speedMul, terrainAt } from './terrain';
 
 const { SEPARATION_RADIUS, SEPARATION_ACCEL, SPEED_RELAX_RATE, ARRIVAL_RADIUS, DECEL_RADIUS } =
@@ -13,9 +14,9 @@ const { SEPARATION_RADIUS, SEPARATION_ACCEL, SPEED_RELAX_RATE, ARRIVAL_RADIUS, D
 // Reused scratch array — zero allocation in the hot loop (BLUEPRINT.md §8).
 const neighbors: Unit[] = [];
 
-/** Base march speed for a unit kind on plains. */
+/** Base march speed for a unit on plains. */
 function baseSpeed(unit: Unit): number {
-  return unit.kind === 'heavy' ? CONFIG.UNIT.HEAVY_SPEED : CONFIG.UNIT.LIGHT_SPEED;
+  return UNIT_TYPES[unit.kind].speed;
 }
 
 /** Desired velocity toward the current waypoint at `speed` (already terrain-scaled).
@@ -53,16 +54,16 @@ export function stepMovement(state: GameState, hash: SpatialHash<Unit>, dt: numb
   const { units, world, terrain } = state;
 
   const relax = Math.min(SPEED_RELAX_RATE * dt, 1);
-  const maxSpd = CONFIG.UNIT.LIGHT_SPEED * 1.8;
+  const maxSpd = 90 * 1.8; // drone speed × headroom
 
   for (const unit of units) {
-    // Terrain under the unit scales its march speed (light vs heavy differ).
-    const heavy = unit.kind === 'heavy';
-    const terrainMul = speedMul(terrainAt(terrain, unit.pos.x, unit.pos.y), heavy);
+    const def = UNIT_TYPES[unit.kind];
+    const terrainMul = speedMul(terrainAt(terrain, unit.pos.x, unit.pos.y), def);
     const dv = desiredVel(unit, baseSpeed(unit) * terrainMul);
 
     // Boids separation so units never overlap.
-    hash.queryRadius(unit.pos.x, unit.pos.y, SEPARATION_RADIUS, neighbors);
+    const sepRadius = Math.max(SEPARATION_RADIUS, def.radius * 2.5);
+    hash.queryRadius(unit.pos.x, unit.pos.y, sepRadius, neighbors);
     let sepX = 0;
     let sepY = 0;
     for (const other of neighbors) {
@@ -71,7 +72,7 @@ export function stepMovement(state: GameState, hash: SpatialHash<Unit>, dt: numb
       const dy = unit.pos.y - other.pos.y;
       const dist = Math.hypot(dx, dy);
       if (dist > 1e-6) {
-        const weight = 1 - dist / SEPARATION_RADIUS;
+        const weight = 1 - dist / sepRadius;
         sepX += (dx / dist) * weight;
         sepY += (dy / dist) * weight;
       } else {

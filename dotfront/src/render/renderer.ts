@@ -5,6 +5,7 @@
 import { CONFIG } from '../config';
 import type { SpatialHash } from '../core/spatial-hash';
 import type { GameState, Owner, TerritoryData, Unit, Vec2 } from '../core/state';
+import { UNIT_TYPES } from '../sim/unit-types';
 import type { Camera } from '../input/camera-input';
 
 export interface RenderOverlays {
@@ -56,7 +57,7 @@ export class Renderer {
     this.camera.setViewport(this.cssWidth, this.cssHeight);
   }
 
-  render(state: GameState, hash: SpatialHash<Unit>, alpha: number, overlays: RenderOverlays): void {
+  render(state: GameState, hash: SpatialHash<Unit>, alpha: number, overlays: RenderOverlays, frameDtMs = 0): void {
     const ctx = this.ctx;
     const cam = this.camera;
 
@@ -85,6 +86,7 @@ export class Renderer {
 
     this.drawCities(state);
     if (overlays.groupPath.length > 1) this.drawGroupPath(overlays.groupPath);
+    this.drawTracers(state, frameDtMs);
     this.drawUnits(state, alpha);
 
     if (overlays.lassoPolygon.length > 1) this.drawLasso(overlays.lassoPolygon);
@@ -246,7 +248,7 @@ export class Renderer {
       // Production progress bar below city.
       if (city.productionQueue.length > 0) {
         const job = city.productionQueue[0]!;
-        const frac = job.progress / CONFIG.ECONOMY.SPAWN_TIME;
+        const frac = job.progress / UNIT_TYPES[job.kind].spawnTime;
         const z = this.camera.zoom;
         const w = city.radius * 2;
         const h = 3 / z;
@@ -295,11 +297,13 @@ export class Renderer {
   private drawUnits(state: GameState, alpha: number): void {
     const ctx = this.ctx;
     const amp = CONFIG.COMBAT.SHAKE_AMPLITUDE;
+    const z = this.camera.zoom;
 
     for (const unit of state.units) {
       let x = unit.prevPos.x + (unit.pos.x - unit.prevPos.x) * alpha;
       let y = unit.prevPos.y + (unit.pos.y - unit.prevPos.y) * alpha;
       const color = OWNER_COLOR[unit.owner];
+      const r = unit.radius;
 
       // Combat shake (visual only; render may use Math.random — not sim).
       if (unit.inCombat) {
@@ -309,38 +313,103 @@ export class Renderer {
 
       if (unit.selected) {
         ctx.beginPath();
-        ctx.arc(x, y, unit.radius + 3.5, 0, Math.PI * 2);
+        ctx.arc(x, y, r + 3.5, 0, Math.PI * 2);
         ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5 / this.camera.zoom;
+        ctx.lineWidth = 1.5 / z;
         ctx.globalAlpha = 0.5;
         ctx.stroke();
         ctx.globalAlpha = 1;
       }
 
-      ctx.beginPath();
-      ctx.arc(x, y, unit.radius, 0, Math.PI * 2);
-      // Routing units flicker/fade; starving units fade differently (§7).
       let unitAlpha = 1;
       if (unit.routTimer > 0) unitAlpha = 0.4 + 0.2 * Math.sin(state.tick);
       else if (unit.starving) unitAlpha = 0.5 + 0.15 * Math.sin(state.tick * 3);
       ctx.globalAlpha = unitAlpha;
-      ctx.fillStyle = unit.flashTimer > 0 ? '#FFFFFF' : color;
-      ctx.fill();
+
+      const fillColor = unit.flashTimer > 0 ? '#FFFFFF' : color;
+
+      // Per-type shapes.
+      if (unit.kind === 'infantry') {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+      } else if (unit.kind === 'tank') {
+        const w = r * 1.8, h = r * 1.3;
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(x - w / 2, y - h / 2, w, h);
+        // barrel stub
+        ctx.fillRect(x - 1.5 / z, y - h / 2 - r * 0.7, 3 / z, r * 0.75);
+      } else if (unit.kind === 'artillery') {
+        // Filled triangle pointing up.
+        ctx.beginPath();
+        ctx.moveTo(x, y - r * 1.2);
+        ctx.lineTo(x + r, y + r * 0.8);
+        ctx.lineTo(x - r, y + r * 0.8);
+        ctx.closePath();
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+      } else {
+        // drone: hollow diamond
+        ctx.beginPath();
+        ctx.moveTo(x, y - r);
+        ctx.lineTo(x + r, y);
+        ctx.lineTo(x, y + r);
+        ctx.lineTo(x - r, y);
+        ctx.closePath();
+        ctx.strokeStyle = fillColor;
+        ctx.lineWidth = 1.5 / z;
+        ctx.stroke();
+        // small center dot
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+      }
+
       ctx.globalAlpha = 1;
 
-      // Heavy units get an inner ring (§5.1).
-      if (unit.kind === 'heavy') {
-        ctx.beginPath();
-        ctx.arc(x, y, unit.radius * 0.45, 0, Math.PI * 2);
-        ctx.fillStyle = unit.flashTimer > 0 ? color : CONFIG.COLORS.BACKGROUND;
-        ctx.fill();
+      // Squad number label above unit.
+      if (unit.squadId !== null) {
+        ctx.font = `${Math.round(8 / z)}px monospace`;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(String(unit.squadId), x, y - r - 1 / z);
       }
 
       // HP bar, only when damaged (§5.2).
       if (unit.hp < unit.maxHp && unit.hp > 0) {
-        this.drawHpBar(x, y, unit.radius, unit.hp / unit.maxHp);
+        this.drawHpBar(x, y, r, unit.hp / unit.maxHp);
       }
     }
+  }
+
+  /** Draw short-lived gun-fire tracer lines and age them. Mutates state.tracers. */
+  private drawTracers(state: GameState, frameDtMs: number): void {
+    const ctx = this.ctx;
+    const dur = CONFIG.UNIT.TRACER_DURATION_MS;
+    const z = this.camera.zoom;
+
+    for (const t of state.tracers) {
+      const progress = t.ageMs / dur;
+      ctx.globalAlpha = (1 - progress) * 0.7;
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = 1 / z;
+      ctx.beginPath();
+      ctx.moveTo(t.from.x, t.from.y);
+      ctx.lineTo(t.to.x, t.to.y);
+      ctx.stroke();
+      t.ageMs += frameDtMs;
+    }
+    ctx.globalAlpha = 1;
+
+    // Remove expired tracers.
+    const keep: typeof state.tracers = [];
+    for (const t of state.tracers) {
+      if (t.ageMs < dur) keep.push(t);
+    }
+    state.tracers = keep;
   }
 
   private drawHpBar(x: number, y: number, radius: number, frac: number): void {
