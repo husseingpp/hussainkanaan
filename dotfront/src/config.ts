@@ -23,14 +23,28 @@ export const CONFIG = {
   },
 
   MOVEMENT: {
-    /** Cruising speed of M0 drifting dots, px/s. */
+    /** Cruising speed of drifting dots, px/s. */
     DRIFT_SPEED: 30,
+    /** Ordered march speed (light units at full health on plains), px/s. */
+    PATH_SPEED: 60,
     /** Neighbors closer than this push each other apart, px. */
     SEPARATION_RADIUS: 14,
     /** Separation acceleration at full overlap, px/s². */
     SEPARATION_ACCEL: 600,
-    /** How quickly speed relaxes back to DRIFT_SPEED after separation, 1/s. */
-    SPEED_RELAX_RATE: 2,
+    /** How quickly velocity relaxes toward desired, 1/s (higher = crisper). */
+    SPEED_RELAX_RATE: 12,
+    /** Distance to a waypoint at which we consider it "arrived", px. */
+    ARRIVAL_RADIUS: 8,
+    /** Begin decelerating toward the final waypoint within this distance. */
+    DECEL_RADIUS: 48,
+  },
+
+  /** M1 input constants. */
+  INPUT: {
+    /** Min pointer-travel (world px) before a drag is treated as lasso/path. */
+    DRAG_THRESHOLD: 5,
+    /** Waypoints are placed every N world-px along the drawn path. */
+    PATH_WAYPOINT_SPACING: 20,
   },
 
   /** Spatial hash cell ≈ 2× unit interaction radius (BLUEPRINT.md §4). */

@@ -1,5 +1,23 @@
 # Changelog
 
+## M1 — Selection & Orders
+
+- **Lasso select:** freehand left-drag draws a polygon; release selects all
+  friendly units inside (ray-casting `pointInPolygon`).
+- **Path orders:** with units selected, left-drag draws a freehand stroke that
+  is resampled into evenly-spaced waypoints (`resamplePath`, spacing 20 px)
+  and assigned to every selected unit simultaneously.
+- **Path following:** units steer smoothly toward each waypoint in turn,
+  decelerate near the final one, then stop. Boids separation keeps them spread
+  out in loose formation without single-filing.
+- **Hotkeys:** `S` / `C` = stop + clear orders, `Esc` = deselect all,
+  `Space` = pause (sim only), `H` = hash overlay.
+- **Render overlays:** dashed lasso preview, live path stroke with arrow tip,
+  confirmed group-path trail, selection ring on each selected unit.
+- **Tests:** `pointInPolygon` (5 cases incl. concave L-shape) +
+  `resamplePath` (6 cases incl. diagonal, oversize spacing, multi-segment).
+
+
 ## M0 — Skeleton
 
 - Scaffolded Vite + TypeScript (strict) + Vitest + ESLint under `dotfront/`.

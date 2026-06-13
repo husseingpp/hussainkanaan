@@ -19,6 +19,13 @@ export interface Unit {
   prevPos: Vec2;
   vel: Vec2;
   radius: number;
+  /** Ordered path waypoints (world coords). Empty = drifting or stopped. */
+  waypoints: Vec2[];
+  /** Index into waypoints of the current target. */
+  waypointIdx: number;
+  /** True when unit has completed a path and should remain still. */
+  stopped: boolean;
+  selected: boolean;
 }
 
 export interface GameState {
@@ -49,6 +56,10 @@ export function createInitialState(seed: number): GameState {
         y: Math.sin(heading) * CONFIG.MOVEMENT.DRIFT_SPEED,
       },
       radius: CONFIG.UNIT.LIGHT_RADIUS,
+      waypoints: [],
+      waypointIdx: 0,
+      stopped: false,
+      selected: false,
     });
   }
 
