@@ -5,7 +5,10 @@ use rusqlite_migration::{Migrations, M};
 /// Append-only: to change the schema, add a new `M::up(include_str!(...))`
 /// entry and a new `migrations/NNNN_*.sql` file. Never edit a shipped one.
 pub fn migrations() -> Migrations<'static> {
-    Migrations::new(vec![M::up(include_str!("../../migrations/0001_init.sql"))])
+    Migrations::new(vec![
+        M::up(include_str!("../../migrations/0001_init.sql")),
+        M::up(include_str!("../../migrations/0002_sales.sql")),
+    ])
 }
 
 #[cfg(test)]

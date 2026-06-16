@@ -154,3 +154,140 @@ pub struct BatchInput {
     pub qty_on_hand: i64,
     pub supplier_id: Option<String>,
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2 — sales / POS
+// ---------------------------------------------------------------------------
+
+pub const SALE_COLS: &str = "id,pharmacy_id,user_id,sale_no,currency,fx_rate_lbp_per_usd,\
+    subtotal,vat_total,discount_total,grand_total,payment_method,amount_tendered,change_due,\
+    status,note,sold_at,updated_at,device_id,dirty";
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Sale {
+    pub id: String,
+    pub pharmacy_id: Option<String>,
+    pub user_id: Option<String>,
+    pub sale_no: i64,
+    pub currency: String,
+    pub fx_rate_lbp_per_usd: Option<f64>,
+    pub subtotal: i64,
+    pub vat_total: i64,
+    pub discount_total: i64,
+    pub grand_total: i64,
+    pub payment_method: String,
+    pub amount_tendered: i64,
+    pub change_due: i64,
+    pub status: String,
+    pub note: Option<String>,
+    pub sold_at: String,
+    pub updated_at: String,
+    pub device_id: String,
+    pub dirty: bool,
+}
+
+impl Sale {
+    pub fn from_row(row: &Row) -> rusqlite::Result<Self> {
+        Ok(Sale {
+            id: row.get(0)?,
+            pharmacy_id: row.get(1)?,
+            user_id: row.get(2)?,
+            sale_no: row.get(3)?,
+            currency: row.get(4)?,
+            fx_rate_lbp_per_usd: row.get(5)?,
+            subtotal: row.get(6)?,
+            vat_total: row.get(7)?,
+            discount_total: row.get(8)?,
+            grand_total: row.get(9)?,
+            payment_method: row.get(10)?,
+            amount_tendered: row.get(11)?,
+            change_due: row.get(12)?,
+            status: row.get(13)?,
+            note: row.get(14)?,
+            sold_at: row.get(15)?,
+            updated_at: row.get(16)?,
+            device_id: row.get(17)?,
+            dirty: row.get(18)?,
+        })
+    }
+}
+
+pub const SALE_ITEM_COLS: &str = "id,sale_id,product_id,batch_id,product_name,batch_no,qty,\
+    unit_price,vat_rate,line_vat,line_total,updated_at,device_id,dirty";
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SaleItem {
+    pub id: String,
+    pub sale_id: String,
+    pub product_id: Option<String>,
+    pub batch_id: Option<String>,
+    pub product_name: String,
+    pub batch_no: Option<String>,
+    pub qty: i64,
+    pub unit_price: i64,
+    pub vat_rate: f64,
+    pub line_vat: i64,
+    pub line_total: i64,
+    pub updated_at: String,
+    pub device_id: String,
+    pub dirty: bool,
+}
+
+impl SaleItem {
+    pub fn from_row(row: &Row) -> rusqlite::Result<Self> {
+        Ok(SaleItem {
+            id: row.get(0)?,
+            sale_id: row.get(1)?,
+            product_id: row.get(2)?,
+            batch_id: row.get(3)?,
+            product_name: row.get(4)?,
+            batch_no: row.get(5)?,
+            qty: row.get(6)?,
+            unit_price: row.get(7)?,
+            vat_rate: row.get(8)?,
+            line_vat: row.get(9)?,
+            line_total: row.get(10)?,
+            updated_at: row.get(11)?,
+            device_id: row.get(12)?,
+            dirty: row.get(13)?,
+        })
+    }
+}
+
+/// A sale plus its line items — the receipt payload.
+#[derive(Debug, Serialize)]
+pub struct SaleWithItems {
+    #[serde(flatten)]
+    pub sale: Sale,
+    pub items: Vec<SaleItem>,
+}
+
+/// One requested cart line at checkout.
+#[derive(Debug, Deserialize)]
+pub struct CartLineInput {
+    pub product_id: String,
+    pub qty: i64,
+}
+
+/// Checkout payload from the frontend.
+#[derive(Debug, Deserialize)]
+pub struct CheckoutInput {
+    pub currency: String,         // settlement currency
+    pub payment_method: String,   // cash | card | other
+    pub amount_tendered: i64,     // minor units of settlement currency
+    pub note: Option<String>,
+    pub lines: Vec<CartLineInput>,
+}
+
+/// Pricing + stock summary the cart needs when adding a product.
+#[derive(Debug, Serialize)]
+pub struct SellInfo {
+    pub product_id: String,
+    pub name: String,
+    pub vat_rate: f64,
+    pub requires_rx: bool,
+    pub controlled: bool,
+    pub total_qty: i64,
+    pub best_currency: Option<String>,  // FEFO batch currency
+    pub best_sell_price: Option<i64>,   // FEFO batch sell price (minor units, its currency)
+}

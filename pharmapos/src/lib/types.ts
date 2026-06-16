@@ -73,3 +73,72 @@ export interface BatchInput {
   qty_on_hand: number;
   supplier_id: string | null;
 }
+
+// ---- Phase 2: sales / POS ----
+
+export type PaymentMethod = "cash" | "card" | "other";
+
+export interface Sale {
+  id: string;
+  pharmacy_id: string | null;
+  user_id: string | null;
+  sale_no: number;
+  currency: Currency;
+  fx_rate_lbp_per_usd: number | null;
+  subtotal: number; // minor units of `currency`
+  vat_total: number;
+  discount_total: number;
+  grand_total: number;
+  payment_method: PaymentMethod;
+  amount_tendered: number;
+  change_due: number;
+  status: string;
+  note: string | null;
+  sold_at: string;
+  updated_at: string;
+  device_id: string;
+  dirty: boolean;
+}
+
+export interface SaleItem {
+  id: string;
+  sale_id: string;
+  product_id: string | null;
+  batch_id: string | null;
+  product_name: string;
+  batch_no: string | null;
+  qty: number;
+  unit_price: number; // minor units of sale currency
+  vat_rate: number;
+  line_vat: number;
+  line_total: number;
+  updated_at: string;
+  device_id: string;
+  dirty: boolean;
+}
+
+export type SaleWithItems = Sale & { items: SaleItem[] };
+
+export interface SellInfo {
+  product_id: string;
+  name: string;
+  vat_rate: number;
+  requires_rx: boolean;
+  controlled: boolean;
+  total_qty: number;
+  best_currency: Currency | null;
+  best_sell_price: number | null; // minor units of best_currency
+}
+
+export interface CartLineInput {
+  product_id: string;
+  qty: number;
+}
+
+export interface CheckoutInput {
+  currency: Currency;
+  payment_method: PaymentMethod;
+  amount_tendered: number; // minor units of settlement currency
+  note: string | null;
+  lines: CartLineInput[];
+}

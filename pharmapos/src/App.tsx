@@ -4,12 +4,13 @@ import { CurrencySettings } from "./components/CurrencySettings";
 import { Badge, Button } from "./components/ui";
 import { ProductsPage } from "./pages/ProductsPage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
+import { SellPage } from "./pages/SellPage";
 import { api } from "./lib/api";
 import { t } from "./lib/i18n";
 import type { Pharmacy } from "./lib/types";
 import { errMessage } from "./lib/util";
 
-type View = { kind: "list" } | { kind: "detail"; id: string };
+type View = { kind: "list" } | { kind: "detail"; id: string } | { kind: "sell" };
 type ToastKind = "success" | "error" | "info";
 interface Toast {
   message: string;
@@ -27,6 +28,11 @@ export default function App() {
   const notify = useCallback((message: string, kind: ToastKind = "info") => {
     setToast({ message, kind });
   }, []);
+
+  const tabClass = (active: boolean) =>
+    `rounded-md px-3 py-1.5 font-medium transition ${
+      active ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+    }`;
 
   // Auto-dismiss toasts.
   useEffect(() => {
@@ -90,6 +96,21 @@ export default function App() {
             </div>
           </div>
 
+          <nav className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-sm">
+            <button
+              onClick={() => setView({ kind: "list" })}
+              className={tabClass(view.kind !== "sell")}
+            >
+              {t("products")}
+            </button>
+            <button
+              onClick={() => setView({ kind: "sell" })}
+              className={tabClass(view.kind === "sell")}
+            >
+              🛒 {t("sell")}
+            </button>
+          </nav>
+
           <div className="flex items-center gap-3">
             <div className="hidden text-right text-xs text-slate-500 sm:block">
               <div>
@@ -105,7 +126,9 @@ export default function App() {
       </header>
 
       <main className="flex-1">
-        {view.kind === "list" ? (
+        {view.kind === "sell" ? (
+          <SellPage pharmacy={pharmacy} notify={notify} />
+        ) : view.kind === "list" ? (
           <ProductsPage
             pharmacy={pharmacy}
             notify={notify}

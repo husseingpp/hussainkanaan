@@ -2,6 +2,7 @@ pub mod batches;
 pub mod device;
 pub mod pharmacy;
 pub mod products;
+pub mod sales;
 
 /// Error type returned by every Tauri command. Serializes to a plain string so
 /// the frontend receives a readable message in the rejected `invoke` promise.

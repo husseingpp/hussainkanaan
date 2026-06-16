@@ -3,10 +3,14 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   Batch,
   BatchInput,
+  CheckoutInput,
   Currency,
   Pharmacy,
   Product,
   ProductInput,
+  Sale,
+  SaleWithItems,
+  SellInfo,
 } from "./types";
 
 // Typed wrappers over the Rust commands. Top-level argument keys are camelCase
@@ -42,4 +46,9 @@ export const api = {
   updateBatch: (id: string, input: BatchInput) =>
     invoke<Batch>("update_batch", { id, input }),
   deleteBatch: (id: string) => invoke<void>("delete_batch", { id }),
+
+  getSellInfo: (productId: string) => invoke<SellInfo>("get_sell_info", { productId }),
+  createSale: (input: CheckoutInput) => invoke<SaleWithItems>("create_sale", { input }),
+  listSales: (limit?: number) => invoke<Sale[]>("list_sales", { limit: limit ?? null }),
+  getSale: (id: string) => invoke<SaleWithItems>("get_sale", { id }),
 };

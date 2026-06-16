@@ -59,6 +59,10 @@ pub fn run() {
             commands::batches::create_batch,
             commands::batches::update_batch,
             commands::batches::delete_batch,
+            commands::sales::get_sell_info,
+            commands::sales::create_sale,
+            commands::sales::list_sales,
+            commands::sales::get_sale,
         ])
         .run(tauri::generate_context!())
         .expect("error while running PharmaPOS");

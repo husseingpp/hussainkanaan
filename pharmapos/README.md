@@ -7,18 +7,27 @@ React + TypeScript + Tailwind.
 > 📘 **[CLAUDE.md](./CLAUDE.md) is the single source of truth** for schema, sync
 > contract, conventions, and decisions. Read it first.
 
-This is **Phase 1**: product catalog + batches + barcode scanning. Sales,
-payments, sync, and the cloud dashboard come in later phases.
+Through **Phase 2**: product catalog + batches + barcode scanning **and a
+sales / POS flow**. Full payments, sync, and the cloud dashboard come later.
 
-## Features (Phase 1)
+## Features
 
+**Phase 1 — catalog**
 - SQLite with a forward-only migration system (`rusqlite` + `rusqlite_migration`).
-- Four core tables — `pharmacies`, `users`, `products`, `batches` — each carrying
-  sync columns (`id` UUIDv4, `updated_at` UTC, `device_id`, `dirty`) from day one.
+- Core tables each carrying sync columns (`id` UUIDv4, `updated_at` UTC,
+  `device_id`, `dirty`) from day one.
 - Product **CRUD + search** by name, generic name, or barcode.
 - **HID barcode scanner** support (keyboard-wedge capture) with a manual fallback.
 - A `device_id` generated once on first launch and persisted locally.
 - Dual-currency (USD / LBP) pricing with a switchable main display currency.
+
+**Phase 2 — sell**
+- **Sell screen**: scan/search → cart → live totals with VAT → checkout.
+- **FEFO** stock allocation (earliest expiry first), splitting across batches;
+  overselling is blocked and writes an `inventory_movements` ledger.
+- Mixed-currency carts settle in a chosen currency via the saved FX rate.
+- Cash payment with tendered/change; sequential receipt numbers.
+- Printable on-screen **receipt** (system print dialog → printer or PDF).
 
 ## Prerequisites
 

@@ -10,9 +10,9 @@
 
 | Phase | Scope | Status |
 |------:|-------|--------|
-| **1** | Scaffold Tauri+React+TS, SQLite + migrations, 4 core tables, Product CRUD + search, barcode scanner, persistent `device_id` | ✅ **this build** |
-| 2 | Sales / POS flow, cart, receipts | later |
-| 3 | Payments, inventory purchases, stock movements, suppliers | later |
+| 1 | Scaffold Tauri+React+TS, SQLite + migrations, 4 core tables, Product CRUD + search, barcode scanner, persistent `device_id` | ✅ done |
+| **2** | Sales / POS flow: cart, FEFO checkout, stock ledger, receipts | ✅ **this build** |
+| 3 | Payments (full), inventory purchases, suppliers | later |
 | 4 | **Sync engine** ⟷ Supabase Postgres (cloud truth + backups) | later |
 | 5 | Backups / restore | later |
 | 6 | Next.js dashboard | later |
@@ -128,9 +128,64 @@ Indexes: `idx_batches_product`, `idx_batches_expiry`.
 ### 4.2 Tables STUBBED (NOT created yet)
 
 To be added in later phases via new forward-only migrations:
-`suppliers`, `purchases` + `purchase_items`, `sales` + `sale_items`,
-`payments`, `inventory_movements`, `customers`, `settings` (if needed beyond
-pharmacy-level config), and sync bookkeeping (`sync_state`, tombstones).
+`suppliers`, `purchases` + `purchase_items`, `payments`, `customers`,
+`settings` (if needed beyond pharmacy-level config), and sync bookkeeping
+(`sync_state`, tombstones).
+
+### 4.3 Tables CREATED in Phase 2 (migration `0002_sales`)
+
+**sales** — one completed transaction (sync columns `S` as before)
+| col | type | notes |
+|-----|------|-------|
+| id | TEXT PK | UUIDv4 |
+| pharmacy_id | TEXT → pharmacies(id) | |
+| user_id | TEXT → users(id) | nullable until auth |
+| sale_no | INTEGER NOT NULL | sequential per pharmacy; `uq_sales_no (pharmacy_id, sale_no)` |
+| currency | TEXT `'USD'\|'LBP'` | settlement currency |
+| fx_rate_lbp_per_usd | REAL | **rate snapshot** used to convert lines |
+| subtotal / vat_total / discount_total / grand_total | INTEGER | minor units of `currency` |
+| payment_method | TEXT `'cash'\|'card'\|'other'` | |
+| amount_tendered / change_due | INTEGER | |
+| status | TEXT `'completed'\|'void'` | void is a later phase |
+| note, sold_at | | |
+| *S* | | |
+
+**sale_items** — one line (snapshots so history survives product/batch edits)
+| col | type | notes |
+|-----|------|-------|
+| id | TEXT PK | |
+| sale_id | TEXT NOT NULL → sales(id) ON DELETE CASCADE | |
+| product_id, batch_id | TEXT | which batch the stock was drawn from |
+| product_name, batch_no | TEXT | **snapshot** |
+| qty | INTEGER | |
+| unit_price | INTEGER | minor units of sale currency (converted) |
+| vat_rate (snapshot), line_vat, line_total | | |
+| *S* | | |
+
+**inventory_movements** — stock ledger (Phase 3 purchases reuse it)
+| col | type | notes |
+|-----|------|-------|
+| id | TEXT PK | |
+| product_id, batch_id | TEXT | |
+| qty_delta | INTEGER | negative = sold |
+| reason | TEXT | `'sale'` now; `'adjustment'`/purchases later |
+| ref_type, ref_id | TEXT | e.g. `'sale'` + sale id |
+| moved_at | | |
+| *S* | | |
+
+**Checkout** (`create_sale` → `perform_checkout`) runs in **one transaction**
+(`PRAGMA defer_foreign_keys` so item rows can precede the sale row):
+1. assign `sale_no = MAX+1` per pharmacy;
+2. per cart line, pull batches with stock **earliest-expiry-first (FEFO)**, splitting
+   a line across batches as needed; **block if total stock < requested**;
+3. convert each batch's `sell_price` from its currency into the sale currency via
+   the snapshotted FX rate (errors if a cross-currency sale has no rate);
+4. write `sale_items`, decrement `batches.qty_on_hand`, append `inventory_movements`;
+5. write `sales` with totals + cash tendered/change.
+
+> The cart's price **preview** uses the FEFO batch price (`get_sell_info`); the
+> **authoritative** totals are recomputed server-side at checkout, so the receipt
+> is always correct even if a line splits across differently-priced batches.
 
 ---
 
@@ -171,18 +226,18 @@ pharmacy-level config), and sync bookkeeping (`sync_state`, tombstones).
 ```
 pharmapos/
 ├─ src-tauri/                 # Rust core — the local source of truth
-│  ├─ migrations/0001_init.sql
+│  ├─ migrations/{0001_init,0002_sales}.sql
 │  ├─ src/
 │  │  ├─ main.rs  lib.rs  util.rs
 │  │  ├─ db/{mod,migrations,models}.rs
-│  │  └─ commands/{device,pharmacy,products,batches}.rs   (+ mod.rs = AppError)
+│  │  └─ commands/{device,pharmacy,products,batches,sales}.rs   (+ mod.rs = AppError)
 │  ├─ capabilities/default.json
 │  └─ tauri.conf.json  Cargo.toml  build.rs  icons/
 ├─ src/                       # React + TS
-│  ├─ lib/{types,api,format,i18n,util}.ts
+│  ├─ lib/{types,api,format,i18n,util,cart}.ts        (cart + .test)
 │  ├─ hooks/useBarcodeScanner.ts (+ .test.ts)
-│  ├─ components/{ScannerInput,ProductForm,BatchForm,CurrencySettings, ui/}
-│  ├─ pages/{ProductsPage,ProductDetailPage}.tsx
+│  ├─ components/{ScannerInput,ProductForm,BatchForm,CurrencySettings,CheckoutModal,Receipt, ui/}
+│  ├─ pages/{ProductsPage,ProductDetailPage,SellPage}.tsx
 │  └─ App.tsx  main.tsx  index.css
 └─ package.json  vite.config.ts  tailwind.config.ts  tsconfig*.json  CLAUDE.md
 ```
@@ -190,7 +245,8 @@ pharmapos/
 The Tauri commands registered in `lib.rs`: `get_device_id`, `get_pharmacy`,
 `update_currency_settings`, `list_products`, `search_products`, `get_product`,
 `find_product_by_barcode`, `create_product`, `update_product`, `delete_product`,
-`list_batches`, `create_batch`, `update_batch`, `delete_batch`.
+`list_batches`, `create_batch`, `update_batch`, `delete_batch`,
+`get_sell_info`, `create_sale`, `list_sales`, `get_sale`.
 
 ---
 
@@ -241,18 +297,25 @@ cargo test --manifest-path src-tauri/Cargo.toml # migrations + DB round-trips + 
 
 ---
 
-## 10. Phase 1 QA gate
+## 10. QA gates
 
-- [ ] App launches on Windows in dev with no internet.
-- [ ] Add / edit / search / list products; data persists across restarts.
-- [ ] Scanning (or typing) a barcode resolves to the right product.
-- [ ] A batch can be attached to a product with expiry + prices.
-- [x] CLAUDE.md documents schema, conventions, and decisions.
+**Phase 1** — products, batches, barcode, persistence, offline. ✅
+
+**Phase 2 (this build):**
+- [ ] Sell screen: scan/search adds products to a cart; totals + VAT update live.
+- [ ] Checkout (cash) computes change; a receipt shows and can be printed.
+- [ ] Stock decrements (FEFO); product `qty_on_hand` drops by the amount sold.
+- [ ] Overselling is blocked; cross-currency needs an FX rate.
+- [ ] Sales persist across restarts with sequential receipt numbers.
+- [ ] Works fully offline.
+- [x] CLAUDE.md documents the schema, sale flow, conventions, and decisions.
 
 ## 11. Open items / decisions to revisit
 
-- **Default VAT = 11%** (Lebanon) at pharmacy level, per-product override.
-  Many medicines are VAT-exempt — revisit per category if needed.
+- **Returns / void sales** — `sales.status` has a `'void'` value but no flow yet.
+- **Discounts** — `discount_total` column exists; no UI yet.
+- **Cart preview price** uses the FEFO batch; a multi-batch line can settle at a
+  blended price (authoritative total is server-side). Revisit if confusing.
+- **Default VAT = 11%** (Lebanon), per-product override; medicines may be exempt.
 - **Soft-delete** (tombstones) before Phase 4 sync so deletes propagate.
-- **GS1 / multi-barcode** per product (currently one barcode per product).
-- **FTS5** full-text search if `LIKE` becomes insufficient at scale.
+- **GS1 / multi-barcode**, **FTS5** search — as before.

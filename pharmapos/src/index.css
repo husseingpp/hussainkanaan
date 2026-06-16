@@ -17,3 +17,24 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   @apply bg-slate-50 text-slate-800;
 }
+
+/* Print only the receipt: hide everything, then reveal the receipt subtree. */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .receipt-print,
+  .receipt-print * {
+    visibility: visible !important;
+  }
+  .receipt-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 16px;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
