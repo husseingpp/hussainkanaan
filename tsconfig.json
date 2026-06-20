@@ -22,5 +22,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "golden-hour-explorer"]
+  "exclude": ["node_modules", "golden-hour-explorer", "atlas-of-history"]
 }
