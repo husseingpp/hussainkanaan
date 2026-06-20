@@ -15,7 +15,14 @@ export function AuthPanel({ user }: AuthPanelProps) {
     e.preventDefault();
     if (!email.trim()) return;
     setStatus('sending');
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim() });
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        // Send the user back to wherever the app is actually running
+        // (http://localhost:5173/ in dev, the GitHub Pages path in prod).
+        emailRedirectTo: window.location.origin + import.meta.env.BASE_URL,
+      },
+    });
     if (error) {
       setErrorMsg(error.message);
       setStatus('error');
