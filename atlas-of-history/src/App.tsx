@@ -1,12 +1,42 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { GlobeView } from './components/GlobeView';
+import { GlobeView, type FlyTo } from './components/GlobeView';
 import { Sidebar } from './components/Sidebar';
 import { AddFactPanel, type FactDraft } from './components/AddFactPanel';
 import { useFacts } from './hooks/useFacts';
 import { supabase } from './lib/supabase';
 import { detectCountry } from './lib/countries';
 import type { Fact } from './data/sampleFacts';
+
+// Spread pins that share (nearly) the same coordinates into a small ring so
+// stacked facts stay individually clickable.
+function clusterOffset(facts: Fact[]): Fact[] {
+  const groups = new Map<string, Fact[]>();
+  for (const f of facts) {
+    const key = `${f.lat.toFixed(3)},${f.lng.toFixed(3)}`;
+    const group = groups.get(key);
+    if (group) group.push(f);
+    else groups.set(key, [f]);
+  }
+
+  const result: Fact[] = [];
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      result.push(group[0]);
+      continue;
+    }
+    const radius = 0.4; // degrees
+    group.forEach((f, i) => {
+      const angle = (2 * Math.PI * i) / group.length;
+      result.push({
+        ...f,
+        lat: f.lat + radius * Math.sin(angle),
+        lng: f.lng + radius * Math.cos(angle),
+      });
+    });
+  }
+  return result;
+}
 
 export default function App() {
   const { facts, loading, error, upsertFact, removeFact } = useFacts();
@@ -16,11 +46,26 @@ export default function App() {
   const [draft, setDraft] = useState<FactDraft | null>(null);
   const [editing, setEditing] = useState<Fact | null>(null);
   const [oceanHint, setOceanHint] = useState(false);
+  const [query, setQuery] = useState('');
+  const [flyTo, setFlyTo] = useState<FlyTo | null>(null);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const rafRef = useRef<number | null>(null);
   const oceanTimer = useRef<number | null>(null);
 
   const panelOpen = draft !== null || editing !== null;
+
+  const filteredFacts = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return facts;
+    return facts.filter(
+      (f) =>
+        f.title.toLowerCase().includes(q) ||
+        f.country_name.toLowerCase().includes(q) ||
+        f.body.toLowerCase().includes(q),
+    );
+  }, [facts, query]);
+
+  const globeFacts = useMemo(() => clusterOffset(filteredFacts), [filteredFacts]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
@@ -94,6 +139,22 @@ export default function App() {
     setEditing(fact);
   }, []);
 
+  const handleSelectCountry = useCallback(
+    (countryCode: string) => {
+      const inCountry = filteredFacts.filter((f) => f.country_code === countryCode);
+      if (inCountry.length === 0) return;
+
+      const lat = inCountry.reduce((sum, f) => sum + f.lat, 0) / inCountry.length;
+      const lng = inCountry.reduce((sum, f) => sum + f.lng, 0) / inCountry.length;
+      setFlyTo({ lat, lng });
+
+      // One fact: open it directly. Several: fly there and let the user pick a pin.
+      setSelectedFact(inCountry.length === 1 ? inCountry[0] : null);
+      setSidebarOpen(true);
+    },
+    [filteredFacts],
+  );
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#0a0f1e]">
       {loading && (
@@ -109,9 +170,10 @@ export default function App() {
       )}
 
       <GlobeView
-        facts={facts}
+        facts={globeFacts}
         draftPin={draft ? { lat: draft.lat, lng: draft.lng } : null}
         paused={panelOpen}
+        flyTo={flyTo}
         onPointClick={handlePointClick}
         onGlobeClick={handleGlobeClick}
         width={dimensions.width}
@@ -138,7 +200,10 @@ export default function App() {
         selectedFact={selectedFact}
         onClose={() => setSelectedFact(null)}
         user={user}
-        factsCount={facts.length}
+        facts={filteredFacts}
+        query={query}
+        onQueryChange={setQuery}
+        onSelectCountry={handleSelectCountry}
         onEdit={handleEditRequest}
       />
 

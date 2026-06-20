@@ -196,10 +196,18 @@ Each phase is one session. End each with the QA gate below.
 Dependency added: `i18n-iso-countries` (numeric→A3 mapping; world-atlas features
 only carry numeric ISO ids + name).
 
-### Phase 4 — Read experience
-- `onPointClick` opens FactCard: image, title, country, year, body, reference
-  link.
-- Sidebar: search box + country list; selecting flies the globe to that point.
+### Phase 4 — Read experience ✅ COMPLETE
+- `src/components/FactCard.tsx` — fact detail (image, country + year, title, body,
+  reference link with Wikipedia-aware label, Edit button for owned facts). Opened
+  via `onPointClick`.
+- `src/components/CountryList.tsx` — search box + countries derived from the
+  filtered facts (unique, A→Z, count badge). Selecting a country flies the globe to
+  the centroid of its facts; a single-fact country opens directly.
+- Sidebar now switches between `CountryList` (browse) and `FactCard` (read).
+- `GlobeView` gains a `flyTo` prop → `pointOfView` animation (1s).
+- Search (`query` in App) filters the globe pins and the country list together.
+- Stacked pins: `clusterOffset` in App spreads facts sharing coordinates into a
+  small ring so each stays clickable.
 
 ### Phase 5 — Timeline + polish + deploy
 - TimelineSlider filters pins by year range client-side.
@@ -222,5 +230,6 @@ only carry numeric ISO ids + name).
 
 - Auth model: anonymous vs required email — default to email magic link;
   revisit if friction is too high.
-- Multiple facts at same coordinates: cluster or slightly offset pins (decide
-  in Phase 4).
+- Multiple facts at same coordinates: RESOLVED (Phase 4) — `clusterOffset` spreads
+  co-located pins into a small ring (0.4° radius) so each stays individually
+  clickable.

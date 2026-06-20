@@ -7,10 +7,16 @@ export interface DraftPin {
   lng: number;
 }
 
+export interface FlyTo {
+  lat: number;
+  lng: number;
+}
+
 interface GlobeViewProps {
   facts: Fact[];
   draftPin: DraftPin | null;
   paused: boolean;
+  flyTo: FlyTo | null;
   onPointClick: (fact: Fact) => void;
   onGlobeClick: (lat: number, lng: number) => void;
   width: number;
@@ -23,6 +29,7 @@ export function GlobeView({
   facts,
   draftPin,
   paused,
+  flyTo,
   onPointClick,
   onGlobeClick,
   width,
@@ -45,6 +52,13 @@ export function GlobeView({
     if (!globe) return;
     globe.controls().autoRotate = !paused;
   }, [paused]);
+
+  // Fly the camera to a requested point (e.g. a country selected in the list).
+  useEffect(() => {
+    const globe = globeRef.current;
+    if (!globe || !flyTo) return;
+    globe.pointOfView({ lat: flyTo.lat, lng: flyTo.lng, altitude: 1.6 }, 1000);
+  }, [flyTo]);
 
   const points = useMemo<GlobePoint[]>(() => {
     const base = facts.map((f) => ({ ...f, __draft: false as const }));
