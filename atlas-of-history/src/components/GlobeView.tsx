@@ -15,7 +15,6 @@ export interface FlyTo {
 interface GlobeViewProps {
   facts: Fact[];
   draftPin: DraftPin | null;
-  paused: boolean;
   flyTo: FlyTo | null;
   onPointClick: (fact: Fact) => void;
   onGlobeClick: (lat: number, lng: number) => void;
@@ -23,12 +22,16 @@ interface GlobeViewProps {
   height: number;
 }
 
+// 4K Earth textures bundled in public/ (served same-origin, no CORS).
+const BASE = import.meta.env.BASE_URL;
+const EARTH_TEXTURE = `${BASE}earth-4k.jpg`;
+const EARTH_BUMP = `${BASE}earth-bump-4k.jpg`;
+
 type GlobePoint = (Fact & { __draft?: false }) | (DraftPin & { __draft: true; id: '__draft' });
 
 export function GlobeView({
   facts,
   draftPin,
-  paused,
   flyTo,
   onPointClick,
   onGlobeClick,
@@ -41,17 +44,11 @@ export function GlobeView({
   useEffect(() => {
     const globe = globeRef.current;
     if (!globe) return;
-    globe.controls().autoRotateSpeed = 0.4;
+    // Auto-rotation stays off; the user controls the view by dragging.
+    globe.controls().autoRotate = false;
     globe.controls().enableDamping = true;
     globe.pointOfView({ altitude: 2.2 }, 0);
   }, []);
-
-  // Pause auto-rotation while a draft/panel is open.
-  useEffect(() => {
-    const globe = globeRef.current;
-    if (!globe) return;
-    globe.controls().autoRotate = !paused;
-  }, [paused]);
 
   // Fly the camera to a requested point (e.g. a country selected in the list).
   useEffect(() => {
@@ -83,16 +80,16 @@ export function GlobeView({
       width={width}
       height={height}
       backgroundColor="rgba(0,0,0,0)"
-      globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-      bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+      globeImageUrl={EARTH_TEXTURE}
+      bumpImageUrl={EARTH_BUMP}
       atmosphereColor="#3b82f6"
       atmosphereAltitude={0.15}
       pointsData={points}
       pointLat={(obj) => (obj as GlobePoint).lat}
       pointLng={(obj) => (obj as GlobePoint).lng}
       pointColor={pointColor}
-      pointAltitude={(obj) => ((obj as GlobePoint).__draft ? 0.04 : 0.01)}
-      pointRadius={(obj) => ((obj as GlobePoint).__draft ? 0.7 : 0.5)}
+      pointAltitude={(obj) => ((obj as GlobePoint).__draft ? 0.025 : 0.008)}
+      pointRadius={(obj) => ((obj as GlobePoint).__draft ? 0.32 : 0.22)}
       pointLabel={(obj) => {
         const p = obj as GlobePoint;
         if (p.__draft) return '';

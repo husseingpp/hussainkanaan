@@ -52,9 +52,6 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [flyTo, setFlyTo] = useState<FlyTo | null>(null);
   const [yearRange, setYearRange] = useState<[number, number] | null>(null);
-  const [reducedMotion, setReducedMotion] = useState(
-    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  );
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const rafRef = useRef<number | null>(null);
   const oceanTimer = useRef<number | null>(null);
@@ -88,13 +85,6 @@ export default function App() {
   }, [searchFiltered, yearRange]);
 
   const globeFacts = useMemo(() => clusterOffset(filteredFacts), [filteredFacts]);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
@@ -202,7 +192,6 @@ export default function App() {
       <GlobeView
         facts={globeFacts}
         draftPin={draft ? { lat: draft.lat, lng: draft.lng } : null}
-        paused={panelOpen || reducedMotion}
         flyTo={flyTo}
         onPointClick={handlePointClick}
         onGlobeClick={handleGlobeClick}
