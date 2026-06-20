@@ -48,13 +48,17 @@ export default function App() {
   const [oceanHint, setOceanHint] = useState(false);
   const [query, setQuery] = useState('');
   const [flyTo, setFlyTo] = useState<FlyTo | null>(null);
+  const [yearRange, setYearRange] = useState<[number, number] | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const rafRef = useRef<number | null>(null);
   const oceanTimer = useRef<number | null>(null);
 
   const panelOpen = draft !== null || editing !== null;
 
-  const filteredFacts = useMemo(() => {
+  const searchFiltered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return facts;
     return facts.filter(
@@ -65,7 +69,29 @@ export default function App() {
     );
   }, [facts, query]);
 
+  const yearBounds = useMemo<[number, number] | null>(() => {
+    const years = facts.filter((f) => f.year != null).map((f) => f.year as number);
+    if (years.length === 0) return null;
+    return [Math.min(...years), Math.max(...years)];
+  }, [facts]);
+
+  const undatedCount = useMemo(() => facts.filter((f) => f.year == null).length, [facts]);
+
+  // Undated facts are always shown; the slider only constrains dated facts.
+  const filteredFacts = useMemo(() => {
+    if (!yearRange) return searchFiltered;
+    const [lo, hi] = yearRange;
+    return searchFiltered.filter((f) => f.year == null || (f.year >= lo && f.year <= hi));
+  }, [searchFiltered, yearRange]);
+
   const globeFacts = useMemo(() => clusterOffset(filteredFacts), [filteredFacts]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
@@ -172,7 +198,7 @@ export default function App() {
       <GlobeView
         facts={globeFacts}
         draftPin={draft ? { lat: draft.lat, lng: draft.lng } : null}
-        paused={panelOpen}
+        paused={panelOpen || reducedMotion}
         flyTo={flyTo}
         onPointClick={handlePointClick}
         onGlobeClick={handleGlobeClick}
@@ -187,10 +213,12 @@ export default function App() {
       )}
 
       {!panelOpen && !sidebarOpen && !loading && !error && (
-        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 text-sm pointer-events-none select-none">
+        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 text-sm pointer-events-none select-none text-center px-4">
           {facts.length === 0
             ? 'Click a country to add the first fact.'
-            : 'Click a country to add a fact, or a pin to read one.'}
+            : globeFacts.length === 0
+              ? 'No facts match the current filters.'
+              : 'Click a country to add a fact, or a pin to read one.'}
         </p>
       )}
 
@@ -205,6 +233,11 @@ export default function App() {
         onQueryChange={setQuery}
         onSelectCountry={handleSelectCountry}
         onEdit={handleEditRequest}
+        yearBounds={yearBounds}
+        yearRange={yearRange ?? yearBounds ?? [0, 0]}
+        onYearChange={setYearRange}
+        onYearReset={() => setYearRange(null)}
+        undatedCount={undatedCount}
       />
 
       {panelOpen && (

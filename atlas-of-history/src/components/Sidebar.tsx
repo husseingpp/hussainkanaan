@@ -3,6 +3,7 @@ import { Fact } from '../data/sampleFacts';
 import { AuthPanel } from './AuthPanel';
 import { FactCard } from './FactCard';
 import { CountryList } from './CountryList';
+import { TimelineSlider } from './TimelineSlider';
 
 interface SidebarProps {
   open: boolean;
@@ -15,6 +16,11 @@ interface SidebarProps {
   onQueryChange: (q: string) => void;
   onSelectCountry: (countryCode: string) => void;
   onEdit: (fact: Fact) => void;
+  yearBounds: [number, number] | null;
+  yearRange: [number, number];
+  onYearChange: (range: [number, number]) => void;
+  onYearReset: () => void;
+  undatedCount: number;
 }
 
 export function Sidebar({
@@ -28,6 +34,11 @@ export function Sidebar({
   onQueryChange,
   onSelectCountry,
   onEdit,
+  yearBounds,
+  yearRange,
+  onYearChange,
+  onYearReset,
+  undatedCount,
 }: SidebarProps) {
   const canEdit = !!(selectedFact && user && selectedFact.created_by === user.id);
   const factsCount = facts.length;
@@ -79,6 +90,19 @@ export function Sidebar({
             />
           )}
         </div>
+
+        {yearBounds && (
+          <div className="p-5 border-t border-slate-700">
+            <TimelineSlider
+              min={yearBounds[0]}
+              max={yearBounds[1]}
+              value={yearRange}
+              onChange={onYearChange}
+              onReset={onYearReset}
+              undatedCount={undatedCount}
+            />
+          </div>
+        )}
       </aside>
 
       {/* Backdrop on mobile */}

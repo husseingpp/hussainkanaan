@@ -28,7 +28,7 @@ and filter facts across time with a year slider.
 - Point-in-polygon country detection: `d3-geo` (`geoContains`)
 - Styling: Tailwind CSS
 - Backend: Supabase (Postgres + Storage + Auth)
-- Deploy: Vercel
+- Deploy: GitHub Pages (see Deploy section)
 
 ## Project location
 
@@ -209,12 +209,30 @@ only carry numeric ISO ids + name).
 - Stacked pins: `clusterOffset` in App spreads facts sharing coordinates into a
   small ring so each stays clickable.
 
-### Phase 5 — Timeline + polish + deploy
-- TimelineSlider filters pins by year range client-side.
-- Empty/error/loading states everywhere.
-- Responsive down to mobile; visible keyboard focus; reduced-motion respected
-  (pause auto-rotation when `prefers-reduced-motion`).
-- Deploy to Vercel; set env vars in Vercel dashboard.
+### Phase 5 — Timeline + polish + deploy ✅ COMPLETE
+- `src/components/TimelineSlider.tsx` — dual-thumb year range slider (BCE/CE labels,
+  highlighted segment, Reset). Lives as a persistent footer in the Sidebar; hidden
+  when there are no dated facts, collapses to a label when all facts share one year.
+- App filter pipeline: `facts → search → year range → clusterOffset → globe`. Undated
+  facts are always shown; the slider only constrains dated facts. Year bounds derive
+  from the dated facts; `yearRange = null` means "full range" (no filter).
+- Reduced motion: `matchMedia('(prefers-reduced-motion: reduce)')` (with change
+  listener) pauses globe auto-rotation; a CSS block also neutralises animations/
+  transitions. Globe drag/zoom still work.
+- Accessibility: global `:focus-visible` outline; slider thumbs and all controls show
+  a visible keyboard-focus ring.
+- States: loading spinner, error banner, empty globe hint, "No facts match the current
+  filters" when search/timeline empties the globe, and empty country-list copy.
+- Deploy: **GitHub Pages** (not Vercel — see deploy note below). Live at
+  `/hussainkanaan/atlas-of-history/` via `.github/workflows/deploy.yml`.
+
+## Deploy
+
+Deployed to **GitHub Pages** (the repo already had a Pages workflow; Vercel was not
+used). The Pages site root is `/hussainkanaan/`, so Vite `base` is
+`/hussainkanaan/atlas-of-history/`. The deploy workflow runs `cp .env.example .env`
+before `vite build`; `.env.example` carries the public Supabase URL + anon/publishable
+key (safe to commit). App URL: `https://husseingpp.github.io/hussainkanaan/atlas-of-history/`.
 
 ## QA gate checklist (run at end of every phase)
 
