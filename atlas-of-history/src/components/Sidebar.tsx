@@ -1,10 +1,14 @@
+import type { User } from '@supabase/supabase-js';
 import { Fact } from '../data/sampleFacts';
+import { AuthPanel } from './AuthPanel';
 
 interface SidebarProps {
   open: boolean;
   onToggle: () => void;
   selectedFact: Fact | null;
   onClose: () => void;
+  user: User | null;
+  factsCount: number;
 }
 
 function formatYear(year: number | null): string {
@@ -24,7 +28,7 @@ function referenceLabel(fact: Fact): string {
   return 'Open reference →';
 }
 
-export function Sidebar({ open, onToggle, selectedFact, onClose }: SidebarProps) {
+export function Sidebar({ open, onToggle, selectedFact, onClose, user, factsCount }: SidebarProps) {
   return (
     <>
       {/* Toggle tab */}
@@ -43,9 +47,14 @@ export function Sidebar({ open, onToggle, selectedFact, onClose }: SidebarProps)
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="p-5 border-b border-slate-700">
-          <h1 className="text-lg font-semibold text-slate-100">Atlas of History</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Click a pin to read its story</p>
+        <div className="p-5 border-b border-slate-700 space-y-3">
+          <div>
+            <h1 className="text-lg font-semibold text-slate-100">Atlas of History</h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {factsCount === 0 ? 'No facts yet' : `${factsCount} fact${factsCount !== 1 ? 's' : ''} on the globe`}
+            </p>
+          </div>
+          <AuthPanel user={user} />
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
@@ -94,11 +103,11 @@ export function Sidebar({ open, onToggle, selectedFact, onClose }: SidebarProps)
             </div>
           ) : (
             <div className="text-sm text-slate-400 space-y-2">
-              <p>Click a pin on the globe to read a historical fact.</p>
-              <p className="text-slate-500 text-xs">
-                More features — search, filtering by year, and adding your own facts — are coming
-                soon.
-              </p>
+              {factsCount === 0 ? (
+                <p>Click a country to add the first fact.</p>
+              ) : (
+                <p>Click a pin on the globe to read a historical fact.</p>
+              )}
             </div>
           )}
         </div>

@@ -166,11 +166,15 @@ Each phase is one session. End each with the QA gate below.
 - Layout shell: globe center, collapsible right sidebar (empty for now).
 - No backend yet.
 
-### Phase 2 — Supabase wiring
-- Install + configure Supabase client from env.
-- Apply schema + RLS + storage bucket (document any manual dashboard steps).
-- `useFacts` fetches real facts; pins render from DB instead of sample data.
-- Basic anonymous/email auth so `created_by` can be set.
+### Phase 2 — Supabase wiring ✅ COMPLETE
+- Supabase project: `atlas-of-history` (id: `ltidmmvudancwnrxglud`, region: eu-west-1).
+- Schema applied via MCP migration: `facts` table + RLS policies + indexes.
+- `fact-images` storage bucket created (public read) with upload/update/delete policies.
+- `src/lib/supabase.ts` — client initialised from `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.
+- `src/hooks/useFacts.ts` — fetches all facts + realtime INSERT/UPDATE/DELETE subscription.
+- `src/components/AuthPanel.tsx` — email magic-link sign-in / sign-out.
+- Sidebar header shows auth state and fact count; App shows loading/error banners.
+- `.env` holds real credentials (gitignored); `.env.example` documents the vars.
 
 ### Phase 3 — Add / Edit flow
 - `onGlobeClick` places a draft pin and opens AddFactPanel with prefilled
