@@ -64,10 +64,9 @@ jobs:
 
       - name: Build Atlas of History
         working-directory: atlas-of-history
-        run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          cp .env.example .env
+          npm run build
 
       - name: Inject Atlas of History into portfolio output
         run: |
