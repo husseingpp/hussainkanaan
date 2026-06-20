@@ -11,6 +11,7 @@ interface SidebarProps {
   selectedFact: Fact | null;
   onClose: () => void;
   user: User | null;
+  isAdmin: boolean;
   facts: Fact[];
   query: string;
   onQueryChange: (q: string) => void;
@@ -29,6 +30,7 @@ export function Sidebar({
   selectedFact,
   onClose,
   user,
+  isAdmin,
   facts,
   query,
   onQueryChange,
@@ -40,7 +42,7 @@ export function Sidebar({
   onYearReset,
   undatedCount,
 }: SidebarProps) {
-  const canEdit = !!(selectedFact && user && selectedFact.created_by === user.id);
+  const canEdit = !!(selectedFact && isAdmin);
   const factsCount = facts.length;
 
   return (

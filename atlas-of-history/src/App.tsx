@@ -38,11 +38,14 @@ function clusterOffset(facts: Fact[]): Fact[] {
   return result;
 }
 
+const ADMIN_EMAIL = 'kanaanbh@gmail.com';
+
 export default function App() {
   const { facts, loading, error, upsertFact, removeFact } = useFacts();
   const [selectedFact, setSelectedFact] = useState<Fact | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const isAdmin = user?.email === ADMIN_EMAIL;
   const [draft, setDraft] = useState<FactDraft | null>(null);
   const [editing, setEditing] = useState<Fact | null>(null);
   const [oceanHint, setOceanHint] = useState(false);
@@ -121,6 +124,7 @@ export default function App() {
   }, []);
 
   const handleGlobeClick = useCallback((lat: number, lng: number) => {
+    if (!isAdmin) return;
     const country = detectCountry(lat, lng);
     if (!country) {
       setOceanHint(true);
@@ -132,7 +136,7 @@ export default function App() {
     setEditing(null);
     setSelectedFact(null);
     setDraft({ lat, lng, country_code: country.country_code, country_name: country.country_name });
-  }, []);
+  }, [isAdmin]);
 
   const handleClosePanel = useCallback(() => {
     setDraft(null);
@@ -228,6 +232,7 @@ export default function App() {
         selectedFact={selectedFact}
         onClose={() => setSelectedFact(null)}
         user={user}
+        isAdmin={isAdmin}
         facts={filteredFacts}
         query={query}
         onQueryChange={setQuery}
