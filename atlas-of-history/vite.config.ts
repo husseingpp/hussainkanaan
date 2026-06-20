@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/atlas-of-history/',
+  base: '/hussainkanaan/atlas-of-history/',
 });
