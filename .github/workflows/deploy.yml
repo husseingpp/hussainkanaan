@@ -6,6 +6,7 @@ on:
       - main
       - claude/beautiful-lovelace-rcjqT
       - claude/upbeat-babbage-5CAxl
+      - claude/atlas-history-setup-7ukc5r
   workflow_dispatch:
 
 permissions:
@@ -56,6 +57,22 @@ jobs:
         run: |
           mkdir -p out/cafe-footfall-tracker
           cp -r cafe-footfall-tracker/docs/. out/cafe-footfall-tracker/
+
+      - name: Install Atlas of History dependencies
+        working-directory: atlas-of-history
+        run: npm ci
+
+      - name: Build Atlas of History
+        working-directory: atlas-of-history
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Inject Atlas of History into portfolio output
+        run: |
+          mkdir -p out/atlas-of-history
+          cp -r atlas-of-history/dist/. out/atlas-of-history/
 
       - name: Disable Jekyll processing
         run: touch out/.nojekyll
