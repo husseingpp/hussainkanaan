@@ -10,6 +10,8 @@ export interface Fact {
   image_url: string | null;
   reference_url: string | null;
   reference_label: string | null;
+  created_by?: string | null;
+  created_at?: string;
 }
 
 export const sampleFacts: Fact[] = [

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Fact } from '../data/sampleFacts';
 
@@ -6,12 +6,30 @@ interface UseFactsResult {
   facts: Fact[];
   loading: boolean;
   error: string | null;
+  upsertFact: (fact: Fact) => void;
+  removeFact: (id: string) => void;
+}
+
+function mergeById(prev: Fact[], next: Fact): Fact[] {
+  const idx = prev.findIndex((f) => f.id === next.id);
+  if (idx === -1) return [...prev, next];
+  const copy = prev.slice();
+  copy[idx] = next;
+  return copy;
 }
 
 export function useFacts(): UseFactsResult {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const upsertFact = useCallback((fact: Fact) => {
+    setFacts((prev) => mergeById(prev, fact));
+  }, []);
+
+  const removeFact = useCallback((id: string) => {
+    setFacts((prev) => prev.filter((f) => f.id !== id));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,17 +58,14 @@ export function useFacts(): UseFactsResult {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'facts' },
         (payload) => {
-          if (!cancelled) setFacts((prev) => [...prev, payload.new as Fact]);
+          if (!cancelled) setFacts((prev) => mergeById(prev, payload.new as Fact));
         },
       )
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'facts' },
         (payload) => {
-          if (!cancelled)
-            setFacts((prev) =>
-              prev.map((f) => (f.id === (payload.new as Fact).id ? (payload.new as Fact) : f)),
-            );
+          if (!cancelled) setFacts((prev) => mergeById(prev, payload.new as Fact));
         },
       )
       .on(
@@ -69,5 +84,5 @@ export function useFacts(): UseFactsResult {
     };
   }, []);
 
-  return { facts, loading, error };
+  return { facts, loading, error, upsertFact, removeFact };
 }

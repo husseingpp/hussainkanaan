@@ -176,12 +176,25 @@ Each phase is one session. End each with the QA gate below.
 - Sidebar header shows auth state and fact count; App shows loading/error banners.
 - `.env` holds real credentials (gitignored); `.env.example` documents the vars.
 
-### Phase 3 — Add / Edit flow
-- `onGlobeClick` places a draft pin and opens AddFactPanel with prefilled
-  lat/lng and detected country.
-- Form: title, body, year, image upload (to `fact-images`), reference_url +
-  label. Writes to Supabase. New pin appears without full reload.
-- Edit + delete for facts the user owns.
+### Phase 3 — Add / Edit flow ✅ COMPLETE
+- `src/lib/countries.ts` — loads countries-110m TopoJSON once, `detectCountry(lat,lng)`
+  uses `d3-geo` `geoContains`; numeric id → ISO A3 via `i18n-iso-countries`
+  (`numericToAlpha3`), `country_name` from feature `properties.name`. Returns null
+  over ocean.
+- `onGlobeClick` resolves the country, drops a cyan draft pin, and opens
+  `AddFactPanel` prefilled with lat/lng + detected country. Ocean clicks show a
+  transient "Click on land to add a fact." hint.
+- `AddFactPanel.tsx` — form: title*, body*, year (negative = BCE), image upload to
+  `fact-images` (`${user.id}/${uuid}.${ext}` → public URL), reference_url + label.
+  Insert sets `created_by = user.id`. Signed-out users see a sign-in prompt.
+- Edit + delete for owned facts: Sidebar shows "Edit fact" when
+  `selectedFact.created_by === user.id`; the edit panel holds the Delete action.
+- `useFacts` now exposes `upsertFact` / `removeFact` and merges realtime events by
+  id, so new/edited/deleted pins update with no reload (realtime also enabled on the
+  `facts` table via `alter publication supabase_realtime add table facts`).
+
+Dependency added: `i18n-iso-countries` (numeric→A3 mapping; world-atlas features
+only carry numeric ISO ids + name).
 
 ### Phase 4 — Read experience
 - `onPointClick` opens FactCard: image, title, country, year, body, reference

@@ -2,17 +2,25 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { GlobeView } from './components/GlobeView';
 import { Sidebar } from './components/Sidebar';
+import { AddFactPanel, type FactDraft } from './components/AddFactPanel';
 import { useFacts } from './hooks/useFacts';
 import { supabase } from './lib/supabase';
+import { detectCountry } from './lib/countries';
 import type { Fact } from './data/sampleFacts';
 
 export default function App() {
-  const { facts, loading, error } = useFacts();
+  const { facts, loading, error, upsertFact, removeFact } = useFacts();
   const [selectedFact, setSelectedFact] = useState<Fact | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [draft, setDraft] = useState<FactDraft | null>(null);
+  const [editing, setEditing] = useState<Fact | null>(null);
+  const [oceanHint, setOceanHint] = useState(false);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   const rafRef = useRef<number | null>(null);
+  const oceanTimer = useRef<number | null>(null);
+
+  const panelOpen = draft !== null || editing !== null;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
@@ -41,8 +49,49 @@ export default function App() {
     setSidebarOpen(true);
   }, []);
 
-  const handleSidebarClose = useCallback(() => {
+  const handleGlobeClick = useCallback((lat: number, lng: number) => {
+    const country = detectCountry(lat, lng);
+    if (!country) {
+      setOceanHint(true);
+      if (oceanTimer.current) clearTimeout(oceanTimer.current);
+      oceanTimer.current = window.setTimeout(() => setOceanHint(false), 2500);
+      return;
+    }
+    setOceanHint(false);
+    setEditing(null);
     setSelectedFact(null);
+    setDraft({ lat, lng, country_code: country.country_code, country_name: country.country_name });
+  }, []);
+
+  const handleClosePanel = useCallback(() => {
+    setDraft(null);
+    setEditing(null);
+  }, []);
+
+  const handleSaved = useCallback(
+    (fact: Fact) => {
+      upsertFact(fact);
+      setDraft(null);
+      setEditing(null);
+      setSelectedFact(fact);
+      setSidebarOpen(true);
+    },
+    [upsertFact],
+  );
+
+  const handleDeleted = useCallback(
+    (id: string) => {
+      removeFact(id);
+      setDraft(null);
+      setEditing(null);
+      setSelectedFact((cur) => (cur && cur.id === id ? null : cur));
+    },
+    [removeFact],
+  );
+
+  const handleEditRequest = useCallback((fact: Fact) => {
+    setDraft(null);
+    setEditing(fact);
   }, []);
 
   return (
@@ -61,20 +110,25 @@ export default function App() {
 
       <GlobeView
         facts={facts}
+        draftPin={draft ? { lat: draft.lat, lng: draft.lng } : null}
+        paused={panelOpen}
         onPointClick={handlePointClick}
+        onGlobeClick={handleGlobeClick}
         width={dimensions.width}
         height={dimensions.height}
       />
 
-      {!sidebarOpen && !loading && facts.length === 0 && !error && (
-        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 text-sm pointer-events-none select-none">
-          Click a country to add the first fact.
+      {oceanHint && (
+        <p className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-slate-800/90 border border-slate-600 text-slate-100 text-sm px-4 py-2 rounded-lg">
+          Click on land to add a fact.
         </p>
       )}
 
-      {!sidebarOpen && !loading && facts.length > 0 && (
+      {!panelOpen && !sidebarOpen && !loading && !error && (
         <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 text-sm pointer-events-none select-none">
-          Click a pin to read a historical fact
+          {facts.length === 0
+            ? 'Click a country to add the first fact.'
+            : 'Click a country to add a fact, or a pin to read one.'}
         </p>
       )}
 
@@ -82,10 +136,22 @@ export default function App() {
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
         selectedFact={selectedFact}
-        onClose={handleSidebarClose}
+        onClose={() => setSelectedFact(null)}
         user={user}
         factsCount={facts.length}
+        onEdit={handleEditRequest}
       />
+
+      {panelOpen && (
+        <AddFactPanel
+          draft={draft}
+          editing={editing}
+          user={user}
+          onClose={handleClosePanel}
+          onSaved={handleSaved}
+          onDeleted={handleDeleted}
+        />
+      )}
     </div>
   );
 }

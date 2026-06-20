@@ -9,6 +9,7 @@ interface SidebarProps {
   onClose: () => void;
   user: User | null;
   factsCount: number;
+  onEdit: (fact: Fact) => void;
 }
 
 function formatYear(year: number | null): string {
@@ -28,7 +29,17 @@ function referenceLabel(fact: Fact): string {
   return 'Open reference →';
 }
 
-export function Sidebar({ open, onToggle, selectedFact, onClose, user, factsCount }: SidebarProps) {
+export function Sidebar({
+  open,
+  onToggle,
+  selectedFact,
+  onClose,
+  user,
+  factsCount,
+  onEdit,
+}: SidebarProps) {
+  const canEdit = !!(selectedFact && user && selectedFact.created_by === user.id);
+
   return (
     <>
       {/* Toggle tab */}
@@ -99,6 +110,15 @@ export function Sidebar({ open, onToggle, selectedFact, onClose, user, factsCoun
                 >
                   {referenceLabel(selectedFact)}
                 </a>
+              )}
+
+              {canEdit && (
+                <button
+                  onClick={() => onEdit(selectedFact)}
+                  className="mt-5 w-full bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-medium py-2 rounded transition-colors"
+                >
+                  Edit fact
+                </button>
               )}
             </div>
           ) : (
