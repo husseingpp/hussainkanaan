@@ -180,9 +180,12 @@ coordinate swap, last-geometry selection, polygon fallback, filtering and stats.
    (`Promise.all([...])`). This makes the status filter and the total/active/closed stats
    meaningful regardless of how the API behaves when `status` is omitted. The default UI view is
    still the active ("open") events, matching user story 1.
-2. **Globe texture.** The globe uses the standard three-globe example textures
-   (`earth-night.jpg` + `earth-topology.png`) loaded from a CDN at runtime, for a real Earth
-   surface rather than a blank sphere.
+2. **Globe texture & controls.** The globe uses a night-lights ("Black Marble") look: a reliable
+   2048px base (`earth-night.jpg` + `earth-topology.png` from a CDN) that always loads, then an
+   **8K night map upgrade** (solarsystemscope) swapped in on top once it loads, with a silent
+   fallback to the base if that host is unreachable/CORS-blocked. Render quality is boosted via
+   device-pixel-ratio (capped 2×) and max anisotropy. **Auto-rotate is off** — the globe only
+   moves when the user drags it.
 3. **`postcss.config.js`** is committed explicitly (Tailwind v3) rather than relying on
    `tailwindcss init -p`.
 4. **Legend is interactive** — clicking a category in the legend also sets the category filter
