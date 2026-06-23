@@ -44,6 +44,14 @@ jobs:
         env:
           EXPO_NO_TELEMETRY: "1"
 
+      - name: Install LiveEarth dependencies
+        working-directory: liveearth
+        run: npm ci
+
+      - name: Build LiveEarth globe
+        working-directory: liveearth
+        run: npm run build
+
       - name: Build portfolio (static export)
         run: npm run build
 
@@ -56,6 +64,11 @@ jobs:
         run: |
           mkdir -p out/cafe-footfall-tracker
           cp -r cafe-footfall-tracker/docs/. out/cafe-footfall-tracker/
+
+      - name: Inject LiveEarth globe into portfolio output
+        run: |
+          mkdir -p out/liveearth
+          cp -r liveearth/dist/. out/liveearth/
 
       - name: Disable Jekyll processing
         run: touch out/.nojekyll

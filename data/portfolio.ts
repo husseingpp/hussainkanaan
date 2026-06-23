@@ -10,7 +10,8 @@ export type IconKey =
   | "code"
   | "spark"
   | "sun"
-  | "map";
+  | "map"
+  | "globe";
 
 export type SkillGroup = {
   title: string;
@@ -156,6 +157,15 @@ export const data = {
       stack: ["React Native", "Expo", "Supabase", "PostgreSQL", "MapLibre", "TanStack Query"],
       github: "https://github.com/husseingpp/hussainkanaan/tree/main/golden-hour-explorer",
       route: "/sunspot",
+    },
+    {
+      title: "LiveEarth · Natural Events Globe",
+      tag: "Live Data",
+      glyph: "globe",
+      desc: "An interactive 3D globe that plots current natural events — wildfires, volcanoes, storms, floods — at their real coordinates, pulled live from NASA's EONET API. Filter by category and status, click a marker for details, and the data auto-refreshes to stay current. No API key, no backend.",
+      stack: ["React", "TypeScript", "Vite", "react-globe.gl", "TanStack Query", "Tailwind"],
+      github: "https://github.com/husseingpp/hussainkanaan/tree/main/liveearth",
+      demo: "https://husseingpp.github.io/hussainkanaan/liveearth/",
     },
     {
       title: "Google Maps Scraper",

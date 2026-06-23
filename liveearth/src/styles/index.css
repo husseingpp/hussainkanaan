@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #05070d;
+  color: #e8eef9;
+  font-family: theme("fontFamily.sans");
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Tooltip injected by react-globe.gl's pointLabel (raw HTML, so styled here). */
+.globe-tip {
+  max-width: 16rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(2, 6, 23, 0.9);
+  color: #e8eef9;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.2;
+  backdrop-filter: blur(4px);
+}
+
+/* Slim scrollbar for the detail panel. */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
