@@ -6,6 +6,7 @@ on:
       - main
       - claude/beautiful-lovelace-rcjqT
       - claude/upbeat-babbage-5CAxl
+      - claude/hopeful-lovelace-ya0gqa
   workflow_dispatch:
 
 permissions:
