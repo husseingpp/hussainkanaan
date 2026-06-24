@@ -2,13 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import Globe, { type GlobeMethods } from "react-globe.gl";
 import type { GlobePoint } from "../lib/transform";
+import { buildHypsometricCanvas } from "../lib/relief";
 
-// Base textures — reliable + CORS-enabled, so they always load (no blank globe).
-const NIGHT_IMG = "https://unpkg.com/three-globe/example/img/earth-night.jpg";
-const BUMP_IMG = "https://unpkg.com/three-globe/example/img/earth-topology.png";
-// High-resolution (8K) night map, swapped in on top of the base once/if it loads.
-const HI_RES_NIGHT =
-  "https://www.solarsystemscope.com/textures/download/8k_earth_nightmap.jpg";
+// Grayscale elevation heightmap (reliable + CORS-enabled via unpkg). Used as the
+// single source for both the 3D relief (displacement) and the hypsometric colour.
+const HEIGHT_IMG = "https://unpkg.com/three-globe/example/img/earth-topology.png";
+
+// Coarser mesh on touch devices to protect performance; dense on desktop so the
+// displacement reads as real terrain.
+const COARSE_POINTER =
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(pointer: coarse)").matches;
+const CURVATURE = COARSE_POINTER ? 0.8 : 0.4; // segments = 360 / value
+const DISPLACEMENT = 5; // relief height on three-globe's GLOBE_RADIUS (100)
 
 interface Props {
   points: GlobePoint[];
@@ -21,10 +28,10 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
-  // Our own globe material so we control the texture quality + can upgrade it.
+  // Our own material: a stylized relief surface (no Earth photo).
   const materialRef = useRef<THREE.MeshPhongMaterial | null>(null);
   if (!materialRef.current) {
-    materialRef.current = new THREE.MeshPhongMaterial({ color: 0xffffff });
+    materialRef.current = new THREE.MeshPhongMaterial({ color: 0x14304f, shininess: 4 });
   }
 
   // Keep the canvas sized to its container (responsive + mobile).
@@ -38,50 +45,57 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  // Load textures once: show the reliable base, then upgrade to the 8K night map.
+  // Load the heightmap once → real 3D relief (displacement/bump) + elevation tints.
   useEffect(() => {
     const mat = materialRef.current!;
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin("anonymous");
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      // Displacement + bump push the actual vertices out → 3D mountains/valleys.
+      const height = new THREE.Texture(img);
+      height.needsUpdate = true;
+      mat.displacementMap = height;
+      mat.displacementScale = DISPLACEMENT;
+      mat.bumpMap = height;
+      mat.bumpScale = 1.2;
 
-    const applyMap = (tex: THREE.Texture) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = 16;
-      mat.map = tex;
+      // Colour the surface from elevation alone (blue seas → green → brown → snow).
+      try {
+        const colorTex = new THREE.CanvasTexture(buildHypsometricCanvas(img, 2048));
+        colorTex.colorSpace = THREE.SRGBColorSpace;
+        colorTex.anisotropy = 8;
+        mat.map = colorTex;
+        mat.color = new THREE.Color(0xffffff);
+      } catch {
+        /* canvas unavailable — keep the flat base colour */
+      }
       mat.needsUpdate = true;
     };
-
-    // Base loads first (fast), then we attempt the high-res upgrade on top.
-    loader.load(NIGHT_IMG, (base) => {
-      applyMap(base);
-      loader.load(HI_RES_NIGHT, applyMap, undefined, () => {
-        /* host unreachable / CORS — keep the base texture */
-      });
-    });
-
-    loader.load(BUMP_IMG, (bump) => {
-      bump.anisotropy = 16;
-      mat.bumpMap = bump;
-      mat.bumpScale = 4;
-      mat.needsUpdate = true;
-    });
+    img.onerror = () => {
+      /* heightmap unreachable — leave a plain coloured sphere */
+    };
+    img.src = HEIGHT_IMG;
   }, []);
 
-  // Runs once the globe is initialised: render quality + no auto-spin.
+  // Runs once the globe is initialised: render quality, lighting, no auto-spin.
   const handleReady = () => {
     const g = globeRef.current;
     if (!g) return;
 
-    // Crisper rendering on high-DPI screens (capped at 2x for performance).
     const renderer = g.renderer();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
     const mat = materialRef.current!;
-    for (const tex of [mat.map, mat.bumpMap]) {
+    for (const tex of [mat.map, mat.bumpMap, mat.displacementMap]) {
       if (tex) {
         tex.anisotropy = maxAniso;
         tex.needsUpdate = true;
       }
+    }
+
+    // Brighten the directional light so the relief casts visible shading.
+    for (const light of g.lights()) {
+      if (light instanceof THREE.DirectionalLight) light.intensity = 1.25;
     }
 
     // No auto-spin — the globe only moves when the user drags it.
@@ -100,14 +114,15 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
         height={size.height || undefined}
         backgroundColor="rgba(0,0,0,0)"
         globeMaterial={materialRef.current}
+        globeCurvatureResolution={CURVATURE}
         showAtmosphere
-        atmosphereColor="#4c8dff"
-        atmosphereAltitude={0.18}
+        atmosphereColor="#7fb2ff"
+        atmosphereAltitude={0.2}
         pointsData={points}
         pointLat={(d) => (d as GlobePoint).lat}
         pointLng={(d) => (d as GlobePoint).lng}
         pointColor={(d) => (d as GlobePoint).color}
-        pointAltitude={(d) => ((d as GlobePoint).id === selectedId ? 0.12 : 0.02)}
+        pointAltitude={(d) => ((d as GlobePoint).id === selectedId ? 0.14 : 0.06)}
         pointRadius={(d) => ((d as GlobePoint).id === selectedId ? 0.55 : 0.32)}
         pointResolution={6}
         pointLabel={(d) =>
