@@ -23,11 +23,19 @@ Desktop: Tauri 2 + React + TS + SQLite. Cloud: Supabase (Postgres). Shared React
 Tauri 2, React, TypeScript, Vite, Tailwind, SQLite (tauri-plugin-sql), Supabase, Zustand/React Query.
 
 ## Status
-- **Phase 0 — Foundations: DONE.**
-  - `src/lib/money.ts` + full Vitest suite (the gate). Run with `npm test`.
-  - Data-access interface (`src/data/repository.ts` + `types.ts`) with two stub
-    implementations (`SqliteRepository`, `SupabaseRepository`).
-  - Full Tauri 2 shell scaffolded under `src-tauri/` (build it on a Windows/dev
-    machine — the cloud dev container has no Rust/webkit toolchain).
-- **Next: Phase 1 — local-only offline POS core** (SQLite schema + migrations,
-  products/batches/sales SQLite repo, Checkout screen, receipt). See BLUEPRINT.md §12.
+- **Phase 0 — Foundations: DONE.** money.ts + tests; data-access interface; Tauri shell.
+- **Phase 1 — Local-only offline POS core: DONE.**
+  - Canonical schema `migrations/0001_init.sql` (one source for Rust `include_str!`
+    and the JS/sql.js path).
+  - SQL is behind a `SqlDriver` so the same `SqliteRepository` runs on tauri-plugin-sql
+    (desktop), sql.js (Node tests + browser dev). Real impl for products/batches/sales/
+    exchange-rates/settings; `sales.createCompleted` is transactional.
+  - Pure `saleAssembly` (VAT-inclusive totals, discount allocation, settlement guard).
+  - Checkout screen (`src/screens/Checkout/`): search, cart, dual-currency totals,
+    mixed LL/$ payment, LL change with rounding, receipt preview.
+  - Gate verified by `src/data/sqlite/SqliteRepository.test.ts` (sale persists, stock
+    decrements via stock_movements, rate snapshotted) + a live browser run.
+- **VAT decision (locked): prices are VAT-inclusive (11%).** The VAT figure is the
+  component extracted from the total via `extractInclusiveVat` in money.ts.
+- **Next: Phase 2 — inventory depth** (goods received, FEFO selection, low-stock /
+  near-expiry alerts). See BLUEPRINT.md §9.

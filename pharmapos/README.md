@@ -7,15 +7,23 @@ Supabase-backed web app that share the same React/TypeScript UI.
 See [`BLUEPRINT.md`](./BLUEPRINT.md) for the full technical design and
 [`CLAUDE.md`](./CLAUDE.md) for the non-negotiable project rules.
 
-## Status — Phase 0 (Foundations) complete
+## Status — Phases 0 & 1 complete
 
 | Piece | Where | Notes |
 |---|---|---|
-| Money math | `src/lib/money.ts` (+ `money.test.ts`) | Integer minor units only, no floats. The single source of truth for all money. |
+| Money math | `src/lib/money.ts` (+ `money.test.ts`) | Integer minor units only, no floats. Format/parse/convert, LL rounding, VAT extraction, settlement. The single source of truth for all money. |
 | Client IDs | `src/lib/ids.ts` | `newId()` → UUID v4 for offline-safe rows. |
 | Data-access contract | `src/data/repository.ts`, `src/data/types.ts` | The interface the UI depends on. |
-| Repository stubs | `src/data/sqlite/`, `src/data/supabase/` | Type-checked stubs; bodies land in Phase 1 / 3. |
+| Schema | `migrations/0001_init.sql` | One canonical file used by Rust (`include_str!`) and the sql.js path. |
+| SQL drivers | `src/data/sql/`, `src/data/sqlite/` | `SqlDriver` boundary → same `SqliteRepository` on tauri-plugin-sql, sql.js (tests + browser dev). |
+| Sale assembly | `src/data/saleAssembly.ts` | Pure VAT-inclusive totals + discount allocation + settlement guard. |
+| Checkout | `src/screens/Checkout/` | Search, cart, dual-currency totals, mixed LL/$ payment, LL change, receipt. |
+| Cloud stub | `src/data/supabase/` | Type-checked stub; implemented in Phase 3. |
 | Desktop shell | `src-tauri/` | Full Tauri 2 + `tauri-plugin-sql` scaffold (build on a desktop machine). |
+
+Prices are **VAT-inclusive** (Lebanon 11%); the receipt shows the extracted VAT component.
+The Phase 1 gate (a dual-currency sale persists to SQLite and decrements stock via
+`stock_movements`) is verified by `src/data/sqlite/SqliteRepository.test.ts`.
 
 ## Stack
 Tauri 2 · React · TypeScript · Vite · Tailwind CSS · SQLite (`tauri-plugin-sql`) · Supabase (Postgres).

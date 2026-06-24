@@ -33,8 +33,9 @@ export interface NewSaleLineInput {
   product_id: UUID;
   batch_id: UUID;
   qty: number;
-  unit_price_usd_cents: number;
+  unit_price_usd_cents: number; // VAT-inclusive unit price
   line_discount_usd_cents: number;
+  vat_rate: number; // product VAT rate at sale time (e.g. 0.11), for the VAT line
 }
 
 export interface NewPaymentInput {

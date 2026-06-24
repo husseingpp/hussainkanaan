@@ -70,6 +70,17 @@ function groupThousands(digits: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+/**
+ * Divide two integers, rounding the quotient to the nearest integer (ties away
+ * from zero). Integer-exact (BigInt) — use this for any money apportioning, e.g.
+ * allocating a whole-sale discount across lines.
+ */
+export function roundDiv(numerator: number, denominator: number): number {
+  assertInt(numerator, 'numerator');
+  assertInt(denominator, 'denominator');
+  return Number(roundDivBig(BigInt(numerator), BigInt(denominator)));
+}
+
 // ---------------------------------------------------------------------------
 // Formatting (minor units -> display string)
 // ---------------------------------------------------------------------------
@@ -190,6 +201,33 @@ export function roundLbp(amount: number, step: number): number {
   }
   const steps = roundDivBig(BigInt(amount), BigInt(step));
   return Number(steps * BigInt(step));
+}
+
+// ---------------------------------------------------------------------------
+// VAT (prices are VAT-inclusive — Lebanon 11%)
+// ---------------------------------------------------------------------------
+
+export interface VatBreakdown {
+  /** Amount excluding VAT. */
+  net: number;
+  /** The VAT component. `net + vat === inclusiveMinor` exactly. */
+  vat: number;
+}
+
+/**
+ * Extract the VAT component from a VAT-INCLUSIVE amount in minor units.
+ * `vatRate` is a decimal (e.g. 0.11 for 11%). Computed in basis points with BigInt
+ * so the result stays an exact integer split: `net + vat === inclusiveMinor`.
+ */
+export function extractInclusiveVat(inclusiveMinor: number, vatRate: number): VatBreakdown {
+  assertInt(inclusiveMinor, 'inclusive amount');
+  if (!Number.isFinite(vatRate) || vatRate < 0) {
+    throw new Error(`money: vatRate must be a finite number >= 0, got ${vatRate}`);
+  }
+  const basisPoints = BigInt(Math.round(vatRate * 10000));
+  const denominator = 10000n + basisPoints;
+  const net = Number(roundDivBig(BigInt(inclusiveMinor) * 10000n, denominator));
+  return { net, vat: inclusiveMinor - net };
 }
 
 // ---------------------------------------------------------------------------

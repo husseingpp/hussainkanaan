@@ -4,6 +4,7 @@ import {
   MINOR_PER_MAJOR,
   computeChange,
   convert,
+  extractInclusiveVat,
   formatLBP,
   formatMoney,
   formatUSD,
@@ -176,6 +177,23 @@ describe('roundLbp', () => {
 
   it('rounds negatives away from zero on a tie', () => {
     expect(roundLbp(-1500, 1000)).toBe(-2000);
+  });
+});
+
+describe('extractInclusiveVat', () => {
+  it('splits a VAT-inclusive amount into net + vat that sum exactly', () => {
+    expect(extractInclusiveVat(1110, 0.11)).toEqual({ net: 1000, vat: 110 });
+    const r = extractInclusiveVat(150, 0.11);
+    expect(r.net + r.vat).toBe(150);
+    expect(r.vat).toBe(15); // 150 - round(150/1.11)
+  });
+
+  it('returns zero VAT when the rate is 0', () => {
+    expect(extractInclusiveVat(150000, 0)).toEqual({ net: 150000, vat: 0 });
+  });
+
+  it('rejects negative rates', () => {
+    expect(() => extractInclusiveVat(100, -0.1)).toThrow();
   });
 });
 
