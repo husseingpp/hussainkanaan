@@ -13,8 +13,8 @@ No accounts, no backend, no API key — the app is read-only against NASA's publ
   terrain displacement (mountains/valleys) with a cyan→magenta elevation glow (emissive), no photo
   imagery, magenta atmosphere — matched by a neon dark-glass UI
 - 🔴 Live event markers, colour-coded per category, plotted at real `{lat, lng}`
-- 🔎 Filter by **category** and **status** (all / active / closed); selection is reflected in the
-  URL so views are shareable
+- 🔎 **Multi-select** category filter (toggle individual categories off while keeping the rest) +
+  **status** (all / active / closed); reflected in the URL so views are shareable
 - 🪟 Click a marker → detail panel with title, category, most-recent date, coordinates and
   source links
 - 📊 Live stats (total / active / closed) + an "updated N min ago" indicator

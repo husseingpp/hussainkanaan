@@ -186,17 +186,21 @@ coordinate swap, last-geometry selection, polygon fallback, filtering and stats.
    low `globeCurvatureResolution`) and a **cyan→magenta neon colour ramp** generated client-side from
    elevation alone (near-black oceans → teal/cyan lowlands → indigo → magenta highlands → white-hot
    peaks; see `src/lib/relief.ts`). The colour map is also used as an **emissiveMap** so the land
-   self-illuminates against the dark oceans. `SEA_LEVEL` is kept low (~0.012) so coastlines stay tight
-   and continents read as land. Magenta atmosphere glow; mesh density coarser on touch devices;
-   hi-DPI pixel ratio + anisotropy. **Auto-rotate is off.** This is relief at globe→regional scale
-   (video-game-planet look), not Google-Earth tile terrain.
+   self-illuminates against the dark oceans. Sea vs land is separated by a **land/ocean mask**
+   (`earth-water.png`, auto-detected polarity), not just an elevation threshold — so oceans are
+   **flattened (displacement 0) and tinted dark** while only continents rise, keeping land dominant.
+   Magenta atmosphere glow. **Mobile-tuned:** coarser mesh (`globeCurvatureResolution` ~1.2 vs ~0.5),
+   capped pixel ratio (~1.5 vs 2) and smaller textures (1024 vs 2048) on touch/narrow screens, with
+   damped smooth controls. **Auto-rotate is off.** This is relief at globe→regional scale, not
+   Google-Earth tile terrain.
 3. **Cyberpunk UI.** The whole interface matches: dark background with a faint neon grid backdrop,
    dark-glass panels with cyan/magenta borders + glow, uppercase mono titles with text-glow
    (`src/styles/index.css` tokens + `.cyber-panel`/`.cyber-title`).
 4. **`postcss.config.js`** is committed explicitly (Tailwind v3) rather than relying on
    `tailwindcss init -p`.
-5. **Legend is interactive** — clicking a category in the legend also sets the category filter
-   (a small UX bonus beyond the spec).
+5. **Multi-select category filter** — instead of all-or-one, categories are toggled individually via
+   a "Categories" checklist popover in the FilterBar (All/None) and by clicking entries in the
+   Legend. State is a `hidden` set of category ids, synced to the URL as `hide=...`.
 
 **Portfolio integration:** LiveEarth is linked from the main portfolio (a project card in
 `data/portfolio.ts`) and built + injected into the GitHub Pages output by the repo's

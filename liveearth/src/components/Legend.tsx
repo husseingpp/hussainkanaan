@@ -19,11 +19,11 @@ const LABELS: Record<string, string> = {
 
 interface Props {
   className?: string;
-  activeCategory: string;
-  onSelect: (category: string) => void;
+  hidden: Set<string>;
+  onToggle: (category: string) => void;
 }
 
-export function Legend({ className = "", activeCategory, onSelect }: Props) {
+export function Legend({ className = "", hidden, onToggle }: Props) {
   const entries = Object.entries(CATEGORY_COLORS);
   return (
     <div className={"cyber-panel max-w-[11rem] rounded-xl p-3 " + className}>
@@ -32,22 +32,25 @@ export function Legend({ className = "", activeCategory, onSelect }: Props) {
       </div>
       <ul className="grid grid-cols-1 gap-1">
         {entries.map(([id, color]) => {
-          const active = activeCategory === id;
+          const off = hidden.has(id);
           return (
             <li key={id}>
               <button
                 type="button"
-                onClick={() => onSelect(active ? "" : id)}
+                onClick={() => onToggle(id)}
+                title={off ? "Show" : "Hide"}
                 className={
-                  "flex w-full items-center gap-2 rounded-md px-1.5 py-0.5 text-left text-xs transition-colors " +
-                  (active
-                    ? "bg-cyan-400/20 text-cyan-100"
-                    : "text-cyan-100/70 hover:bg-cyan-400/10")
+                  "flex w-full items-center gap-2 rounded-md px-1.5 py-0.5 text-left text-xs transition-colors hover:bg-cyan-400/10 " +
+                  (off ? "text-cyan-100/35 line-through" : "text-cyan-100/85")
                 }
               >
                 <span
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
+                  style={
+                    off
+                      ? { backgroundColor: "transparent", border: `1px solid ${color}` }
+                      : { backgroundColor: color, boxShadow: `0 0 6px ${color}` }
+                  }
                 />
                 <span className="truncate">{LABELS[id] ?? id}</span>
               </button>

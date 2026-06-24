@@ -13,18 +13,21 @@ import {
   type StatusFilter,
 } from "./lib/transform";
 
-function readParams(): { category: string; status: StatusFilter } {
+function readParams(): { hidden: Set<string>; status: StatusFilter } {
   const p = new URLSearchParams(window.location.search);
-  const category = p.get("category") ?? "";
+  const hide = p.get("hide");
+  const hidden = new Set(
+    (hide ? hide.split(",") : []).map((s) => s.trim()).filter(Boolean),
+  );
   const raw = p.get("status");
   const status: StatusFilter =
     raw === "open" || raw === "closed" || raw === "all" ? raw : "open";
-  return { category, status };
+  return { hidden, status };
 }
 
 export default function App() {
   const initial = readParams();
-  const [category, setCategory] = useState(initial.category);
+  const [hidden, setHidden] = useState<Set<string>>(initial.hidden);
   const [status, setStatus] = useState<StatusFilter>(initial.status);
   const [selected, setSelected] = useState<GlobePoint | null>(null);
 
@@ -34,22 +37,30 @@ export default function App() {
   // Reflect filters in the URL so links are shareable.
   useEffect(() => {
     const p = new URLSearchParams();
-    if (category) p.set("category", category);
+    if (hidden.size) p.set("hide", [...hidden].join(","));
     if (status !== "open") p.set("status", status);
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [category, status]);
+  }, [hidden, status]);
+
+  const toggleCategory = (id: string) =>
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const allPoints = useMemo(() => eventsToPoints(data ?? []), [data]);
-  // Stats reflect the current category across all statuses…
+  // Stats reflect the visible categories across all statuses…
   const categoryPoints = useMemo(
-    () => filterPoints(allPoints, category, "all"),
-    [allPoints, category],
+    () => filterPoints(allPoints, hidden, "all"),
+    [allPoints, hidden],
   );
   // …while the markers on the globe respect both category and status.
   const visiblePoints = useMemo(
-    () => filterPoints(allPoints, category, status),
-    [allPoints, category, status],
+    () => filterPoints(allPoints, hidden, status),
+    [allPoints, hidden, status],
   );
   const stats = useMemo(() => computeStats(categoryPoints), [categoryPoints]);
 
@@ -85,19 +96,24 @@ export default function App() {
         </div>
         <div className="pointer-events-auto self-start">
           <FilterBar
-            category={category}
+            hidden={hidden}
             status={status}
             visibleCount={visiblePoints.length}
-            onCategory={setCategory}
+            onToggleCategory={toggleCategory}
+            onSetHidden={setHidden}
             onStatus={setStatus}
+            onReset={() => {
+              setHidden(new Set());
+              setStatus("open");
+            }}
           />
         </div>
       </header>
 
       <Legend
         className="pointer-events-auto absolute bottom-3 left-3 z-10 hidden sm:block"
-        activeCategory={category}
-        onSelect={setCategory}
+        hidden={hidden}
+        onToggle={toggleCategory}
       />
 
       {selected && <EventPanel point={selected} onClose={() => setSelected(null)} />}

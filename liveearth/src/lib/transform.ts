@@ -97,13 +97,17 @@ export function eventsToPoints(events: EonetEvent[]): GlobePoint[] {
   return points;
 }
 
+/**
+ * Filter points by a set of *hidden* category ids (toggle individual categories
+ * off while keeping the rest) and by status.
+ */
 export function filterPoints(
   points: GlobePoint[],
-  category: string,
+  hidden: Set<string>,
   status: StatusFilter,
 ): GlobePoint[] {
   return points.filter((p) => {
-    if (category && p.categoryId !== category) return false;
+    if (hidden.has(p.categoryId)) return false;
     if (status === "open" && p.closed) return false;
     if (status === "closed" && !p.closed) return false;
     return true;

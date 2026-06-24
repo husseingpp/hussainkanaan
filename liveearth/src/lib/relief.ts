@@ -63,6 +63,127 @@ export function elevationColor(t: number): RGB {
   return sample(LAND, Math.pow(Math.max(0, Math.min(1, u)), LAND_CONTRAST));
 }
 
+/** Land-only ramp (never returns an ocean colour) — used when a mask has already
+ * confirmed the pixel is land, so even low elevations stay on the neon land ramp. */
+export function landColor(t: number): RGB {
+  return sample(LAND, Math.pow(Math.max(0, Math.min(1, t)), LAND_CONTRAST));
+}
+
+/** Ocean ramp by depth (0 = deepest … 1 = shallow). */
+export function oceanColor(t: number): RGB {
+  return sample(OCEAN, t);
+}
+
+/** Decide whether "water" pixels are the bright ones in a land/ocean mask, by
+ * comparing a known-ocean sample to a known-land sample. Robust to either
+ * polarity of the asset. */
+export function waterIsBright(oceanLum: number, landLum: number): boolean {
+  return oceanLum >= landLum;
+}
+
+function luminance(r: number, g: number, b: number): number {
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+function lonLatToIndex(lng: number, lat: number, w: number, h: number): number {
+  const x = Math.min(w - 1, Math.max(0, Math.round(((lng + 180) / 360) * w)));
+  const y = Math.min(h - 1, Math.max(0, Math.round(((90 - lat) / 180) * h)));
+  return (y * w + x) * 4;
+}
+
+function drawScaled(img: HTMLImageElement, w: number, h: number): Uint8ClampedArray | null {
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(img, 0, 0, w, h);
+  return ctx.getImageData(0, 0, w, h).data;
+}
+
+export interface ReliefTextures {
+  /** sRGB colour map: dark seas + neon land. */
+  colorCanvas: HTMLCanvasElement;
+  /** Linear displacement/bump map: 0 over oceans (flat), elevation over land. */
+  dispCanvas: HTMLCanvasElement;
+}
+
+/**
+ * Composite an elevation heightmap + a land/ocean mask into a colour canvas and
+ * a displacement canvas (browser-only). The mask decides sea vs land definitively
+ * (so oceans don't swallow low-lying land), with auto-detected polarity. Oceans
+ * are flattened (displacement 0) and tinted dark; land keeps its elevation relief
+ * and the neon hypsometric tint.
+ */
+export function buildReliefTextures(
+  topoImg: HTMLImageElement,
+  waterImg: HTMLImageElement,
+  maxWidth = 2048,
+): ReliefTextures | null {
+  const srcW = topoImg.naturalWidth || topoImg.width;
+  const srcH = topoImg.naturalHeight || topoImg.height;
+  const scale = srcW > maxWidth ? maxWidth / srcW : 1;
+  const w = Math.max(1, Math.round(srcW * scale));
+  const h = Math.max(1, Math.round(srcH * scale));
+
+  const topo = drawScaled(topoImg, w, h);
+  const water = drawScaled(waterImg, w, h);
+  if (!topo || !water) return null;
+
+  // Auto-detect mask polarity from a known-ocean and known-land sample.
+  const oceanIdx = lonLatToIndex(-150, 0, w, h); // mid-Pacific
+  const landIdx = lonLatToIndex(10, 22, w, h); // Sahara
+  const oceanLum = luminance(water[oceanIdx], water[oceanIdx + 1], water[oceanIdx + 2]);
+  const landLum = luminance(water[landIdx], water[landIdx + 1], water[landIdx + 2]);
+  const bright = waterIsBright(oceanLum, landLum);
+  const mid = (oceanLum + landLum) / 2;
+
+  const colorCanvas = document.createElement("canvas");
+  colorCanvas.width = w;
+  colorCanvas.height = h;
+  const dispCanvas = document.createElement("canvas");
+  dispCanvas.width = w;
+  dispCanvas.height = h;
+  const colorCtx = colorCanvas.getContext("2d");
+  const dispCtx = dispCanvas.getContext("2d");
+  if (!colorCtx || !dispCtx) return null;
+
+  const colorImg = colorCtx.createImageData(w, h);
+  const dispImg = dispCtx.createImageData(w, h);
+  const cd = colorImg.data;
+  const dd = dispImg.data;
+
+  for (let i = 0; i < topo.length; i += 4) {
+    const elev = topo[i] / 255;
+    const wl = luminance(water[i], water[i + 1], water[i + 2]);
+    const isOcean = bright ? wl > mid : wl < mid;
+
+    let r: number;
+    let g: number;
+    let b: number;
+    let disp: number;
+    if (isOcean) {
+      [r, g, b] = oceanColor(elev); // subtle depth variation, stays dark
+      disp = 0; // flat seas
+    } else {
+      [r, g, b] = landColor(elev);
+      disp = topo[i]; // keep land relief
+    }
+    cd[i] = r;
+    cd[i + 1] = g;
+    cd[i + 2] = b;
+    cd[i + 3] = 255;
+    dd[i] = disp;
+    dd[i + 1] = disp;
+    dd[i + 2] = disp;
+    dd[i + 3] = 255;
+  }
+
+  colorCtx.putImageData(colorImg, 0, 0);
+  dispCtx.putImageData(dispImg, 0, 0);
+  return { colorCanvas, dispCanvas };
+}
+
 /**
  * Recolour a grayscale heightmap image into a hypsometric colour map on a
  * canvas (browser-only — uses the DOM). The red channel is read as elevation.

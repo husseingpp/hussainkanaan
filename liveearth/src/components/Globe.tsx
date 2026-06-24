@@ -2,20 +2,33 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import Globe, { type GlobeMethods } from "react-globe.gl";
 import type { GlobePoint } from "../lib/transform";
-import { buildHypsometricCanvas } from "../lib/relief";
+import { buildHypsometricCanvas, buildReliefTextures } from "../lib/relief";
 
-// Grayscale elevation heightmap (reliable + CORS-enabled via unpkg). Used as the
-// single source for both the 3D relief (displacement) and the hypsometric colour.
+// Elevation heightmap + land/ocean mask (reliable + CORS-enabled via unpkg).
 const HEIGHT_IMG = "https://unpkg.com/three-globe/example/img/earth-topology.png";
+const WATER_IMG = "https://unpkg.com/three-globe/example/img/earth-water.png";
 
-// Coarser mesh on touch devices to protect performance; dense on desktop so the
-// displacement reads as real terrain.
+// Lighter settings on touch devices for a smooth mobile experience.
 const COARSE_POINTER =
   typeof window !== "undefined" &&
-  typeof window.matchMedia === "function" &&
-  window.matchMedia("(pointer: coarse)").matches;
-const CURVATURE = COARSE_POINTER ? 0.8 : 0.4; // segments = 360 / value
+  ((typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: coarse)").matches) ||
+    window.innerWidth < 768);
+const CURVATURE = COARSE_POINTER ? 1.2 : 0.5; // segments = 360 / value
+const TEX_MAX = COARSE_POINTER ? 1024 : 2048; // texture working resolution
+const MAX_PIXEL_RATIO = COARSE_POINTER ? 1.5 : 2;
 const DISPLACEMENT = 5; // relief height on three-globe's GLOBE_RADIUS (100)
+
+// Load an <img> as a promise (CORS-enabled so the canvas stays untainted).
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
 
 interface Props {
   points: GlobePoint[];
@@ -50,39 +63,65 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  // Load the heightmap once → real 3D relief (displacement/bump) + elevation tints.
+  // Build the relief surface: elevation + land/ocean mask → flat dark seas,
+  // raised neon continents. Falls back to a topology-only tint if the mask fails.
   useEffect(() => {
+    let cancelled = false;
     const mat = materialRef.current!;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      // Displacement + bump push the actual vertices out → 3D mountains/valleys.
-      const height = new THREE.Texture(img);
-      height.needsUpdate = true;
-      mat.displacementMap = height;
-      mat.displacementScale = DISPLACEMENT;
-      mat.bumpMap = height;
-      mat.bumpScale = 1.2;
 
-      // Colour the surface from elevation alone (cyberpunk cyan → magenta ramp).
-      // The same neon map is used as an emissive map so the land self-illuminates
-      // against the dark oceans for a glowing, cyberpunk look.
+    const applyColor = (canvas: HTMLCanvasElement) => {
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      mat.map = tex;
+      mat.emissiveMap = tex;
+      mat.color = new THREE.Color(0xffffff);
+    };
+    const applyDisplacement = (source: HTMLCanvasElement | HTMLImageElement) => {
+      const tex =
+        source instanceof HTMLCanvasElement
+          ? new THREE.CanvasTexture(source)
+          : new THREE.Texture(source);
+      tex.needsUpdate = true;
+      mat.displacementMap = tex;
+      mat.displacementScale = DISPLACEMENT;
+      mat.bumpMap = tex;
+      mat.bumpScale = 1.2;
+    };
+
+    (async () => {
       try {
-        const colorTex = new THREE.CanvasTexture(buildHypsometricCanvas(img, 2048));
-        colorTex.colorSpace = THREE.SRGBColorSpace;
-        colorTex.anisotropy = 8;
-        mat.map = colorTex;
-        mat.emissiveMap = colorTex;
-        mat.color = new THREE.Color(0xffffff);
+        const [topo, water] = await Promise.all([
+          loadImage(HEIGHT_IMG),
+          loadImage(WATER_IMG),
+        ]);
+        if (cancelled) return;
+        const relief = buildReliefTextures(topo, water, TEX_MAX);
+        if (relief) {
+          applyColor(relief.colorCanvas);
+          applyDisplacement(relief.dispCanvas);
+        } else {
+          applyColor(buildHypsometricCanvas(topo, TEX_MAX));
+          applyDisplacement(topo);
+        }
+        mat.needsUpdate = true;
       } catch {
-        /* canvas unavailable — keep the flat base colour */
+        // Mask unavailable → topology-only fallback (relief + tint, no flat seas).
+        try {
+          const topo = await loadImage(HEIGHT_IMG);
+          if (cancelled) return;
+          applyColor(buildHypsometricCanvas(topo, TEX_MAX));
+          applyDisplacement(topo);
+          mat.needsUpdate = true;
+        } catch {
+          /* leave the plain coloured sphere */
+        }
       }
-      mat.needsUpdate = true;
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    img.onerror = () => {
-      /* heightmap unreachable — leave a plain coloured sphere */
-    };
-    img.src = HEIGHT_IMG;
   }, []);
 
   // Runs once the globe is initialised: render quality, lighting, no auto-spin.
@@ -91,7 +130,7 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
     if (!g) return;
 
     const renderer = g.renderer();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO));
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
     const mat = materialRef.current!;
     for (const tex of [mat.map, mat.bumpMap, mat.displacementMap]) {
@@ -108,10 +147,13 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
       if (light instanceof THREE.AmbientLight) light.intensity = 0.35;
     }
 
-    // No auto-spin — the globe only moves when the user drags it.
+    // Smooth, no auto-spin — the globe only moves when the user drags it.
     const controls = g.controls();
     controls.autoRotate = false;
     controls.enableDamping = true;
+    controls.dampingFactor = 0.12;
+    controls.rotateSpeed = 0.6;
+    controls.zoomSpeed = 0.7;
     g.pointOfView({ altitude: 2.5 });
   };
 
