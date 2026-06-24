@@ -62,7 +62,8 @@ export default function App() {
   }, [allPoints, selected]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#05070d] text-slate-100">
+    <div className="relative h-full w-full overflow-hidden bg-[#05030f] text-slate-100">
+      <div className="cyber-backdrop" />
       <GlobeView
         points={visiblePoints}
         selectedId={selected?.id ?? null}
@@ -73,11 +74,11 @@ export default function App() {
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-3 p-3 sm:p-5">
         <div className="pointer-events-auto flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
-              <span className="text-sky-400">●</span> LiveEarth
+            <h1 className="cyber-title flex items-center gap-2 text-xl sm:text-2xl">
+              <span style={{ color: "var(--neon-magenta)" }}>◉</span> LiveEarth
             </h1>
-            <p className="text-xs text-slate-400 sm:text-sm">
-              Live natural events from NASA EONET
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/70 sm:text-sm">
+              Live natural events · NASA EONET
             </p>
           </div>
           <StatsBar stats={stats} isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
@@ -118,7 +119,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => refetch()}
-            className="rounded-lg bg-sky-500/90 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-400"
+            className="cyber-glow-cyan rounded-lg border border-cyan-400/70 bg-cyan-500/10 px-4 py-2 text-sm font-semibold uppercase tracking-wider text-cyan-200 transition-colors hover:bg-cyan-500/25"
           >
             Retry
           </button>
@@ -138,6 +139,6 @@ function Overlay({ children }: { children: ReactNode }) {
 
 function Spinner() {
   return (
-    <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-sky-400" />
+    <span className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/20 border-t-cyan-300 shadow-[0_0_14px_rgba(0,234,255,0.5)]" />
   );
 }

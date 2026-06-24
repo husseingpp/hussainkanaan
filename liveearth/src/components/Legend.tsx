@@ -26,13 +26,8 @@ interface Props {
 export function Legend({ className = "", activeCategory, onSelect }: Props) {
   const entries = Object.entries(CATEGORY_COLORS);
   return (
-    <div
-      className={
-        "max-w-[11rem] rounded-xl border border-white/10 bg-black/40 p-3 backdrop-blur-md " +
-        className
-      }
-    >
-      <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+    <div className={"cyber-panel max-w-[11rem] rounded-xl p-3 " + className}>
+      <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300/70">
         Categories
       </div>
       <ul className="grid grid-cols-1 gap-1">
@@ -45,12 +40,14 @@ export function Legend({ className = "", activeCategory, onSelect }: Props) {
                 onClick={() => onSelect(active ? "" : id)}
                 className={
                   "flex w-full items-center gap-2 rounded-md px-1.5 py-0.5 text-left text-xs transition-colors " +
-                  (active ? "bg-white/15 text-white" : "text-slate-300 hover:bg-white/10")
+                  (active
+                    ? "bg-cyan-400/20 text-cyan-100"
+                    : "text-cyan-100/70 hover:bg-cyan-400/10")
                 }
               >
                 <span
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: color }}
+                  style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
                 />
                 <span className="truncate">{LABELS[id] ?? id}</span>
               </button>

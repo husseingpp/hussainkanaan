@@ -4,6 +4,11 @@
 
 :root {
   color-scheme: dark;
+  /* Cyberpunk neon palette */
+  --neon-cyan: #00eaff;
+  --neon-magenta: #ff2bd6;
+  --bg-0: #05030f;
+  --bg-1: #0a0618;
 }
 
 html,
@@ -14,33 +19,77 @@ body,
 
 body {
   margin: 0;
-  background: #05070d;
-  color: #e8eef9;
-  font-family: theme("fontFamily.sans");
+  background: var(--bg-0);
+  color: #d7f7ff;
+  font-family: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Fira Code", Menlo, monospace;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
 
-/* Tooltip injected by react-globe.gl's pointLabel (raw HTML, so styled here). */
+/* Faint neon grid + vignette behind the globe. */
+.cyber-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(0, 234, 255, 0.08), transparent 60%),
+    radial-gradient(circle at 80% 90%, rgba(255, 43, 214, 0.1), transparent 55%),
+    linear-gradient(rgba(0, 234, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 234, 255, 0.05) 1px, transparent 1px),
+    var(--bg-0);
+  background-size: 100% 100%, 100% 100%, 42px 42px, 42px 42px, 100% 100%;
+  mask-image: radial-gradient(circle at 50% 45%, black 55%, transparent 100%);
+}
+
+/* Neon panel surface used across the UI overlays. */
+.cyber-panel {
+  background: rgba(7, 9, 22, 0.62);
+  border: 1px solid rgba(0, 234, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(0, 234, 255, 0.08) inset,
+    0 0 18px rgba(0, 234, 255, 0.18),
+    0 0 36px rgba(255, 43, 214, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.cyber-title {
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #eafdff;
+  text-shadow:
+    0 0 8px rgba(0, 234, 255, 0.85),
+    0 0 22px rgba(255, 43, 214, 0.5);
+}
+
+.cyber-glow-cyan {
+  box-shadow: 0 0 12px rgba(0, 234, 255, 0.55);
+}
+
+/* Tooltip injected by react-globe.gl's pointLabel (raw HTML, styled here). */
 .globe-tip {
   max-width: 16rem;
   padding: 0.35rem 0.6rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(2, 6, 23, 0.9);
-  color: #e8eef9;
+  border-radius: 0.4rem;
+  border: 1px solid var(--neon-cyan);
+  background: rgba(3, 6, 18, 0.92);
+  color: #eafdff;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   line-height: 1.2;
+  text-shadow: 0 0 6px rgba(0, 234, 255, 0.7);
+  box-shadow: 0 0 14px rgba(0, 234, 255, 0.4);
   backdrop-filter: blur(4px);
 }
 
-/* Slim scrollbar for the detail panel. */
+/* Slim neon scrollbar for the detail panel. */
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 234, 255, 0.35);
   border-radius: 999px;
 }

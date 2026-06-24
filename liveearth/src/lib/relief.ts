@@ -10,22 +10,26 @@ interface Stop {
 }
 
 // Anything at/below this normalized elevation is treated as ocean.
-export const SEA_LEVEL = 0.03;
+// Kept low so coastlines stay tight and continents read as land, not sea.
+export const SEA_LEVEL = 0.012;
 
+// Cyberpunk cyan→magenta ramp (no natural-earth colours).
 const OCEAN: Stop[] = [
-  { at: 0, color: [8, 28, 68] }, // deep
-  { at: 1, color: [22, 84, 150] }, // shallow / coast
+  { at: 0, color: [1, 3, 10] }, // near-black deep
+  { at: 1, color: [6, 50, 71] }, // subtle cyan shallows
 ];
 
 const LAND: Stop[] = [
-  { at: 0.0, color: [72, 118, 70] }, // coastal green
-  { at: 0.12, color: [99, 150, 78] }, // lowland green
-  { at: 0.3, color: [150, 158, 92] }, // tan
-  { at: 0.5, color: [138, 110, 72] }, // brown
-  { at: 0.72, color: [112, 92, 80] }, // dark rock
-  { at: 0.88, color: [183, 178, 173] }, // bare rock / grey
-  { at: 1.0, color: [255, 255, 255] }, // snow / peaks
+  { at: 0.0, color: [7, 59, 70] }, // dark teal coast
+  { at: 0.18, color: [19, 196, 214] }, // neon cyan lowland
+  { at: 0.42, color: [79, 59, 214] }, // indigo
+  { at: 0.68, color: [192, 38, 212] }, // magenta highland
+  { at: 0.86, color: [255, 90, 242] }, // hot pink
+  { at: 1.0, color: [243, 249, 255] }, // white-hot peaks
 ];
+
+// Spread the heightmap's compressed land range so the neon tones (and peaks) read.
+const LAND_CONTRAST = 0.7;
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
@@ -55,7 +59,8 @@ function sample(stops: Stop[], x: number): RGB {
  */
 export function elevationColor(t: number): RGB {
   if (t < SEA_LEVEL) return sample(OCEAN, t / SEA_LEVEL);
-  return sample(LAND, (t - SEA_LEVEL) / (1 - SEA_LEVEL));
+  const u = (t - SEA_LEVEL) / (1 - SEA_LEVEL);
+  return sample(LAND, Math.pow(Math.max(0, Math.min(1, u)), LAND_CONTRAST));
 }
 
 /**

@@ -26,18 +26,20 @@ export function StatsBar({ stats, isFetching, dataUpdatedAt }: Props) {
   }, []);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2 backdrop-blur-md">
-      <Stat label="Total" value={stats.total} color="#e2e8f0" />
+    <div className="cyber-panel flex items-center gap-3 rounded-xl px-3 py-2">
+      <Stat label="Total" value={stats.total} color="#eafdff" />
       <Divider />
-      <Stat label="Active" value={stats.active} color="#34d399" />
+      <Stat label="Active" value={stats.active} color="#00eaff" />
       <Divider />
-      <Stat label="Closed" value={stats.closed} color="#94a3b8" />
+      <Stat label="Closed" value={stats.closed} color="#ff2bd6" />
       <Divider />
-      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+      <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-cyan-200/70">
         <span
           className={
             "h-1.5 w-1.5 rounded-full " +
-            (isFetching ? "animate-pulse bg-sky-400" : "bg-emerald-400")
+            (isFetching
+              ? "animate-pulse bg-fuchsia-400 shadow-[0_0_8px_rgba(255,43,214,0.8)]"
+              : "bg-cyan-400 shadow-[0_0_8px_rgba(0,234,255,0.8)]")
           }
         />
         {isFetching ? "updating…" : `updated ${timeAgo(dataUpdatedAt, now)}`}
@@ -52,11 +54,11 @@ function Stat({ label, value, color }: { label: string; value: number; color: st
       <div className="text-base font-semibold" style={{ color }}>
         {value}
       </div>
-      <div className="text-[10px] uppercase tracking-wide text-slate-400">{label}</div>
+      <div className="text-[10px] uppercase tracking-wide text-cyan-200/60">{label}</div>
     </div>
   );
 }
 
 function Divider() {
-  return <span className="h-6 w-px bg-white/10" />;
+  return <span className="h-6 w-px bg-cyan-400/20" />;
 }

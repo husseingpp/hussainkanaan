@@ -31,7 +31,12 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
   // Our own material: a stylized relief surface (no Earth photo).
   const materialRef = useRef<THREE.MeshPhongMaterial | null>(null);
   if (!materialRef.current) {
-    materialRef.current = new THREE.MeshPhongMaterial({ color: 0x14304f, shininess: 4 });
+    materialRef.current = new THREE.MeshPhongMaterial({
+      color: 0x06121f,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.5,
+      shininess: 2,
+    });
   }
 
   // Keep the canvas sized to its container (responsive + mobile).
@@ -59,12 +64,15 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
       mat.bumpMap = height;
       mat.bumpScale = 1.2;
 
-      // Colour the surface from elevation alone (blue seas → green → brown → snow).
+      // Colour the surface from elevation alone (cyberpunk cyan → magenta ramp).
+      // The same neon map is used as an emissive map so the land self-illuminates
+      // against the dark oceans for a glowing, cyberpunk look.
       try {
         const colorTex = new THREE.CanvasTexture(buildHypsometricCanvas(img, 2048));
         colorTex.colorSpace = THREE.SRGBColorSpace;
         colorTex.anisotropy = 8;
         mat.map = colorTex;
+        mat.emissiveMap = colorTex;
         mat.color = new THREE.Color(0xffffff);
       } catch {
         /* canvas unavailable — keep the flat base colour */
@@ -93,9 +101,11 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
       }
     }
 
-    // Brighten the directional light so the relief casts visible shading.
+    // Keep a directional light for relief shading, but let the neon emissive
+    // glow lead; dim the ambient so the dark side stays moody.
     for (const light of g.lights()) {
-      if (light instanceof THREE.DirectionalLight) light.intensity = 1.25;
+      if (light instanceof THREE.DirectionalLight) light.intensity = 0.9;
+      if (light instanceof THREE.AmbientLight) light.intensity = 0.35;
     }
 
     // No auto-spin — the globe only moves when the user drags it.
@@ -116,8 +126,8 @@ export function GlobeView({ points, selectedId, onSelect }: Props) {
         globeMaterial={materialRef.current}
         globeCurvatureResolution={CURVATURE}
         showAtmosphere
-        atmosphereColor="#7fb2ff"
-        atmosphereAltitude={0.2}
+        atmosphereColor="#ff2bd6"
+        atmosphereAltitude={0.28}
         pointsData={points}
         pointLat={(d) => (d as GlobePoint).lat}
         pointLng={(d) => (d as GlobePoint).lng}

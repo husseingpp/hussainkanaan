@@ -9,9 +9,9 @@ No accounts, no backend, no API key — the app is read-only against NASA's publ
 
 ## Features
 
-- 🌐 Draggable 3D **relief globe** (react-globe.gl / three.js) — a stylized "video-game planet"
-  with real terrain displacement (mountains/valleys) and elevation-tinted continents, no photo
-  imagery; atmosphere glow included
+- 🌐 Draggable 3D **relief globe** (react-globe.gl / three.js) — a **cyberpunk neon planet**: real
+  terrain displacement (mountains/valleys) with a cyan→magenta elevation glow (emissive), no photo
+  imagery, magenta atmosphere — matched by a neon dark-glass UI
 - 🔴 Live event markers, colour-coded per category, plotted at real `{lat, lng}`
 - 🔎 Filter by **category** and **status** (all / active / closed); selection is reflected in the
   URL so views are shareable
