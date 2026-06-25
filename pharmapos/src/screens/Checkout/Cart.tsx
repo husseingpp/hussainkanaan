@@ -36,16 +36,22 @@ export function Cart({ rate }: { rate: number }) {
                   </div>
                   <div className="text-xs text-slate-400">
                     <Money usd={l.product.price_usd_cents} rate={rate} /> each
+                    {' · '}
+                    {l.batchExpiry ? `exp ${l.batchExpiry}` : 'no expiry'} · {l.batchOnHand} on hand
                   </div>
                 </td>
                 <td className="px-3 py-2 text-center">
                   <input
                     type="number"
                     min={1}
+                    max={l.batchOnHand}
                     value={l.qty}
                     onChange={(e) => setQty(l.product.id, Math.floor(Number(e.target.value)))}
                     className="w-16 rounded border border-slate-300 px-2 py-1 text-center outline-none focus:border-emerald-500"
                   />
+                  {l.qty >= l.batchOnHand && (
+                    <div className="mt-0.5 text-[10px] text-amber-600">max (batch)</div>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-right">
                   <Money usd={lineTotal} rate={rate} />

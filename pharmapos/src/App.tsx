@@ -1,10 +1,10 @@
 import { RepositoryProvider } from './data/RepositoryProvider';
-import Checkout from './screens/Checkout/Checkout';
+import { AppShell } from './screens/AppShell';
 
 export default function App() {
   return (
     <RepositoryProvider>
-      <Checkout />
+      <AppShell />
     </RepositoryProvider>
   );
 }

@@ -107,6 +107,44 @@ export interface SettingsRepository {
   all(): Promise<Setting[]>;
 }
 
+// --- Inventory (Phase 2) ---
+
+export interface ReceiveStockInput {
+  product_id: UUID;
+  branch_id: UUID;
+  batch_no: string | null;
+  expiry_date: string | null; // ISO date
+  qty: number;
+  cost_usd_cents: number;
+  user_id: UUID | null;
+}
+
+export interface LowStockRow {
+  product: Product;
+  on_hand: number;
+}
+
+export type ExpiryBucket = 'expired' | 'expiring' | 'ok';
+
+export interface ExpiryRow {
+  batch: Batch;
+  product: Product;
+  bucket: ExpiryBucket;
+  /** Whole days until expiry (negative = already expired); null when no expiry date. */
+  days_to_expiry: number | null;
+}
+
+export interface InventoryRepository {
+  /** Goods received: add stock to a new or existing batch + a `purchase` movement. */
+  receiveStock(input: ReceiveStockInput): Promise<Batch>;
+  /** Manual stock correction (damage, recount): an `adjustment` movement + cache update. */
+  adjustStock(batchId: UUID, qtyDelta: number, userId: UUID | null): Promise<void>;
+  /** Products whose total on-hand is below `threshold`. */
+  lowStock(threshold: number): Promise<LowStockRow[]>;
+  /** Batches with stock, bucketed by expiry as of `asOfIso`; `nearDays` defines "expiring". */
+  expiryReport(asOfIso: string, nearDays: number): Promise<ExpiryRow[]>;
+}
+
 /** The single object the UI depends on. */
 export interface Repository {
   products: ProductRepository;
@@ -114,4 +152,5 @@ export interface Repository {
   sales: SaleRepository;
   exchangeRates: ExchangeRateRepository;
   settings: SettingsRepository;
+  inventory: InventoryRepository;
 }

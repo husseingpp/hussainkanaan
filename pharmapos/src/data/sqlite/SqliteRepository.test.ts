@@ -2,6 +2,7 @@ import { beforeEach, describe, it, expect } from 'vitest';
 import { createTestDriver } from '../../test/sqljs';
 import { seedDemoData } from '../seed';
 import { SqliteRepository } from './SqliteRepository';
+import { availableQty, pickFefoBatch } from '../fefo';
 import type { SqlDriver } from '../sql/SqlDriver';
 import type { NewSaleInput } from '../repository';
 import type { Product } from '../types';
@@ -38,15 +39,21 @@ describe('seed + reads', () => {
 
     const panadol = await findProduct('Panadol');
     const batches = await repo.batches.listByProduct(panadol.id);
-    expect(batches[0].qty_on_hand).toBe(40);
+    // Two batches; FEFO-first is the earlier-expiry one (2026-09-15, qty 5).
+    expect(batches).toHaveLength(2);
+    expect(pickFefoBatch(batches)!.expiry_date).toBe('2026-09-15');
+    expect(pickFefoBatch(batches)!.qty_on_hand).toBe(5);
+    expect(availableQty(batches)).toBe(45);
   });
 });
 
 describe('createCompleted — the Phase 1 gate', () => {
   it('rings up a dual-currency sale, persists it, and decrements stock via movements', async () => {
-    const panadol = await findProduct('Panadol'); // 250¢, qty 40
+    const panadol = await findProduct('Panadol'); // 250¢; two batches (5 @ 2026-09-15, 40 @ 2027-03-31)
     const augmentin = await findProduct('Augmentin'); // 1200¢, qty 25
-    const panadolBatch = (await repo.batches.listByProduct(panadol.id))[0];
+    const panadolBatches = await repo.batches.listByProduct(panadol.id);
+    const panadolBatch = pickFefoBatch(panadolBatches)!; // earliest-expiry: 5 units
+    const laterPanadolBatch = panadolBatches.find((b) => b.id !== panadolBatch.id)!; // 40 units
     const augmentinBatch = (await repo.batches.listByProduct(augmentin.id))[0];
     const rate = (await repo.exchangeRates.current())!.usd_to_lbp;
 
@@ -109,14 +116,15 @@ describe('createCompleted — the Phase 1 gate', () => {
     expect(movements.map((m) => m.qty_delta)).toEqual([-2, -1]);
     expect(movements.every((m) => m.type === 'sale')).toBe(true);
 
-    // And the derived qty_on_hand cache followed.
-    expect((await repo.batches.get(panadolBatch.id))!.qty_on_hand).toBe(38);
+    // FEFO: the earliest-expiry batch was decremented; the later one untouched.
+    expect((await repo.batches.get(panadolBatch.id))!.qty_on_hand).toBe(3); // 5 - 2
+    expect((await repo.batches.get(laterPanadolBatch.id))!.qty_on_hand).toBe(40);
     expect((await repo.batches.get(augmentinBatch.id))!.qty_on_hand).toBe(24);
   });
 
   it('rejects an underpaid sale and writes nothing', async () => {
     const panadol = await findProduct('Panadol');
-    const batch = (await repo.batches.listByProduct(panadol.id))[0];
+    const batch = pickFefoBatch(await repo.batches.listByProduct(panadol.id))!; // 5 units
     const salesBefore = (await repo.sales.list()).length;
 
     const input: NewSaleInput = {
@@ -144,6 +152,6 @@ describe('createCompleted — the Phase 1 gate', () => {
 
     // Nothing changed: no new sale, stock intact.
     expect((await repo.sales.list()).length).toBe(salesBefore);
-    expect((await repo.batches.get(batch.id))!.qty_on_hand).toBe(40);
+    expect((await repo.batches.get(batch.id))!.qty_on_hand).toBe(5);
   });
 });

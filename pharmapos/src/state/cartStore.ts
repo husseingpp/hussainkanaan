@@ -6,11 +6,17 @@
 
 import { create } from 'zustand';
 import type { NewPaymentInput } from '../data/repository';
-import type { Product } from '../data/types';
+import type { Batch, Product } from '../data/types';
 
+/**
+ * One cart line draws from a single batch (the FEFO batch chosen when the product
+ * was added). `batchOnHand` caps the quantity so a line can never oversell its batch.
+ */
 export interface CartLine {
   product: Product;
   batchId: string;
+  batchOnHand: number;
+  batchExpiry: string | null;
   qty: number;
   lineDiscountUsdCents: number;
 }
@@ -19,7 +25,7 @@ interface CartState {
   lines: CartLine[];
   wholeDiscountUsdCents: number;
   payments: NewPaymentInput[];
-  addProduct: (product: Product, batchId: string) => void;
+  addProduct: (product: Product, batch: Batch) => void;
   setQty: (productId: string, qty: number) => void;
   setLineDiscount: (productId: string, cents: number) => void;
   removeLine: (productId: string) => void;
@@ -35,24 +41,39 @@ export const useCartStore = create<CartState>((set) => ({
   wholeDiscountUsdCents: 0,
   payments: [],
 
-  addProduct: (product, batchId) =>
+  addProduct: (product, batch) =>
     set((s) => {
       const existing = s.lines.find((l) => l.product.id === product.id);
       if (existing) {
         return {
           lines: s.lines.map((l) =>
-            l.product.id === product.id ? { ...l, qty: l.qty + 1 } : l,
+            l.product.id === product.id
+              ? { ...l, qty: Math.min(l.qty + 1, l.batchOnHand) }
+              : l,
           ),
         };
       }
-      return { lines: [...s.lines, { product, batchId, qty: 1, lineDiscountUsdCents: 0 }] };
+      return {
+        lines: [
+          ...s.lines,
+          {
+            product,
+            batchId: batch.id,
+            batchOnHand: batch.qty_on_hand,
+            batchExpiry: batch.expiry_date,
+            qty: 1,
+            lineDiscountUsdCents: 0,
+          },
+        ],
+      };
     }),
 
   setQty: (productId, qty) =>
     set((s) => ({
       lines: s.lines.flatMap((l) => {
         if (l.product.id !== productId) return [l];
-        return qty <= 0 ? [] : [{ ...l, qty }];
+        if (qty <= 0) return [];
+        return [{ ...l, qty: Math.min(qty, l.batchOnHand) }];
       }),
     })),
 

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRepository, useSession } from '../../data/RepositoryProvider';
 import type { NewSaleInput, NewSaleLineInput } from '../../data/repository';
 import { computeTotals, type TotalsLine } from '../../data/saleAssembly';
-import type { Product } from '../../data/types';
+import { availableQty, pickFefoBatch } from '../../data/fefo';
+import type { Batch, Product } from '../../data/types';
 import { computeChange, lbpToUsdCents, settle, type PaymentInput } from '../../lib/money';
 import { useCartStore } from '../../state/cartStore';
 import { Cart } from './Cart';
@@ -23,7 +24,7 @@ const toTotalsLine = (l: {
   vat_rate: l.product.vat_rate,
 });
 
-export default function Checkout() {
+export default function Checkout({ onStockChanged }: { onStockChanged?: () => void }) {
   const repo = useRepository();
   const session = useSession();
 
@@ -36,9 +37,27 @@ export default function Checkout() {
   const [rate, setRate] = useState<number | null>(null);
   const [roundingStep, setRoundingStep] = useState(1000);
   const [storeName, setStoreName] = useState('PharmaPOS');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [stock, setStock] = useState<Map<string, { onHand: number; fefoBatch: Batch | null }>>(
+    new Map(),
+  );
   const [receipt, setReceipt] = useState<ReceiptModel | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load (and refresh) products + per-product on-hand and the current FEFO batch.
+  const loadStock = useCallback(async () => {
+    const all = await repo.products.list();
+    const map = new Map<string, { onHand: number; fefoBatch: Batch | null }>();
+    await Promise.all(
+      all.map(async (p) => {
+        const batches = await repo.batches.listByProduct(p.id);
+        map.set(p.id, { onHand: availableQty(batches), fefoBatch: pickFefoBatch(batches) });
+      }),
+    );
+    setProducts(all);
+    setStock(map);
+  }, [repo]);
 
   useEffect(() => {
     (async () => {
@@ -48,8 +67,9 @@ export default function Checkout() {
       if (step) setRoundingStep(Number(step));
       const name = await repo.settings.get('store_name');
       if (name) setStoreName(name);
+      await loadStock();
     })();
-  }, [repo]);
+  }, [repo, loadStock]);
 
   const totals = useMemo(
     () => computeTotals(lines.map(toTotalsLine), wholeDiscount),
@@ -57,17 +77,16 @@ export default function Checkout() {
   );
 
   const handlePick = useCallback(
-    async (product: Product) => {
-      const batches = await repo.batches.listByProduct(product.id);
-      const batch = batches.find((b) => b.qty_on_hand > 0) ?? batches[0];
+    (product: Product) => {
+      const batch = stock.get(product.id)?.fefoBatch;
       if (!batch) {
-        setError(`${product.name} has no stock batch.`);
+        setError(`${product.name} is out of stock.`);
         return;
       }
       setError(null);
-      addProduct(product, batch.id);
+      addProduct(product, batch);
     },
-    [repo, addProduct],
+    [stock, addProduct],
   );
 
   const onComplete = useCallback(async () => {
@@ -117,12 +136,14 @@ export default function Checkout() {
         })),
       });
       reset();
+      await loadStock(); // reflect the decremented stock
+      onStockChanged?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
-  }, [rate, lines, payments, totals, roundingStep, wholeDiscount, repo, session, storeName, reset]);
+  }, [rate, lines, payments, totals, roundingStep, wholeDiscount, repo, session, storeName, reset, loadStock, onStockChanged]);
 
   if (rate === null) {
     return (
@@ -133,26 +154,16 @@ export default function Checkout() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50 text-slate-900">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
-        <div>
-          <h1 className="text-lg font-bold">{storeName}</h1>
-          <p className="text-xs text-slate-400">Checkout</p>
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-slate-500">
-            1&nbsp;USD = {rate.toLocaleString()}&nbsp;L.L.
-          </span>
-          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-            ● Offline · local SQLite
-          </span>
-        </div>
-      </header>
-
+    <div className="flex h-full min-h-0 flex-col bg-slate-50 text-slate-900">
       <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden p-4 lg:grid-cols-[1fr_380px]">
         <section className="flex min-h-0 flex-col gap-4">
           <div className="min-h-0 flex-1">
-            <ProductSearch rate={rate} onPick={handlePick} />
+            <ProductSearch
+              products={products}
+              rate={rate}
+              onHandOf={(id) => stock.get(id)?.onHand ?? 0}
+              onPick={handlePick}
+            />
           </div>
           <div className="flex min-h-0 flex-[1.2] flex-col">
             <h2 className="mb-2 text-sm font-semibold text-slate-600">Cart</h2>

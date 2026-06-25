@@ -7,13 +7,18 @@
  */
 
 import { newId, nowIso } from '../../lib/ids';
+import { classifyExpiry, daysUntil } from '../expiry';
 import { assembleSale } from '../saleAssembly';
 import { withTransaction, type SqlDriver } from '../sql/SqlDriver';
 import {
   type BatchRepository,
   type ExchangeRateRepository,
+  type ExpiryRow,
+  type InventoryRepository,
+  type LowStockRow,
   type NewSaleInput,
   type ProductRepository,
+  type ReceiveStockInput,
   type Repository,
   type SaleQuery,
   type SaleRepository,
@@ -403,12 +408,184 @@ class SqliteSettingsRepository implements SettingsRepository {
   }
 }
 
+class SqliteInventoryRepository implements InventoryRepository {
+  constructor(private readonly db: SqlDriver) {}
+
+  async receiveStock(input: ReceiveStockInput): Promise<Batch> {
+    const now = nowIso();
+    // Match an existing live batch by product + batch_no (null batch_no is its own bucket).
+    const existing = await this.db.select<Row>(
+      `SELECT * FROM batches
+       WHERE product_id = ? AND deleted_at IS NULL
+         AND ((batch_no IS NULL AND ? IS NULL) OR batch_no = ?)
+       LIMIT 1`,
+      [input.product_id, input.batch_no, input.batch_no],
+    );
+
+    let batch: Batch;
+    if (existing.length) {
+      const current = rowToBatch(existing[0]);
+      batch = {
+        ...current,
+        qty_on_hand: current.qty_on_hand + input.qty,
+        expiry_date: input.expiry_date ?? current.expiry_date,
+        cost_usd_cents: input.cost_usd_cents,
+        updated_at: now,
+        sync_version: current.sync_version + 1,
+        last_modified_by: input.user_id,
+      };
+    } else {
+      batch = {
+        id: newId(),
+        product_id: input.product_id,
+        branch_id: input.branch_id,
+        batch_no: input.batch_no,
+        expiry_date: input.expiry_date,
+        qty_on_hand: input.qty,
+        cost_usd_cents: input.cost_usd_cents,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+        last_modified_by: input.user_id,
+        sync_version: 0,
+      };
+    }
+
+    const movement: StockMovement = {
+      id: newId(),
+      product_id: input.product_id,
+      batch_id: batch.id,
+      branch_id: input.branch_id,
+      type: 'purchase',
+      qty_delta: input.qty,
+      ref_id: null,
+      created_at: now,
+      updated_at: now,
+      deleted_at: null,
+      last_modified_by: input.user_id,
+      sync_version: 0,
+    };
+
+    await withTransaction(this.db, async () => {
+      await this.upsertBatch(batch);
+      await this.insertMovement(movement);
+    });
+    return batch;
+  }
+
+  async adjustStock(batchId: UUID, qtyDelta: number, userId: UUID | null): Promise<void> {
+    const now = nowIso();
+    const rows = await this.db.select<Row>('SELECT * FROM batches WHERE id = ?', [batchId]);
+    if (!rows.length) throw new Error(`adjustStock: batch ${batchId} not found`);
+    const current = rowToBatch(rows[0]);
+    const updated: Batch = {
+      ...current,
+      qty_on_hand: current.qty_on_hand + qtyDelta,
+      updated_at: now,
+      sync_version: current.sync_version + 1,
+      last_modified_by: userId,
+    };
+    const movement: StockMovement = {
+      id: newId(),
+      product_id: current.product_id,
+      batch_id: current.id,
+      branch_id: current.branch_id,
+      type: 'adjustment',
+      qty_delta: qtyDelta,
+      ref_id: null,
+      created_at: now,
+      updated_at: now,
+      deleted_at: null,
+      last_modified_by: userId,
+      sync_version: 0,
+    };
+    await withTransaction(this.db, async () => {
+      await this.upsertBatch(updated);
+      await this.insertMovement(movement);
+    });
+  }
+
+  async lowStock(threshold: number): Promise<LowStockRow[]> {
+    const rows = await this.db.select<Row>(
+      `SELECT p.*, COALESCE(SUM(CASE WHEN b.deleted_at IS NULL THEN b.qty_on_hand ELSE 0 END), 0) AS on_hand
+       FROM products p
+       LEFT JOIN batches b ON b.product_id = p.id
+       WHERE p.deleted_at IS NULL AND p.active = 1
+       GROUP BY p.id
+       HAVING on_hand < ?
+       ORDER BY on_hand ASC, p.name`,
+      [threshold],
+    );
+    return rows.map((r) => ({ product: rowToProduct(r), on_hand: r.on_hand as number }));
+  }
+
+  async expiryReport(asOfIso: string, nearDays: number): Promise<ExpiryRow[]> {
+    const productRows = await this.db.select<Row>(
+      'SELECT * FROM products WHERE deleted_at IS NULL',
+    );
+    const byId = new Map(productRows.map((r) => [r.id as string, rowToProduct(r)]));
+
+    const batchRows = await this.db.select<Row>(
+      `SELECT * FROM batches
+       WHERE deleted_at IS NULL AND qty_on_hand > 0
+       ORDER BY (expiry_date IS NULL), expiry_date ASC`,
+    );
+
+    const out: ExpiryRow[] = [];
+    for (const row of batchRows) {
+      const batch = rowToBatch(row);
+      const product = byId.get(batch.product_id);
+      if (!product) continue;
+      out.push({
+        batch,
+        product,
+        bucket: classifyExpiry(batch.expiry_date, asOfIso, nearDays),
+        days_to_expiry: batch.expiry_date ? daysUntil(batch.expiry_date, asOfIso) : null,
+      });
+    }
+    return out;
+  }
+
+  private upsertBatch(b: Batch): Promise<void> {
+    return this.db.execute(
+      `INSERT INTO batches
+         (id, product_id, branch_id, batch_no, expiry_date, qty_on_hand, cost_usd_cents,
+          created_at, updated_at, deleted_at, last_modified_by, sync_version)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+       ON CONFLICT(id) DO UPDATE SET
+         batch_no=excluded.batch_no, expiry_date=excluded.expiry_date,
+         qty_on_hand=excluded.qty_on_hand, cost_usd_cents=excluded.cost_usd_cents,
+         updated_at=excluded.updated_at, last_modified_by=excluded.last_modified_by,
+         sync_version=excluded.sync_version`,
+      [
+        b.id, b.product_id, b.branch_id, b.batch_no, b.expiry_date, b.qty_on_hand,
+        b.cost_usd_cents, b.created_at, b.updated_at, b.deleted_at, b.last_modified_by,
+        b.sync_version,
+      ],
+    );
+  }
+
+  private insertMovement(m: StockMovement): Promise<void> {
+    return this.db.execute(
+      `INSERT INTO stock_movements
+         (id, product_id, batch_id, branch_id, type, qty_delta, ref_id, created_at, updated_at,
+          deleted_at, last_modified_by, sync_version)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        m.id, m.product_id, m.batch_id, m.branch_id, m.type, m.qty_delta, m.ref_id,
+        m.created_at, m.updated_at, m.deleted_at, m.last_modified_by, m.sync_version,
+      ],
+    );
+  }
+}
+
 export class SqliteRepository implements Repository {
   readonly products: ProductRepository;
   readonly batches: BatchRepository;
   readonly sales: SaleRepository;
   readonly exchangeRates: ExchangeRateRepository;
   readonly settings: SettingsRepository;
+  readonly inventory: InventoryRepository;
 
   constructor(db: SqlDriver) {
     this.products = new SqliteProductRepository(db);
@@ -416,5 +593,6 @@ export class SqliteRepository implements Repository {
     this.sales = new SqliteSaleRepository(db);
     this.exchangeRates = new SqliteExchangeRateRepository(db);
     this.settings = new SqliteSettingsRepository(db);
+    this.inventory = new SqliteInventoryRepository(db);
   }
 }

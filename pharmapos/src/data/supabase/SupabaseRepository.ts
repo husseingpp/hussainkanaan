@@ -10,8 +10,12 @@ import {
   NotImplementedError,
   type BatchRepository,
   type ExchangeRateRepository,
+  type ExpiryRow,
+  type InventoryRepository,
+  type LowStockRow,
   type NewSaleInput,
   type ProductRepository,
+  type ReceiveStockInput,
   type Repository,
   type SaleQuery,
   type SaleRepository,
@@ -85,10 +89,26 @@ class SupabaseSettingsRepository implements SettingsRepository {
   }
 }
 
+class SupabaseInventoryRepository implements InventoryRepository {
+  receiveStock(_input: ReceiveStockInput): Promise<Batch> {
+    throw new NotImplementedError('SupabaseRepository.inventory.receiveStock');
+  }
+  adjustStock(_batchId: UUID, _qtyDelta: number, _userId: UUID | null): Promise<void> {
+    throw new NotImplementedError('SupabaseRepository.inventory.adjustStock');
+  }
+  lowStock(_threshold: number): Promise<LowStockRow[]> {
+    throw new NotImplementedError('SupabaseRepository.inventory.lowStock');
+  }
+  expiryReport(_asOfIso: string, _nearDays: number): Promise<ExpiryRow[]> {
+    throw new NotImplementedError('SupabaseRepository.inventory.expiryReport');
+  }
+}
+
 export class SupabaseRepository implements Repository {
   readonly products: ProductRepository = new SupabaseProductRepository();
   readonly batches: BatchRepository = new SupabaseBatchRepository();
   readonly sales: SaleRepository = new SupabaseSaleRepository();
   readonly exchangeRates: ExchangeRateRepository = new SupabaseExchangeRateRepository();
   readonly settings: SettingsRepository = new SupabaseSettingsRepository();
+  readonly inventory: InventoryRepository = new SupabaseInventoryRepository();
 }
