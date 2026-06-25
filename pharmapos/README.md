@@ -7,7 +7,7 @@ Supabase-backed web app that share the same React/TypeScript UI.
 See [`BLUEPRINT.md`](./BLUEPRINT.md) for the full technical design and
 [`CLAUDE.md`](./CLAUDE.md) for the non-negotiable project rules.
 
-## Status — Phases 0, 1 & 2 complete
+## Status — Phases 0–2 complete; Phase 3 cloud code complete (live project pending)
 
 | Piece | Where | Notes |
 |---|---|---|
@@ -55,6 +55,27 @@ npm run tauri build  # produce a desktop binary
 > **not** build in a headless Linux CI/cloud container; develop the desktop build on a
 > Windows/macOS machine. The pure-TypeScript core (money + data layer) is fully verified
 > here via `npm test`.
+
+### Cloud mode (Supabase)
+
+The same React UI runs against Supabase (Postgres) when cloud env vars are set. To connect a
+project:
+
+```sh
+# 1. Create (or reuse) a Supabase project.
+# 2. Apply the schema + seed (Supabase SQL editor, or the MCP/CLI):
+#      supabase/migrations/0001_init.sql   # tables, product_stock view, create_sale RPC, RLS
+#      supabase/seed.sql                   # demo branch/user/products/batches/rate/settings
+# 3. Point the app at it:
+cp .env.example .env        # then fill in:
+#   VITE_SUPABASE_URL=https://<ref>.supabase.co
+#   VITE_SUPABASE_ANON_KEY=<publishable/anon key>
+npm run dev                 # now runs in cloud mode (web); Tauri always stays offline-first
+```
+
+> Backend selection (`src/data/createRepository.ts`): **Tauri → local SQLite**; otherwise
+> **Supabase env present → cloud**; otherwise **dev → seeded sql.js**. Phase 3 is a *permissive
+> MVP* — anon key + allow-all RLS, no login screen yet (a hardening pass adds auth + tight RLS).
 
 ## Money conventions (do not change)
 - USD is stored as **integer cents** (`$12.50` → `1250`).

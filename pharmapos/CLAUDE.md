@@ -43,9 +43,20 @@ Tauri 2, React, TypeScript, Vite, Tailwind, SQLite (tauri-plugin-sql), Supabase,
     Expiry report (with a low-stock/near-expiry badge).
   - Gate verified by `inventory.test.ts` + the FEFO assertions in
     `SqliteRepository.test.ts` (sale decrements the earliest-expiry batch) + a live run.
+- **Phase 3 — Cloud: code COMPLETE (live project pending).**
+  - Postgres schema `supabase/migrations/0001_init.sql` (mirror of the SQLite schema +
+    `product_stock` view + atomic `create_sale` RPC + permissive allow-all RLS) and
+    `supabase/seed.sql`.
+  - `SupabaseRepository` (full impl over `supabase-js`, reusing `assembleSale` +
+    `classifyExpiry`); `createRepository` selects it when `VITE_SUPABASE_URL` is set and
+    not under Tauri. `client.ts` + `.env.example`.
+  - Verified by `tsc`/build/61 tests (offline path untouched). **Live run deferred:** the
+    Supabase org is at the free-tier 2-active-project limit, so no new project could be
+    created this session. Connect one per README "Cloud mode" to finish the gate.
+  - **Permissive MVP (locked): anon key + allow-all RLS, no login screen** — a hardening
+    pass adds Supabase Auth + branch-scoped RLS.
 - **VAT decision (locked): prices are VAT-inclusive (11%).** The VAT figure is the
   component extracted from the total via `extractInclusiveVat` in money.ts.
 - **FEFO model (locked): single earliest-expiry batch per line**, qty capped at that
   batch's on-hand (no batch oversell). `pickFefoBatch` chooses it.
-- **Next: Phase 3 — Cloud + Auth** (Supabase schema mirror, RLS, cloud repository).
-  See BLUEPRINT.md §9.
+- **Next: Phase 4 — Sync engine** (outbox + pull, conflict rules, sync status). See BLUEPRINT.md §9.
