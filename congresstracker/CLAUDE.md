@@ -45,7 +45,7 @@ enforced by the schema.**
 1. **Schema** — apply `supabase/migrations/0001_init.sql`, confirm RLS. ✅ scaffolded
 2. **API client** — `ingest/_client.ts`: rate-limited, retrying, paging
    Congress.gov client. Unit-test paging before moving on. ✅ done
-3. **Members ingestion** — `ingest/members.ts` → upsert `members` + `terms`.
+3. **Members ingestion** — `ingest/members.ts` → upsert `members` + `terms`. ✅ done
 4. **Read-only UI** — member list (`/`) + profile (`/member/[bioguideId]`)
    wired to Supabase. No promises yet.
 5. **Bills ingestion** — `ingest/bills.ts` → `bills` + `sponsorships`; bill
@@ -134,4 +134,25 @@ opinion site. Wing columns are descriptive, never pejorative. Always expose the
 - **QA gate (passed):** `npm test` — 16 unit tests covering paging order,
   termination conditions, key detection, retries/backoff, throttle, and the
   daily cap. `npm run typecheck` is clean.
-- Next: Phase 3 wires this client into `ingest/members.ts`.
+- Next: Phase 4 wires Supabase into the Next.js UI (member list + profile).
+
+### Phase 3 — Members ingestion (done)
+
+- `ingest/members.ts` exports `ingestMembers(opts)` → `IngestResult`.
+- **Incremental sync:** pass `fromDateTime` (ISO-8601) to only fetch members
+  whose `updateDate` is at or after that value — keeps daily request usage low.
+  Store the highest `source_updated_at` from each run and use it next time.
+- **Idempotent:** members are upserted with `onConflict: 'bioguide_id'`.
+  Terms use delete-then-insert per batch (the `coalesce(district,-1)` expression
+  index on `terms` cannot be targeted by PostgREST's `onConflict` parameter).
+- **Batching:** 250 items per Congress.gov page; 100 rows per Supabase upsert/
+  insert to stay within PostgREST body limits.
+- **Handles API shape quirks:** terms come back as `{ item: [...] }` or a bare
+  array — both handled. Member names are inverted ("Last, First") and parsed.
+  Party names ("Democratic", "Democrat", "Republican", …) are mapped to the
+  `party` enum. Chamber strings ("House of Representatives", "Senate") are
+  mapped to `chamber`.
+- **Testable:** `CongressClient` and Supabase client are both injectable.
+  All transformation functions are pure and exported.
+- **QA gate (passed):** `npm test` → 48/48 passing (includes Phase 2 suite).
+  `npm run typecheck` clean.
