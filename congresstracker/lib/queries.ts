@@ -8,7 +8,7 @@
  */
 
 import { createPublicClient } from "./supabase.ts";
-import type { Member, Term } from "./database.types.ts";
+import type { Member, Term, Bill, Sponsorship } from "./database.types.ts";
 
 export const PER_PAGE = 100;
 
@@ -110,6 +110,140 @@ export async function getMemberTerms(bioguideId: string): Promise<Term[]> {
       .order("congress", { ascending: false });
     if (error) return [];
     return (data as Term[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Bills
+// ---------------------------------------------------------------------------
+
+export interface BillFilters {
+  congress?: string | number;
+  /** "law" -> only enacted bills. */
+  status?: string;
+  q?: string;
+  page?: string | number;
+}
+
+export interface BillListResult {
+  bills: Bill[];
+  total: number;
+  page: number;
+}
+
+export async function getBills(
+  filters: BillFilters = {},
+): Promise<BillListResult> {
+  const db = safeDb();
+  if (!db) return { bills: [], total: 0, page: 0 };
+
+  const page = Math.max(0, Number(filters.page ?? 0));
+  const from = page * PER_PAGE;
+  const to = from + PER_PAGE - 1;
+
+  try {
+    // eslint-disable-next-line
+    let q: any = (db as any)
+      .from("bills")
+      .select("*", { count: "exact" })
+      .order("latest_action_date", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
+      .range(from, to);
+
+    const congress = Number(filters.congress);
+    if (Number.isFinite(congress) && congress > 0) {
+      q = q.eq("congress", congress);
+    }
+    if (filters.status === "law") {
+      q = q.eq("became_law", true);
+    }
+    const title = filters.q?.trim();
+    if (title) {
+      const escaped = title.replace(/[%_\\]/g, "\\$&");
+      q = q.ilike("title", `%${escaped}%`);
+    }
+
+    const { data, error, count } = await q;
+    if (error) throw error;
+    return { bills: (data as Bill[]) ?? [], total: count ?? 0, page };
+  } catch {
+    return { bills: [], total: 0, page };
+  }
+}
+
+export async function getBill(id: string): Promise<Bill | null> {
+  const db = safeDb();
+  if (!db) return null;
+  try {
+    const { data, error } = await (db as any)
+      .from("bills")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) return null;
+    return (data as Bill) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** A sponsorship joined with the sponsoring member (for bill pages). */
+export interface SponsorshipWithMember extends Sponsorship {
+  members: Pick<
+    Member,
+    "bioguide_id" | "full_name" | "party" | "state" | "current_chamber" | "image_url"
+  > | null;
+}
+
+export async function getBillSponsorships(
+  billId: string,
+): Promise<SponsorshipWithMember[]> {
+  const db = safeDb();
+  if (!db) return [];
+  try {
+    const { data, error } = await (db as any)
+      .from("sponsorships")
+      .select(
+        "*, members(bioguide_id, full_name, party, state, current_chamber, image_url)",
+      )
+      .eq("bill_id", billId)
+      .order("is_sponsor", { ascending: false })
+      .order("sponsored_date", { ascending: true, nullsFirst: false });
+    if (error) return [];
+    return (data as SponsorshipWithMember[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** A sponsorship joined with the bill (for member profile pages). */
+export interface SponsorshipWithBill extends Sponsorship {
+  bills: Pick<
+    Bill,
+    "id" | "congress" | "bill_type" | "number" | "title" | "became_law" | "latest_action_date"
+  > | null;
+}
+
+export async function getMemberSponsorships(
+  bioguideId: string,
+  limit = 25,
+): Promise<SponsorshipWithBill[]> {
+  const db = safeDb();
+  if (!db) return [];
+  try {
+    const { data, error } = await (db as any)
+      .from("sponsorships")
+      .select(
+        "*, bills(id, congress, bill_type, number, title, became_law, latest_action_date)",
+      )
+      .eq("bioguide_id", bioguideId)
+      .order("is_sponsor", { ascending: false })
+      .order("sponsored_date", { ascending: false, nullsFirst: false })
+      .limit(limit);
+    if (error) return [];
+    return (data as SponsorshipWithBill[]) ?? [];
   } catch {
     return [];
   }

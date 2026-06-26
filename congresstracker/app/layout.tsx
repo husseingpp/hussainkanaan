@@ -27,12 +27,26 @@ export default function RootLayout({
             >
               CongressTracker
             </Link>
-            <Link
-              href="/methodology"
-              className="text-sm text-gray-500 hover:text-gray-900"
-            >
-              Methodology
-            </Link>
+            <div className="flex items-center gap-5">
+              <Link
+                href="/"
+                className="text-sm text-gray-500 hover:text-gray-900"
+              >
+                Members
+              </Link>
+              <Link
+                href="/bills"
+                className="text-sm text-gray-500 hover:text-gray-900"
+              >
+                Bills
+              </Link>
+              <Link
+                href="/methodology"
+                className="text-sm text-gray-500 hover:text-gray-900"
+              >
+                Methodology
+              </Link>
+            </div>
           </nav>
         </header>
 

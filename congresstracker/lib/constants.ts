@@ -74,3 +74,54 @@ export const CHAMBER_LABELS: Record<string, string> = {
 export function congressStartYear(congress: number): number {
   return 1789 + (congress - 1) * 2;
 }
+
+/** Short display labels for bill types (DB stores lowercase: "hr", "s", …). */
+export const BILL_TYPE_LABELS: Record<string, string> = {
+  hr: "H.R.",
+  s: "S.",
+  hjres: "H.J.Res.",
+  sjres: "S.J.Res.",
+  hconres: "H.Con.Res.",
+  sconres: "S.Con.Res.",
+  hres: "H.Res.",
+  sres: "S.Res.",
+};
+
+/** congress.gov web-URL path segment per bill type. */
+const BILL_TYPE_URL_SEGMENT: Record<string, string> = {
+  hr: "house-bill",
+  s: "senate-bill",
+  hjres: "house-joint-resolution",
+  sjres: "senate-joint-resolution",
+  hconres: "house-concurrent-resolution",
+  sconres: "senate-concurrent-resolution",
+  hres: "house-resolution",
+  sres: "senate-resolution",
+};
+
+/** 1 -> "1st", 2 -> "2nd", 117 -> "117th". */
+export function ordinal(n: number): string {
+  const rem100 = n % 100;
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1:
+      return `${n}st`;
+    case 2:
+      return `${n}nd`;
+    case 3:
+      return `${n}rd`;
+    default:
+      return `${n}th`;
+  }
+}
+
+/** Build the public congress.gov URL for a bill, or null if type is unknown. */
+export function congressGovBillUrl(
+  congress: number,
+  billType: string,
+  number: number,
+): string | null {
+  const segment = BILL_TYPE_URL_SEGMENT[billType];
+  if (!segment) return null;
+  return `https://www.congress.gov/bill/${ordinal(congress)}-congress/${segment}/${number}`;
+}

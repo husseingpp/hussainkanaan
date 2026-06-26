@@ -49,7 +49,7 @@ enforced by the schema.**
 4. **Read-only UI** — member list (`/`) + profile (`/member/[bioguideId]`)
    wired to Supabase. No promises yet. ✅ done
 5. **Bills ingestion** — `ingest/bills.ts` → `bills` + `sponsorships`; bill
-   pages.
+   pages. ✅ done
 6. **Votes ingestion** — `ingest/votes.ts` (House/Senate XML). This is the
    messiest module; isolate it and test parsing hard.
 7. **Wings + scores** — classification + `ingest/scores.ts` → `alignment_scores`.
@@ -165,6 +165,45 @@ Files added:
 QA gate: `npm run build` clean (no errors, no lint warnings), `npm test`
 48/48 passing. Both pages are `ƒ` (dynamic, server-rendered) with
 `revalidate = 3600`.
+
+### Phase 5 — Bills ingestion + bill pages (done)
+
+Ingestion — `ingest/bills.ts`, `ingestBills(opts)` → `BillIngestResult`:
+- Pages the `/v3/bill` (or `/v3/bill/{congress}`) list endpoint, then fetches
+  each bill's DETAIL endpoint for sponsors / introduced date / policy area.
+- **Cost controls** (the ~5k/day limit bites here): `withDetail` (default true,
+  1 req/bill), `withCosponsors` (default false — cosponsors are a separate
+  paged endpoint, even more requests), `maxCosponsorsPerBill`, `maxItems`.
+- **Idempotent:** bills upsert on the `id` PK; sponsorships upsert on the
+  `(bioguide_id, bill_id)` unique constraint (a plain constraint, so unlike
+  terms we can use PostgREST `onConflict` directly).
+- **FK safety:** sponsorships reference `members`; a bill can be sponsored by a
+  former member not in our table, so rows are filtered to known member ids
+  (loaded once via `loadMemberIds`, or supplied via `knownMemberIds`).
+  Skipped rows are counted in `skippedSponsorships`, not errored.
+- **De-dupe:** a member appearing twice for one bill is collapsed to avoid the
+  "ON CONFLICT cannot affect row a second time" upsert error.
+- `became_law` derived from the detail `laws[]` array or a "Became … Law"
+  latest-action match (`detectBecameLaw`).
+- Pure transforms (`makeBillId`, `transformBill`, `transformSponsors`,
+  `transformCosponsor`, `detectBecameLaw`, `billDetailPath`) all exported +
+  unit-tested.
+
+UI:
+- `app/bills/page.tsx` — bill list with congress / status (became law) / title
+  filters and pagination.
+- `app/bill/[id]/page.tsx` — bill detail: title, status, policy area, dates,
+  latest action, congress.gov link, primary sponsor(s) + cosponsors linking to
+  member profiles.
+- Member profile gains a **Sponsored legislation** section (sponsored +
+  cosponsored, linking to bill pages).
+- `lib/queries.ts` adds `getBills`, `getBill`, `getBillSponsorships`
+  (joins members), `getMemberSponsorships` (joins bills).
+- `lib/constants.ts` adds `BILL_TYPE_LABELS`, `ordinal`, `congressGovBillUrl`.
+- Nav gains Members / Bills / Methodology.
+
+QA gate: `npm test` → 70/70 passing (32 new in `bills.test.ts`).
+`npm run build` clean; routes `/bills` and `/bill/[id]` present.
 
 ### Phase 3 — Members ingestion (done)
 

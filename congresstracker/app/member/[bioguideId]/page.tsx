@@ -1,12 +1,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getMember, getMemberTerms } from "../../../lib/queries.ts";
+import {
+  getMember,
+  getMemberTerms,
+  getMemberSponsorships,
+  type SponsorshipWithBill,
+} from "../../../lib/queries.ts";
 import {
   PARTY_LABELS,
   CHAMBER_LABELS,
+  BILL_TYPE_LABELS,
   congressStartYear,
 } from "../../../lib/constants.ts";
+import { BillStatusBadge } from "../../_components/BillStatusBadge.tsx";
 import { PartyBadge } from "../../_components/PartyBadge.tsx";
 import { MemberPhoto } from "../../_components/MemberPhoto.tsx";
 import type { Term } from "../../../lib/database.types.ts";
@@ -27,12 +34,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function MemberProfilePage({ params }: PageProps) {
-  const [member, terms] = await Promise.all([
+  const [member, terms, sponsorships] = await Promise.all([
     getMember(params.bioguideId),
     getMemberTerms(params.bioguideId),
+    getMemberSponsorships(params.bioguideId),
   ]);
 
   if (!member) notFound();
+
+  const sponsored = sponsorships.filter((s) => s.is_sponsor);
+  const cosponsored = sponsorships.filter((s) => !s.is_sponsor);
 
   const partyLabel = member.party ? PARTY_LABELS[member.party] : null;
   const chamberLabel = member.current_chamber
@@ -112,6 +123,26 @@ export default async function MemberProfilePage({ params }: PageProps) {
         </div>
       )}
 
+      {/* Sponsored legislation (Phase 5 data) */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold mb-3">Sponsored legislation</h2>
+        {sponsorships.length > 0 ? (
+          <div className="space-y-4">
+            {sponsored.length > 0 && (
+              <BillList title="Sponsored" items={sponsored} />
+            )}
+            {cosponsored.length > 0 && (
+              <BillList title="Cosponsored" items={cosponsored} />
+            )}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-400">
+            No sponsored legislation in the database yet (populated by Phase 5
+            bills ingestion).
+          </div>
+        )}
+      </section>
+
       {/* Placeholder sections for future phases */}
       <section className="mt-8">
         <h2 className="text-lg font-semibold mb-3">Voting record</h2>
@@ -159,6 +190,43 @@ export default async function MemberProfilePage({ params }: PageProps) {
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
+
+function BillList({
+  title,
+  items,
+}: {
+  title: string;
+  items: SponsorshipWithBill[];
+}) {
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+        {title} ({items.length})
+      </h3>
+      <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white shadow-sm">
+        {items.map((s) => {
+          const b = s.bills;
+          if (!b) return null;
+          const label =
+            BILL_TYPE_LABELS[b.bill_type] ?? b.bill_type.toUpperCase();
+          return (
+            <li key={b.id} className="p-3 hover:bg-gray-50 transition-colors">
+              <Link href={`/bill/${b.id}`} className="flex items-start gap-3">
+                <span className="font-mono text-xs text-gray-500 whitespace-nowrap pt-0.5">
+                  {label} {b.number}
+                </span>
+                <span className="flex-1 text-sm text-gray-900 hover:text-blue-700">
+                  {b.title ?? "(untitled)"}
+                </span>
+                {b.became_law && <BillStatusBadge becameLaw />}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 function TermsTable({
   title,
