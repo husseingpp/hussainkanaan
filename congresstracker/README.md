@@ -1,0 +1,89 @@
+# CongressTracker
+
+Non-partisan accountability for every member of the US Congress: who they are,
+what they **promised** before being elected, and what they **actually did** in
+office (votes, sponsored bills, bills passed). Browse the same member through a
+**Left / Center / Right** lens, Ground News style.
+
+> The product only has value if people trust it. **Every factual claim about a
+> real person is traceable to a source — enforced by the database schema, not
+> just the UI.** See [`CLAUDE.md`](./CLAUDE.md) for the full spec and hard rules.
+
+## Stack
+
+Next.js 14 (App Router) · TypeScript · Tailwind CSS · Supabase (Postgres + RLS)
+· Vercel. Data from [`api.congress.gov`](https://api.congress.gov) plus House
+Clerk / Senate roll-call XML.
+
+## Status
+
+This is the **Phase 1 (schema)** scaffold. The database schema, RLS, project
+configuration, and a non-factual landing + `/methodology` page exist. Member
+data, ingestion, and profiles arrive in later phases — see the build order in
+[`CLAUDE.md`](./CLAUDE.md).
+
+## Getting started
+
+Requires Node.js 18.17+ (Node 20+ recommended).
+
+```bash
+npm install
+cp .env.example .env.local   # then fill in the values
+npm run dev                  # http://localhost:3000
+```
+
+## Database
+
+The full schema lives in [`supabase/migrations/0001_init.sql`](./supabase/migrations/0001_init.sql).
+
+Apply it to a Supabase project either with the Supabase CLI:
+
+```bash
+supabase db push
+```
+
+or by pasting the migration into the Supabase SQL editor.
+
+### What the schema guarantees
+
+- `members` · `terms` · `bills` · `sponsorships` · `votes` · `promises` ·
+  `alignment_scores`.
+- `votes.source_url` and `promises.source_url` are **mandatory** (`NOT NULL` +
+  non-empty) — no source, no row.
+- `promises.status` defaults to `unverified`; marking a promise `kept` /
+  `broken` / `partial` requires a **reviewer** and a **status source URL**.
+- **Row Level Security:** public (anon) access is read-only on every table.
+  Promise create/update is limited to authenticated reviewers. Ingestion jobs
+  use the service-role key, which bypasses RLS.
+
+### QA gate (before starting Phase 2)
+
+With the anon key, confirm:
+
+1. `SELECT` works on every table.
+2. `INSERT` / `UPDATE` / `DELETE` are rejected on every table.
+3. A `promises` insert without `source_url` fails.
+4. Setting a promise to `broken` without `reviewed_by` + `status_source_url`
+   fails.
+
+## Environment
+
+See [`.env.example`](./.env.example): `CONGRESS_API_KEY`,
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` (server-only).
+
+## Project layout
+
+```
+congresstracker/
+├── app/                       # Next.js App Router
+│   ├── page.tsx               # Landing (non-factual placeholder)
+│   └── methodology/page.tsx   # How the site sources and classifies
+├── ingest/                    # Ingestion modules (added per phase)
+├── lib/
+│   ├── supabase.ts            # Public (anon) + service-role clients
+│   └── database.types.ts      # TS mirror of the schema
+├── supabase/migrations/
+│   └── 0001_init.sql          # Phase 1 schema + RLS
+└── CLAUDE.md                  # Single source of truth (spec + hard rules)
+```
