@@ -44,7 +44,7 @@ enforced by the schema.**
 
 1. **Schema** — apply `supabase/migrations/0001_init.sql`, confirm RLS. ✅ scaffolded
 2. **API client** — `ingest/_client.ts`: rate-limited, retrying, paging
-   Congress.gov client. Unit-test paging before moving on.
+   Congress.gov client. Unit-test paging before moving on. ✅ done
 3. **Members ingestion** — `ingest/members.ts` → upsert `members` + `terms`.
 4. **Read-only UI** — member list (`/`) + profile (`/member/[bioguideId]`)
    wired to Supabase. No promises yet.
@@ -114,3 +114,24 @@ opinion site. Wing columns are descriptive, never pejorative. Always expose the
   `INSERT`/`UPDATE`/`DELETE` are rejected, and that a `promises` row cannot be
   inserted without `source_url` or set to `broken` without a reviewer +
   `status_source_url`.
+
+### Phase 2 — Congress.gov API client (done)
+
+- `ingest/_client.ts` exposes `CongressClient` with `get()`, `paginate()`
+  (async generator), and `fetchAll()`.
+- **Rate limiting:** a soft daily cap (`maxRequestsPerDay`, default 5,000)
+  throws `RateLimitExceededError` when exhausted and resets on a rolling 24h
+  window; `minIntervalMs` smooths bursts. `requestsUsedToday` is observable.
+- **Retries:** transient failures (408/425/429/5xx and network errors) retry
+  with exponential backoff + jitter, capped at `backoffMaxMs`, honouring
+  `Retry-After` on 429. Non-retryable statuses (e.g. 404) throw `HttpError`
+  immediately. The `api_key` is redacted from error messages.
+- **Paging:** offset/limit walk, auto-detecting the response array key (or via
+  `itemsKey`), stopping at `pagination.count`, a short page, or `maxItems`.
+  `pageSize` is clamped to the API max of 250.
+- **Testability:** `fetchFn`, `now`, `sleep`, and `random` are injectable, so
+  the whole suite runs with no network and deterministic timing.
+- **QA gate (passed):** `npm test` — 16 unit tests covering paging order,
+  termination conditions, key detection, retries/backoff, throttle, and the
+  daily cap. `npm run typecheck` is clean.
+- Next: Phase 3 wires this client into `ingest/members.ts`.
