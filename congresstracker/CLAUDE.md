@@ -47,7 +47,7 @@ enforced by the schema.**
    Congress.gov client. Unit-test paging before moving on. ✅ done
 3. **Members ingestion** — `ingest/members.ts` → upsert `members` + `terms`. ✅ done
 4. **Read-only UI** — member list (`/`) + profile (`/member/[bioguideId]`)
-   wired to Supabase. No promises yet.
+   wired to Supabase. No promises yet. ✅ done
 5. **Bills ingestion** — `ingest/bills.ts` → `bills` + `sponsorships`; bill
    pages.
 6. **Votes ingestion** — `ingest/votes.ts` (House/Senate XML). This is the
@@ -134,7 +134,37 @@ opinion site. Wing columns are descriptive, never pejorative. Always expose the
 - **QA gate (passed):** `npm test` — 16 unit tests covering paging order,
   termination conditions, key detection, retries/backoff, throttle, and the
   daily cap. `npm run typecheck` is clean.
-- Next: Phase 4 wires Supabase into the Next.js UI (member list + profile).
+- Next: Phase 5 adds bills ingestion and bill pages.
+
+### Phase 4 — Read-only UI (done)
+
+Files added:
+- `lib/queries.ts` — `getMembers(filters)`, `getMember(id)`, `getMemberTerms(id)`.
+  All use the anon Supabase client (read-only, RLS-gated) and return safe
+  defaults when Supabase is unconfigured, so pages render cleanly before
+  ingestion has run.
+- `lib/constants.ts` — US states list, party/chamber label maps,
+  `congressStartYear()` helper.
+- `app/layout.tsx` — minimal nav (CongressTracker ↔ Methodology) + footer
+  with sourcing note.
+- `app/page.tsx` — member list: GET-form filters (chamber / party / state /
+  name search), a responsive table with photo/name/state/chamber/party, URL-
+  param pagination. Empty state varies between "no data yet" and "no results
+  for these filters".
+- `app/member/[bioguideId]/page.tsx` — profile: photo, name, party badge,
+  state, chamber, terms-served table split by chamber (Senate / House) with
+  congress number / years / district / party, link to congress.gov,
+  source-date note. Stub sections for votes (Phase 6) and promises (Phase 8)
+  so the shape of the page is visible now. `notFound()` if bioguide_id is
+  unknown.
+- `app/_components/PartyBadge.tsx` — coloured badge (D=blue / R=red /
+  I=purple / L=amber / Other=gray).
+- `app/_components/MemberPhoto.tsx` — headshot with initials fallback.
+- `next.config.mjs` — allows `www.congress.gov/img/member/**` for photos.
+
+QA gate: `npm run build` clean (no errors, no lint warnings), `npm test`
+48/48 passing. Both pages are `ƒ` (dynamic, server-rendered) with
+`revalidate = 3600`.
 
 ### Phase 3 — Members ingestion (done)
 
