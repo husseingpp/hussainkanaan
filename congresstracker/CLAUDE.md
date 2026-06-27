@@ -98,9 +98,49 @@ vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
 `/api/cron/sync?tasks=members`; the route (`app/api/cron/sync/route.ts`,
 nodejs runtime) is guarded by `CRON_SECRET` (Vercel sends it as a Bearer token)
 and supports `tasks=members,scores`. Bills/votes are heavier and run manually.
-Full guide in `DEPLOYMENT.md`. GitHub Pages can't host this (static-export only).
+Full guide in `DEPLOYMENT.md`.
+
+A second target is **GitHub Pages** (live static export). Because every page
+reads Supabase with the anon key (RLS read-only), the app also runs as a static
+site that fetches live data in the browser: `npm run build:static` (sets
+`STATIC_EXPORT`, `output:export`, basePath `/hussainkanaan/congresstracker`).
+The repo's `deploy.yml` builds + injects it; `congresstracker-ingest.yml` runs
+the same incremental sync (`scripts/sync.ts`) on a schedule. See the "Live static
+export" implementation note below.
 
 ## Implementation notes (kept in sync as phases land)
+
+### Live static export (GitHub Pages)
+
+A "live hybrid" build so the site can live on GitHub Pages for free while still
+showing current data.
+
+- **Toggle:** `next.config.mjs` switches on `STATIC_EXPORT=true` to
+  `output:export` + `basePath`/`assetPrefix` `/hussainkanaan/congresstracker` +
+  `trailingSlash` + `images.unoptimized`. Default (Vercel/dev) build is
+  unchanged. `npm run build:static` runs `scripts/build-static.mjs`, which moves
+  `app/api` aside for the export (dynamic route handlers can't be exported) and
+  always restores it — both builds keep working from one tree.
+- **Client-side data:** the six data pages (`/`, `/member/[id]`, `/bills`,
+  `/bill/[id]`, `/wings`, `/compare`) are now thin server wrappers around
+  `"use client"` components that fetch via the same `lib/queries.ts` helpers
+  (the anon key is `NEXT_PUBLIC_`, so it works in the browser). URL filters are
+  read with `useSearchParams` (inside a `Suspense` boundary, required by export)
+  and updated via `router.push`; the shared `app/_components/useAsync.ts` hook
+  runs the fetch. `/admin` was already client-side (Supabase Auth in the
+  browser), so it works on Pages too.
+- **Dynamic routes:** `member/[bioguideId]` and `bill/[id]` export
+  `generateStaticParams` that, in export mode, list ids from Supabase
+  (`getAllMemberIds` / `getAllBillIds`) so one shell is pre-rendered per record;
+  each shell fetches its own live data client-side. With no data yet it emits a
+  single unreachable `_` sentinel page (export requires ≥1 path). New records
+  added after a build 404 until the next build.
+- **CI:** `deploy.yml` builds + injects into `out/congresstracker/` (anon URL/key
+  as repo secrets, baked into the bundle); `congresstracker-ingest.yml` runs
+  `scripts/sync.ts` (same incremental members+scores as the Vercel cron) daily.
+- **Trade-off:** client-rendered (weaker SEO/first paint) vs. Vercel's SSR. The
+  source-provenance hard rules are unaffected — the browser uses the read-only
+  anon key, and promise verdicts still require the authenticated reviewer role.
 
 ### Phase 1 — Schema (scaffolded)
 

@@ -1,12 +1,15 @@
 # Deploying CongressTracker
 
-CongressTracker is a server-rendered Next.js app (live Supabase queries,
-filtering, and a scheduled sync), so it needs a Node host. **Vercel** is the
-target — it provides SSR and cron with zero extra config. GitHub Pages cannot
-host it (static export only).
+CongressTracker reads Supabase with the anon key (RLS-gated read-only), which
+works from both a server and the browser, so there are two supported hosts:
 
-The app lives in the `congresstracker/` subdirectory of this repo, so the one
-thing you must set during import is the **Root Directory**.
+- **Vercel** — server-rendered, with a cron-driven sync. Zero extra config.
+- **GitHub Pages** — a live static export: a static shell that fetches Supabase
+  in the browser, kept fresh by a scheduled GitHub Action. No server.
+
+Sections 1–5 cover Vercel; [section 6](#6-github-pages-live-static-export) covers
+GitHub Pages. The app lives in the `congresstracker/` subdirectory of this repo,
+which matters for the Vercel **Root Directory** below.
 
 ## 1. Prerequisites
 
@@ -92,3 +95,46 @@ roll-call voters are skipped, never name-guessed.
 The `/admin` tool signs reviewers in with Supabase Auth (email/password). Create
 reviewer accounts in the Supabase dashboard (Authentication → Users) — there is
 no public sign-up. RLS lets the `authenticated` role write only `promises`.
+
+## 6. GitHub Pages (live static export)
+
+GitHub Pages serves static files only, but the site stays **live** because every
+page fetches Supabase in the browser with the anon key (read-only via RLS). A
+scheduled GitHub Action keeps the data fresh — no server, and a successful sync is
+visible immediately without a rebuild. Trade-off vs. Vercel: client-side
+rendering (weaker SEO / first paint), and per-member/bill pages are pre-listed at
+build time (a member added after the last build 404s until the next build).
+
+This repo already wires it up — there is nothing to write, only secrets to set:
+
+1. **Build & publish.** `.github/workflows/deploy.yml` (the portfolio's Pages
+   workflow) installs CongressTracker, runs `npm run build:static`, and injects
+   the result into `out/congresstracker/`. The site is served at
+   `https://<user>.github.io/hussainkanaan/congresstracker/` — which is why the
+   static build sets `basePath`/`assetPrefix` to `/hussainkanaan/congresstracker`
+   (see `next.config.mjs`, gated by the `STATIC_EXPORT` env var).
+
+2. **Repository secrets** (Settings → Secrets and variables → Actions):
+
+   | Secret | Used by | Notes |
+   | --- | --- | --- |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Pages build + sync | public |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Pages build (baked into bundle) | public, RLS read-only |
+   | `SUPABASE_SERVICE_ROLE_KEY` | sync only | **secret** — bypasses RLS |
+   | `CONGRESS_API_KEY` | sync only | secret |
+
+   The anon key is *meant* to ship to the browser; the service-role key is used
+   only inside the Action runner, never in the static bundle.
+
+3. **Scheduled sync.** `.github/workflows/congresstracker-ingest.yml` runs daily
+   (and on demand via *Run workflow*), executing `scripts/sync.ts` — the same
+   incremental members + scores sync as the Vercel cron. Run the heavier
+   first-load (bills, votes) manually as in section 4. Without the secrets above
+   the Action no-ops rather than failing.
+
+Build it locally to preview the exact artifact:
+
+```bash
+npm run build:static   # writes ./out (set NEXT_PUBLIC_SUPABASE_* to include data)
+npx serve out          # note: basePath means open /hussainkanaan/congresstracker/
+```

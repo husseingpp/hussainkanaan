@@ -1,10 +1,12 @@
 /**
- * Server-side data-fetching helpers for CongressTracker.
+ * Data-fetching helpers for CongressTracker.
  *
  * All functions use the anon (public) Supabase client — read-only, gated by
- * Row Level Security. Every function returns a safe default (empty array / null)
- * when Supabase is not configured or returns an error, so pages render cleanly
- * even before the ingestion job has run.
+ * Row Level Security. The anon key is a NEXT_PUBLIC_ value, so these run safely
+ * on the server (Vercel) AND in the browser (the GitHub Pages static-export
+ * build fetches everything client-side). Every function returns a safe default
+ * (empty array / null) when Supabase is not configured or returns an error, so
+ * pages render cleanly even before the ingestion job has run.
  */
 
 import { createPublicClient } from "./supabase.ts";
@@ -486,6 +488,56 @@ export async function getMemberOptions(): Promise<MemberOption[]> {
       .limit(1000);
     if (error) return [];
     return (data as MemberOption[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Build-time static params (GitHub Pages static export)
+// ---------------------------------------------------------------------------
+
+/**
+ * All member bioguide ids. Used by `generateStaticParams` to pre-render one
+ * static shell per member for the static-export build. Returns [] when Supabase
+ * is unconfigured (e.g. a build with no secrets) so the build still succeeds —
+ * it just produces no per-member pages until a build runs with data available.
+ */
+export async function getAllMemberIds(): Promise<string[]> {
+  const db = safeDb();
+  if (!db) return [];
+  try {
+    const { data, error } = await (db as any)
+      .from("members")
+      .select("bioguide_id")
+      .order("bioguide_id")
+      .limit(2000);
+    if (error) return [];
+    return ((data as Array<{ bioguide_id: string }>) ?? []).map(
+      (r) => r.bioguide_id,
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * All bill ids, capped. Used by `generateStaticParams` for the static-export
+ * build. Capped because the bills table can be large; the cap bounds the number
+ * of pre-rendered pages (most-recently-actioned first). Bills outside the cap
+ * still resolve live on a server host; on Pages they 404 until a wider build.
+ */
+export async function getAllBillIds(limit = 5000): Promise<string[]> {
+  const db = safeDb();
+  if (!db) return [];
+  try {
+    const { data, error } = await (db as any)
+      .from("bills")
+      .select("id")
+      .order("latest_action_date", { ascending: false, nullsFirst: false })
+      .limit(limit);
+    if (error) return [];
+    return ((data as Array<{ id: string }>) ?? []).map((r) => r.id);
   } catch {
     return [];
   }

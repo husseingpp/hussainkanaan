@@ -6,6 +6,7 @@ on:
       - main
       - claude/beautiful-lovelace-rcjqT
       - claude/upbeat-babbage-5CAxl
+      - claude/congresstracker-setup-k4fhya
   workflow_dispatch:
 
 permissions:
@@ -56,6 +57,25 @@ jobs:
         run: |
           mkdir -p out/cafe-footfall-tracker
           cp -r cafe-footfall-tracker/docs/. out/cafe-footfall-tracker/
+
+      - name: Install CongressTracker dependencies
+        working-directory: congresstracker
+        run: npm ci
+
+      - name: Build CongressTracker (static export)
+        working-directory: congresstracker
+        run: npm run build:static
+        env:
+          # Public, RLS-gated read-only key — baked into the client bundle so the
+          # static site fetches live data in the browser. Also used at build time
+          # to pre-render one page per member/bill. Safe to expose.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Inject CongressTracker into portfolio output
+        run: |
+          mkdir -p out/congresstracker
+          cp -r congresstracker/out/. out/congresstracker/
 
       - name: Disable Jekyll processing
         run: touch out/.nojekyll

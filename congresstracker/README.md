@@ -32,8 +32,10 @@ in [`CLAUDE.md`](./CLAUDE.md)):
 - **Methodology** — `/methodology` documents sourcing, the wing cutoff, and
   limitations.
 
-Pages are server-rendered against Supabase; deploy on a Node host (Vercel).
-GitHub Pages cannot host it (static export only).
+The app fetches from Supabase (anon, RLS-gated read-only), so it runs two ways:
+on **Vercel** (server-rendered, with cron) or as a **live static export on GitHub
+Pages** (a static shell that reads Supabase in the browser, kept fresh by a
+scheduled GitHub Action). See [Deploy](#deploy).
 
 ## Getting started
 
@@ -104,11 +106,20 @@ See [`.env.example`](./.env.example): `CONGRESS_API_KEY`,
 
 ## Deploy
 
-Server-rendered, so it needs a Node host — **Vercel** (SSR + cron, no extra
-config). Import the repo, set **Root Directory = `congresstracker`**, add the env
-vars, and deploy. A daily incremental sync runs via Vercel Cron
-(`/api/cron/sync`, guarded by `CRON_SECRET`). Full step-by-step in
+Two supported targets — full step-by-step for both in
 [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+
+**Vercel** (server-rendered, SSR + cron). Import the repo, set **Root Directory =
+`congresstracker`**, add the env vars, deploy. A daily incremental sync runs via
+Vercel Cron (`/api/cron/sync`, guarded by `CRON_SECRET`).
+
+**GitHub Pages** (live static export). `npm run build:static` emits a static site
+to `out/` (basePath `/hussainkanaan/congresstracker`) that fetches Supabase live
+in the browser — so the data stays current with no server. The repo's
+`deploy.yml` builds and publishes it; a scheduled Action
+(`congresstracker-ingest.yml`) runs the same incremental sync as the Vercel cron.
+The `/admin` reviewer tool works there too (Supabase Auth runs client-side). The
+trade-off vs. Vercel is client-side rendering (weaker SEO / first paint).
 
 ## Project layout
 

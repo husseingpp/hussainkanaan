@@ -1,0 +1,46 @@
+name: CongressTracker data sync
+
+# Keeps the GitHub Pages deployment's data fresh. The site reads Supabase live
+# in the browser, so a successful sync is visible immediately — no rebuild
+# needed. Mirrors the Vercel cron route: a cheap incremental members sync plus a
+# scores refresh, both idempotent. Bills/votes are heavier and run manually
+# (workflow_dispatch with tasks=bills, etc., once those are added to sync.ts).
+#
+# Requires repository secrets:
+#   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CONGRESS_API_KEY
+# Without them the run no-ops (it does not fail).
+
+on:
+  schedule:
+    - cron: "0 8 * * *" # daily at 08:00 UTC
+  workflow_dispatch:
+    inputs:
+      tasks:
+        description: "Comma-separated tasks to run"
+        default: "members,scores"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: congresstracker/package-lock.json
+
+      - name: Install CongressTracker dependencies
+        working-directory: congresstracker
+        run: npm ci
+
+      - name: Run sync
+        working-directory: congresstracker
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+        run: npx tsx scripts/sync.ts "${{ github.event.inputs.tasks || 'members,scores' }}"
