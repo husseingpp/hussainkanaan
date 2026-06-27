@@ -22,6 +22,13 @@ export default function RootLayout({
         >
           Skip to content
         </a>
+        {process.env.NEXT_PUBLIC_DEMO === "true" && (
+          <div className="bg-amber-100 text-amber-900 text-center text-xs sm:text-sm px-4 py-2 border-b border-amber-200">
+            <strong>Demo data.</strong> Every member, bill, vote and promise here
+            is fictional — placeholder records to preview the interface. No real
+            person is represented.
+          </div>
+        )}
         <header className="bg-white border-b border-gray-200">
           <nav
             className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between"

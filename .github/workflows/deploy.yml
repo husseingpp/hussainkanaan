@@ -66,9 +66,13 @@ jobs:
         working-directory: congresstracker
         run: npm run build:static
         env:
+          # Demo mode: ship fictional placeholder data so the UI is fully visible
+          # with no backend. Flip to "false" (and set the two Supabase vars below)
+          # to serve live data from the browser instead.
+          NEXT_PUBLIC_DEMO: "true"
           # Public, RLS-gated read-only key — baked into the client bundle so the
-          # static site fetches live data in the browser. Also used at build time
-          # to pre-render one page per member/bill. Safe to expose.
+          # static site fetches live data in the browser (used when DEMO is off).
+          # Also used at build time to pre-render one page per member/bill.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 

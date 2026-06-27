@@ -10,6 +10,7 @@
  */
 
 import { createPublicClient } from "./supabase.ts";
+import * as demo from "./demo.ts";
 import type {
   Member,
   Term,
@@ -51,6 +52,7 @@ function safeDb() {
 export async function getMembers(
   filters: MemberFilters = {},
 ): Promise<MemberListResult> {
+  if (demo.isDemo()) return demo.demoGetMembers(filters);
   const db = safeDb();
   if (!db) return { members: [], total: 0, page: 0 };
 
@@ -103,6 +105,7 @@ export async function getMembers(
 }
 
 export async function getMember(bioguideId: string): Promise<Member | null> {
+  if (demo.isDemo()) return demo.demoGetMember(bioguideId);
   const db = safeDb();
   if (!db) return null;
   try {
@@ -119,6 +122,7 @@ export async function getMember(bioguideId: string): Promise<Member | null> {
 }
 
 export async function getMemberTerms(bioguideId: string): Promise<Term[]> {
+  if (demo.isDemo()) return demo.demoGetMemberTerms(bioguideId);
   const db = safeDb();
   if (!db) return [];
   try {
@@ -155,6 +159,7 @@ export interface BillListResult {
 export async function getBills(
   filters: BillFilters = {},
 ): Promise<BillListResult> {
+  if (demo.isDemo()) return demo.demoGetBills(filters);
   const db = safeDb();
   if (!db) return { bills: [], total: 0, page: 0 };
 
@@ -193,6 +198,7 @@ export async function getBills(
 }
 
 export async function getBill(id: string): Promise<Bill | null> {
+  if (demo.isDemo()) return demo.demoGetBill(id);
   const db = safeDb();
   if (!db) return null;
   try {
@@ -219,6 +225,7 @@ export interface SponsorshipWithMember extends Sponsorship {
 export async function getBillSponsorships(
   billId: string,
 ): Promise<SponsorshipWithMember[]> {
+  if (demo.isDemo()) return demo.demoGetBillSponsorships(billId);
   const db = safeDb();
   if (!db) return [];
   try {
@@ -249,6 +256,7 @@ export async function getMemberSponsorships(
   bioguideId: string,
   limit = 25,
 ): Promise<SponsorshipWithBill[]> {
+  if (demo.isDemo()) return demo.demoGetMemberSponsorships(bioguideId, limit);
   const db = safeDb();
   if (!db) return [];
   try {
@@ -281,6 +289,7 @@ export async function getMemberVotes(
   bioguideId: string,
   limit = 25,
 ): Promise<VoteWithBill[]> {
+  if (demo.isDemo()) return demo.demoGetMemberVotes(bioguideId, limit);
   const db = safeDb();
   if (!db) return [];
   try {
@@ -309,6 +318,7 @@ export async function getMemberVotes(
 export async function getMemberAlignment(
   bioguideId: string,
 ): Promise<AlignmentScore | null> {
+  if (demo.isDemo()) return demo.demoGetMemberAlignment(bioguideId);
   const db = safeDb();
   if (!db) return null;
   try {
@@ -338,6 +348,7 @@ export async function getMemberAlignment(
 export async function getMemberPromises(
   bioguideId: string,
 ): Promise<PromiseRow[]> {
+  if (demo.isDemo()) return demo.demoGetMemberPromises(bioguideId);
   const db = safeDb();
   if (!db) return [];
   try {
@@ -378,6 +389,7 @@ export async function getMembersByWing(
   filters: { chamber?: string; state?: string } = {},
   perColumn = 50,
 ): Promise<WingBrowse> {
+  if (demo.isDemo()) return demo.demoGetMembersByWing(filters, perColumn);
   const empty: WingBrowse = {
     left: { members: [], total: 0 },
     center: { members: [], total: 0 },
@@ -431,6 +443,7 @@ export interface MemberStats {
 
 /** Lightweight head-only counts for the compare view (no row payloads). */
 export async function getMemberStats(bioguideId: string): Promise<MemberStats> {
+  if (demo.isDemo()) return demo.demoGetMemberStats(bioguideId);
   const zero: MemberStats = {
     sponsored: 0,
     cosponsored: 0,
@@ -477,6 +490,7 @@ export type MemberOption = Pick<
 >;
 
 export async function getMemberOptions(): Promise<MemberOption[]> {
+  if (demo.isDemo()) return demo.demoGetMemberOptions();
   const db = safeDb();
   if (!db) return [];
   try {
@@ -504,6 +518,7 @@ export async function getMemberOptions(): Promise<MemberOption[]> {
  * it just produces no per-member pages until a build runs with data available.
  */
 export async function getAllMemberIds(): Promise<string[]> {
+  if (demo.isDemo()) return demo.demoGetAllMemberIds();
   const db = safeDb();
   if (!db) return [];
   try {
@@ -528,6 +543,7 @@ export async function getAllMemberIds(): Promise<string[]> {
  * still resolve live on a server host; on Pages they 404 until a wider build.
  */
 export async function getAllBillIds(limit = 5000): Promise<string[]> {
+  if (demo.isDemo()) return demo.demoGetAllBillIds();
   const db = safeDb();
   if (!db) return [];
   try {
