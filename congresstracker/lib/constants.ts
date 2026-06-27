@@ -119,6 +119,12 @@ export function congressStartYear(congress: number): number {
   return 1789 + (congress - 1) * 2;
 }
 
+/** The Congress number in session for a given date (defaults to today). */
+export function currentCongress(date: Date = new Date()): number {
+  // Each Congress spans two years starting in an odd year (the 1st began 1789).
+  return Math.floor((date.getUTCFullYear() - 1789) / 2) + 1;
+}
+
 /** Short display labels for bill types (DB stores lowercase: "hr", "s", …). */
 export const BILL_TYPE_LABELS: Record<string, string> = {
   hr: "H.R.",

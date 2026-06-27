@@ -102,6 +102,14 @@ See [`.env.example`](./.env.example): `CONGRESS_API_KEY`,
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
 `SUPABASE_SERVICE_ROLE_KEY` (server-only).
 
+## Deploy
+
+Server-rendered, so it needs a Node host — **Vercel** (SSR + cron, no extra
+config). Import the repo, set **Root Directory = `congresstracker`**, add the env
+vars, and deploy. A daily incremental sync runs via Vercel Cron
+(`/api/cron/sync`, guarded by `CRON_SECRET`). Full step-by-step in
+[`DEPLOYMENT.md`](./DEPLOYMENT.md).
+
 ## Project layout
 
 ```

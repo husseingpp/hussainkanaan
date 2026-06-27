@@ -88,6 +88,18 @@ opinion site. Wing columns are descriptive, never pejorative. Always expose the
 
 ---
 
+## Deployment
+
+Target host is **Vercel** (SSR + cron). The app lives in `congresstracker/`, so
+the Vercel project's **Root Directory must be set to `congresstracker`**. Env
+vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `CONGRESS_API_KEY`, `CRON_SECRET` (+ optional
+`CURRENT_CONGRESS`). `vercel.json` registers a daily cron to
+`/api/cron/sync?tasks=members`; the route (`app/api/cron/sync/route.ts`,
+nodejs runtime) is guarded by `CRON_SECRET` (Vercel sends it as a Bearer token)
+and supports `tasks=members,scores`. Bills/votes are heavier and run manually.
+Full guide in `DEPLOYMENT.md`. GitHub Pages can't host this (static-export only).
+
 ## Implementation notes (kept in sync as phases land)
 
 ### Phase 1 — Schema (scaffolded)
