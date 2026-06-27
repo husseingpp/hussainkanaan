@@ -14,6 +14,7 @@ import type {
   Bill,
   Sponsorship,
   Vote,
+  AlignmentScore,
 } from "./database.types.ts";
 
 export const PER_PAGE = 100;
@@ -22,6 +23,8 @@ export interface MemberFilters {
   chamber?: string;
   party?: string;
   state?: string;
+  /** Descriptive ideology wing: left / center / right. */
+  wing?: string;
   /** Case-insensitive full-name substring search. */
   q?: string;
   /** Zero-based page index. */
@@ -73,6 +76,13 @@ export async function getMembers(
     }
     if (filters.state && /^[A-Z]{2}$/.test(filters.state)) {
       q = q.eq("state", filters.state);
+    }
+    if (
+      filters.wing === "left" ||
+      filters.wing === "center" ||
+      filters.wing === "right"
+    ) {
+      q = q.eq("current_wing", filters.wing);
     }
     const name = filters.q?.trim();
     if (name) {
@@ -282,5 +292,33 @@ export async function getMemberVotes(
     return (data as VoteWithBill[]) ?? [];
   } catch {
     return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Alignment scores (wings)
+// ---------------------------------------------------------------------------
+
+/**
+ * The member's most recent DW-NOMINATE alignment score, or null if none has
+ * been ingested. Used to show the sourced wing classification on the profile.
+ */
+export async function getMemberAlignment(
+  bioguideId: string,
+): Promise<AlignmentScore | null> {
+  const db = safeDb();
+  if (!db) return null;
+  try {
+    const { data, error } = await (db as any)
+      .from("alignment_scores")
+      .select("*")
+      .eq("bioguide_id", bioguideId)
+      .order("congress", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) return null;
+    return (data as AlignmentScore) ?? null;
+  } catch {
+    return null;
   }
 }

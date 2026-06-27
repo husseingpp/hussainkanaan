@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { getMembers, PER_PAGE } from "../lib/queries.ts";
-import { US_STATES, CHAMBER_LABELS, PARTY_LABELS } from "../lib/constants.ts";
+import {
+  US_STATES,
+  CHAMBER_LABELS,
+  PARTY_LABELS,
+  WING_LABELS,
+} from "../lib/constants.ts";
 import { PartyBadge } from "./_components/PartyBadge.tsx";
+import { WingBadge } from "./_components/WingBadge.tsx";
 import { MemberPhoto } from "./_components/MemberPhoto.tsx";
 
 export const revalidate = 3600; // re-fetch at most once per hour
@@ -12,6 +18,7 @@ interface PageProps {
     chamber?: string;
     party?: string;
     state?: string;
+    wing?: string;
     q?: string;
     page?: string;
   };
@@ -22,13 +29,20 @@ export default async function MemberListPage({ searchParams }: PageProps) {
     chamber: searchParams.chamber,
     party: searchParams.party,
     state: searchParams.state,
+    wing: searchParams.wing,
     q: searchParams.q,
     page: searchParams.page,
   };
 
   const { members, total, page } = await getMembers(filters);
   const totalPages = Math.ceil(total / PER_PAGE);
-  const hasFilters = !!(filters.chamber || filters.party || filters.state || filters.q);
+  const hasFilters = !!(
+    filters.chamber ||
+    filters.party ||
+    filters.state ||
+    filters.wing ||
+    filters.q
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
@@ -46,7 +60,7 @@ export default async function MemberListPage({ searchParams }: PageProps) {
       <form
         method="GET"
         action="/"
-        className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3"
+        className="mb-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
       >
         <select
           name="chamber"
@@ -87,7 +101,21 @@ export default async function MemberListPage({ searchParams }: PageProps) {
           ))}
         </select>
 
-        <div className="col-span-2 sm:col-span-1 flex gap-2">
+        <select
+          name="wing"
+          defaultValue={filters.wing ?? ""}
+          className="col-span-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
+          aria-label="Filter by ideology wing"
+        >
+          <option value="">All wings</option>
+          {Object.entries(WING_LABELS).map(([code, label]) => (
+            <option key={code} value={code}>
+              {label}
+            </option>
+          ))}
+        </select>
+
+        <div className="col-span-2 sm:col-span-3 lg:col-span-1 flex gap-2">
           <input
             type="search"
             name="q"
@@ -106,7 +134,7 @@ export default async function MemberListPage({ searchParams }: PageProps) {
         </div>
 
         {hasFilters && (
-          <div className="col-span-2 sm:col-span-4 flex items-center gap-2">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-5 flex flex-wrap items-center gap-2">
             <span className="text-xs text-gray-500">Active filters:</span>
             {filters.chamber && (
               <FilterChip label={CHAMBER_LABELS[filters.chamber] ?? filters.chamber} />
@@ -115,6 +143,9 @@ export default async function MemberListPage({ searchParams }: PageProps) {
               <FilterChip label={PARTY_LABELS[filters.party] ?? filters.party} />
             )}
             {filters.state && <FilterChip label={filters.state} />}
+            {filters.wing && (
+              <FilterChip label={WING_LABELS[filters.wing] ?? filters.wing} />
+            )}
             {filters.q && <FilterChip label={`"${filters.q}"`} />}
             <Link href="/" className="ml-auto text-xs text-blue-600 hover:underline">
               Clear all
@@ -137,6 +168,7 @@ export default async function MemberListPage({ searchParams }: PageProps) {
                   <th className="px-4 py-3 text-left font-medium text-gray-600 hidden sm:table-cell">State</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600 hidden sm:table-cell">Chamber</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600">Party</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 hidden md:table-cell">Wing</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -163,6 +195,9 @@ export default async function MemberListPage({ searchParams }: PageProps) {
                     </td>
                     <td className="px-4 py-3">
                       <PartyBadge party={m.party} />
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <WingBadge wing={m.current_wing} />
                     </td>
                   </tr>
                 ))}
@@ -225,12 +260,19 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
 
 function buildFilterUrl(
   page: number,
-  filters: { chamber?: string; party?: string; state?: string; q?: string },
+  filters: {
+    chamber?: string;
+    party?: string;
+    state?: string;
+    wing?: string;
+    q?: string;
+  },
 ): string {
   const params = new URLSearchParams();
   if (filters.chamber) params.set("chamber", filters.chamber);
   if (filters.party) params.set("party", filters.party);
   if (filters.state) params.set("state", filters.state);
+  if (filters.wing) params.set("wing", filters.wing);
   if (filters.q) params.set("q", filters.q);
   if (page > 0) params.set("page", String(page));
   const qs = params.toString();
@@ -244,7 +286,13 @@ function Pagination({
 }: {
   page: number;
   totalPages: number;
-  filters: { chamber?: string; party?: string; state?: string; q?: string };
+  filters: {
+    chamber?: string;
+    party?: string;
+    state?: string;
+    wing?: string;
+    q?: string;
+  };
 }) {
   return (
     <nav

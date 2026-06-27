@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DW_NOMINATE_CENTER_THRESHOLD, VOTEVIEW_URL } from "../../lib/constants.ts";
 
 export const metadata = {
   title: "Methodology — CongressTracker",
@@ -58,9 +59,43 @@ export default function Methodology() {
         <h2 className="text-xl font-semibold">Left / center / right</h2>
         <p className="text-gray-700">
           Wing classification is descriptive, not pejorative. It is derived from
-          an external, published ideology metric (e.g. DW-NOMINATE), not a score
-          we invent. Each member&apos;s classification links back to the metric
-          it came from.
+          an external, published ideology metric — we do not invent a partisan
+          score. We use{" "}
+          <a
+            className="underline"
+            href={VOTEVIEW_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            DW-NOMINATE
+          </a>
+          , the widely-cited measure of congressional voting behaviour published
+          by Voteview. Its first dimension runs from roughly −1 (most liberal) to
+          +1 (most conservative).
+        </p>
+        <p className="text-gray-700">
+          We place a member into a wing purely by where that published score
+          falls, using a single fixed cutoff:
+        </p>
+        <ul className="list-disc space-y-1 pl-6 text-gray-700">
+          <li>
+            <strong>Left</strong> — first-dimension score at or below −
+            {DW_NOMINATE_CENTER_THRESHOLD}.
+          </li>
+          <li>
+            <strong>Center</strong> — between −{DW_NOMINATE_CENTER_THRESHOLD} and
+            +{DW_NOMINATE_CENTER_THRESHOLD}.
+          </li>
+          <li>
+            <strong>Right</strong> — first-dimension score at or above +
+            {DW_NOMINATE_CENTER_THRESHOLD}.
+          </li>
+        </ul>
+        <p className="text-gray-700">
+          The cutoff is a presentation choice; the raw score is always shown next
+          to the wing on each member&apos;s profile, and every classification
+          links back to the exact Voteview dataset it came from. A member with no
+          published DW-NOMINATE score is shown with no wing — we never guess.
         </p>
       </section>
     </main>

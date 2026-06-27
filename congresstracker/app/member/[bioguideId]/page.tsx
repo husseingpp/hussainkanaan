@@ -6,6 +6,7 @@ import {
   getMemberTerms,
   getMemberSponsorships,
   getMemberVotes,
+  getMemberAlignment,
   type SponsorshipWithBill,
   type VoteWithBill,
 } from "../../../lib/queries.ts";
@@ -13,13 +14,15 @@ import {
   PARTY_LABELS,
   CHAMBER_LABELS,
   BILL_TYPE_LABELS,
+  WING_LABELS,
   congressStartYear,
 } from "../../../lib/constants.ts";
 import { BillStatusBadge } from "../../_components/BillStatusBadge.tsx";
 import { VotePositionBadge } from "../../_components/VotePositionBadge.tsx";
 import { PartyBadge } from "../../_components/PartyBadge.tsx";
+import { WingBadge } from "../../_components/WingBadge.tsx";
 import { MemberPhoto } from "../../_components/MemberPhoto.tsx";
-import type { Term } from "../../../lib/database.types.ts";
+import type { Term, AlignmentScore } from "../../../lib/database.types.ts";
 
 export const revalidate = 3600;
 
@@ -37,11 +40,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function MemberProfilePage({ params }: PageProps) {
-  const [member, terms, sponsorships, votes] = await Promise.all([
+  const [member, terms, sponsorships, votes, alignment] = await Promise.all([
     getMember(params.bioguideId),
     getMemberTerms(params.bioguideId),
     getMemberSponsorships(params.bioguideId),
     getMemberVotes(params.bioguideId),
+    getMemberAlignment(params.bioguideId),
   ]);
 
   if (!member) notFound();
@@ -104,6 +108,10 @@ export default async function MemberProfilePage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {/* Political alignment (Phase 7 data) — wing is a bucket of the sourced
+          DW-NOMINATE score, always shown with the raw number + its source. */}
+      {alignment && <AlignmentCard score={alignment} />}
 
       {/* Terms served */}
       {terms.length > 0 ? (
@@ -210,6 +218,65 @@ function formatShortDate(d: string | null): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function AlignmentCard({ score }: { score: AlignmentScore }) {
+  const dim1 =
+    score.dimension1 != null ? Number(score.dimension1).toFixed(3) : null;
+  return (
+    <section className="mt-8">
+      <h2 className="text-lg font-semibold mb-3">Political alignment</h2>
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <WingBadge wing={score.wing} />
+          <span className="text-sm text-gray-700">
+            classified <strong>{WING_LABELS[score.wing] ?? score.wing}</strong>{" "}
+            from its DW-NOMINATE score
+          </span>
+        </div>
+
+        <dl className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+          <div>
+            <dt className="text-gray-500">Metric</dt>
+            <dd className="font-medium uppercase">{score.metric}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">Dimension 1</dt>
+            <dd className="font-mono">{dim1 ?? "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">Congress</dt>
+            <dd className="font-medium">{score.congress}th</dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">Scale</dt>
+            <dd className="text-gray-600 text-xs">
+              −1 liberal · +1 conservative
+            </dd>
+          </div>
+        </dl>
+
+        <p className="mt-4 text-xs text-gray-400">
+          The wing is a bucket of the score above, not an invented rating.{" "}
+          <a
+            href={score.source_url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="underline hover:text-gray-600"
+          >
+            Source data ↗
+          </a>{" "}
+          ·{" "}
+          <Link
+            href={score.methodology_url}
+            className="underline hover:text-gray-600"
+          >
+            How wings are assigned
+          </Link>
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function VotesTable({ votes }: { votes: VoteWithBill[] }) {

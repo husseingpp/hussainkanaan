@@ -52,7 +52,7 @@ enforced by the schema.**
    pages. ✅ done
 6. **Votes ingestion** — `ingest/votes.ts` (House/Senate XML). This is the
    messiest module; isolate it and test parsing hard. ✅ done
-7. **Wings + scores** — classification + `ingest/scores.ts` → `alignment_scores`.
+7. **Wings + scores** — classification + `ingest/scores.ts` → `alignment_scores`. ✅ done
 8. **Promises** — admin review tool (`/admin`) + seed data; promise/record
    split view on profiles.
 9. **Polish** — three-wing UI, `/compare`, `/methodology`, accessibility, launch.
@@ -250,6 +250,54 @@ parsing is fully covered by unit tests against real-shaped XML.
 
 QA gate: `npm test` → 96/96 passing (26 new in `votes.test.ts`).
 `npm run typecheck` + `npm run build` clean.
+
+### Phase 7 — Wings + alignment scores (done)
+
+Wing (left/center/right) must come from an external, published ideology metric,
+never an invented partisan score (hard rule 3). We use **DW-NOMINATE** from
+**Voteview** (https://voteview.com), whose per-congress member CSVs already
+carry a `bioguide_id`, so the crosswalk to our `members` table is direct (no
+LIS-style mismatch as with Senate votes).
+
+`ingest/scores.ts`:
+- Pure, exported, unit-tested: `parseCsv` (RFC-4180-ish — handles quoted
+  fields with embedded commas like `"OCASIO-CORTEZ, Alexandria"`, doubled-quote
+  escapes, CRLF), `parseVoteviewMembers` (keys columns by header name, so column
+  re-ordering won't break it; a missing score stays `null`, never coerced to 0),
+  `classifyWing` (symmetric cutoff: dim1 ≤ −t → left, ≥ t → right, else center),
+  `mapVoteviewChamber`, `voteviewMembersUrl`, `toAlignmentRows`.
+- `classifyWing` uses `DW_NOMINATE_CENTER_THRESHOLD` (0.25) from `lib/constants.ts`
+  — one source of truth shared with the methodology page.
+- **Never guesses:** a member with no published DW-NOMINATE score gets NO wing
+  (counted as `skippedNoScore`). FK-safe like bills/votes: rows for members not
+  in our table are skipped (`skippedUnknownMember`).
+- `ingestScores(opts)` fetches the House and/or Senate CSV for a congress,
+  upserts `alignment_scores` on (bioguide_id, congress, metric), then refreshes
+  the denormalised `members.current_wing` cache in ≤3 batched UPDATEs (one per
+  wing). `fetchText` + DB are injectable.
+- Every row carries `source_url` (the exact Voteview CSV) + `methodology_url`
+  (`/methodology`) — schema-enforced and asserted in tests.
+
+UI:
+- `app/_components/WingBadge.tsx` — neutral slate/sky/rose palette (deliberately
+  NOT party blue/red), so the wing reads as a sourced ideology bucket.
+- Member list (`/`) gains a **wing filter** + a Wing column; `getMembers`
+  filters on `current_wing`.
+- Member profile gains a **Political alignment** card: wing badge, the raw
+  dimension-1 score, congress, the −1…+1 scale, and links to the source dataset
+  + `/methodology`. `lib/queries.ts` adds `getMemberAlignment` (latest score).
+- `/methodology` now documents the exact bucketing rule (the ±0.25 cutoff) and
+  states the raw score is always shown and unscored members get no wing.
+
+**Live fetch note:** voteview.com is reachable in principle, but this session's
+egress policy blocks external hosts (same as congress.gov / clerk.house.gov), so
+the live CSV fetch can't run here; parsing is fully covered by unit tests against
+real-shaped CSV. To populate: run `ingestScores({ congress: 118, ... })` from an
+environment with network + the service-role key.
+
+QA gate: `npm test` → 112/112 passing (16 new in `scores.test.ts`).
+`npm run typecheck` + `npm run build` clean (routes `/`, `/member/[bioguideId]`,
+`/methodology` updated).
 
 ### Phase 3 — Members ingestion (done)
 

@@ -70,6 +70,28 @@ export const CHAMBER_LABELS: Record<string, string> = {
   senate: "Senate",
 };
 
+/** Display labels for the descriptive ideology wing (never pejorative). */
+export const WING_LABELS: Record<string, string> = {
+  left: "Left",
+  center: "Center",
+  right: "Right",
+};
+
+/**
+ * The cutoff on DW-NOMINATE first dimension (liberal–conservative) used to
+ * bucket the published score into a left / center / right wing for display.
+ *
+ * This is a presentation choice, NOT an invented score: the underlying number
+ * comes from Voteview's DW-NOMINATE dataset and is always shown alongside the
+ * wing so the bucketing is transparent. dim1 runs roughly -1 (most liberal) to
+ * +1 (most conservative); members within ±this value of 0 are shown as Center.
+ * Documented on /methodology.
+ */
+export const DW_NOMINATE_CENTER_THRESHOLD = 0.25;
+
+/** The canonical source for the DW-NOMINATE ideology metric. */
+export const VOTEVIEW_URL = "https://voteview.com";
+
 /** Congress N started in January of this year. */
 export function congressStartYear(congress: number): number {
   return 1789 + (congress - 1) * 2;
