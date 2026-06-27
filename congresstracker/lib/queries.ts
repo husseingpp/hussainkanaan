@@ -8,7 +8,13 @@
  */
 
 import { createPublicClient } from "./supabase.ts";
-import type { Member, Term, Bill, Sponsorship } from "./database.types.ts";
+import type {
+  Member,
+  Term,
+  Bill,
+  Sponsorship,
+  Vote,
+} from "./database.types.ts";
 
 export const PER_PAGE = 100;
 
@@ -244,6 +250,36 @@ export async function getMemberSponsorships(
       .limit(limit);
     if (error) return [];
     return (data as SponsorshipWithBill[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Votes
+// ---------------------------------------------------------------------------
+
+/** A vote joined with its (optional) bill. */
+export interface VoteWithBill extends Vote {
+  bills: Pick<Bill, "id" | "bill_type" | "number" | "title"> | null;
+}
+
+export async function getMemberVotes(
+  bioguideId: string,
+  limit = 25,
+): Promise<VoteWithBill[]> {
+  const db = safeDb();
+  if (!db) return [];
+  try {
+    const { data, error } = await (db as any)
+      .from("votes")
+      .select("*, bills(id, bill_type, number, title)")
+      .eq("bioguide_id", bioguideId)
+      .order("vote_date", { ascending: false, nullsFirst: false })
+      .order("roll_call", { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return (data as VoteWithBill[]) ?? [];
   } catch {
     return [];
   }

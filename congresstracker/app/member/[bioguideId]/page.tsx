@@ -5,7 +5,9 @@ import {
   getMember,
   getMemberTerms,
   getMemberSponsorships,
+  getMemberVotes,
   type SponsorshipWithBill,
+  type VoteWithBill,
 } from "../../../lib/queries.ts";
 import {
   PARTY_LABELS,
@@ -14,6 +16,7 @@ import {
   congressStartYear,
 } from "../../../lib/constants.ts";
 import { BillStatusBadge } from "../../_components/BillStatusBadge.tsx";
+import { VotePositionBadge } from "../../_components/VotePositionBadge.tsx";
 import { PartyBadge } from "../../_components/PartyBadge.tsx";
 import { MemberPhoto } from "../../_components/MemberPhoto.tsx";
 import type { Term } from "../../../lib/database.types.ts";
@@ -34,10 +37,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function MemberProfilePage({ params }: PageProps) {
-  const [member, terms, sponsorships] = await Promise.all([
+  const [member, terms, sponsorships, votes] = await Promise.all([
     getMember(params.bioguideId),
     getMemberTerms(params.bioguideId),
     getMemberSponsorships(params.bioguideId),
+    getMemberVotes(params.bioguideId),
   ]);
 
   if (!member) notFound();
@@ -143,12 +147,18 @@ export default async function MemberProfilePage({ params }: PageProps) {
         )}
       </section>
 
-      {/* Placeholder sections for future phases */}
+      {/* Voting record (Phase 6 data) */}
       <section className="mt-8">
         <h2 className="text-lg font-semibold mb-3">Voting record</h2>
-        <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
-          Vote data will appear here after Phase 6 (votes ingestion).
-        </div>
+        {votes.length > 0 ? (
+          <VotesTable votes={votes} />
+        ) : (
+          <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-400">
+            No roll-call votes in the database yet (populated by Phase 6 votes
+            ingestion). Every vote is parsed from official House/Senate roll-call
+            XML and carries its source.
+          </div>
+        )}
       </section>
 
       <section className="mt-8">
@@ -190,6 +200,77 @@ export default async function MemberProfilePage({ params }: PageProps) {
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
+
+function formatShortDate(d: string | null): string {
+  if (!d) return "—";
+  const t = Date.parse(d);
+  if (Number.isNaN(t)) return "—";
+  return new Date(t).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function VotesTable({ votes }: { votes: VoteWithBill[] }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-200 bg-gray-50">
+            <th className="px-4 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Date</th>
+            <th className="px-4 py-2 text-left font-medium text-gray-600">Question</th>
+            <th className="px-4 py-2 text-left font-medium text-gray-600">Position</th>
+            <th className="px-4 py-2 text-left font-medium text-gray-600">Source</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {votes.map((v) => {
+            const b = v.bills;
+            const billLabel = b
+              ? `${BILL_TYPE_LABELS[b.bill_type] ?? b.bill_type.toUpperCase()} ${b.number}`
+              : null;
+            return (
+              <tr key={v.id} className="hover:bg-gray-50 transition-colors align-top">
+                <td className="px-4 py-2 text-gray-500 whitespace-nowrap">
+                  {formatShortDate(v.vote_date)}
+                </td>
+                <td className="px-4 py-2 text-gray-700">
+                  {v.question ?? "—"}
+                  {b && billLabel && (
+                    <>
+                      {" "}
+                      <Link
+                        href={`/bill/${b.id}`}
+                        className="text-blue-600 hover:underline whitespace-nowrap"
+                      >
+                        ({billLabel})
+                      </Link>
+                    </>
+                  )}
+                </td>
+                <td className="px-4 py-2">
+                  <VotePositionBadge position={v.position} />
+                </td>
+                <td className="px-4 py-2">
+                  <a
+                    href={v.source_url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-xs text-blue-600 hover:underline"
+                    title={v.source_url}
+                  >
+                    roll {v.roll_call} ↗
+                  </a>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 function BillList({
   title,

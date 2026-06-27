@@ -51,7 +51,7 @@ enforced by the schema.**
 5. **Bills ingestion** — `ingest/bills.ts` → `bills` + `sponsorships`; bill
    pages. ✅ done
 6. **Votes ingestion** — `ingest/votes.ts` (House/Senate XML). This is the
-   messiest module; isolate it and test parsing hard.
+   messiest module; isolate it and test parsing hard. ✅ done
 7. **Wings + scores** — classification + `ingest/scores.ts` → `alignment_scores`.
 8. **Promises** — admin review tool (`/admin`) + seed data; promise/record
    split view on profiles.
@@ -204,6 +204,52 @@ UI:
 
 QA gate: `npm test` → 70/70 passing (32 new in `bills.test.ts`).
 `npm run build` clean; routes `/bills` and `/bill/[id]` present.
+
+### Phase 6 — Votes ingestion (done)
+
+The messiest module, so parsing is isolated in pure functions and tested hard.
+
+Two formats, two id schemes:
+- **House** Clerk XML (`clerk.house.gov/evs/{year}/roll{NNN}.xml`) — voters carry
+  Bioguide ids (`legislator name-id`). Resolve directly.
+- **Senate** LIS XML (`senate.gov/.../vote_{c}_{s}_{NNNNN}.xml`) — voters carry
+  **LIS ids** (`lis_member_id`), NOT Bioguide. Resolved via a deterministic
+  LIS→Bioguide crosswalk (`members.lis_id`, added in migration **0002**).
+  A vote with no crosswalk match is SKIPPED and counted, never attached to a
+  name-guessed member (defamation is the top risk; we never guess identity).
+
+`ingest/votes.ts`:
+- Pure, exported, unit-tested: `normalizePosition` (Yea/Aye/Yes→yea, Nay/No→nay,
+  Present, Not Voting; unknown→not_voting, never invented), `parseHouseDate`
+  ("9-Jan-2023"→ISO), `parseSenateDate`, `parseSession` ("1st"→1),
+  `billIdFromLegisNum` ("H R 3076"→"117-hr-3076"; non-bills→null),
+  `houseRollCallUrl`/`senateRollCallUrl`, `parseHouseRollCall`,
+  `parseSenateRollCall`, `toVoteRows`.
+- `ingestVotes(opts)` walks roll numbers (explicit `endRoll`, or open-ended
+  stopping after `maxConsecutiveMisses` 404s), parses, resolves ids, and upserts
+  on the (bioguide_id, congress, chamber, session, roll_call) unique key.
+  `fetchText` and the DB are injectable.
+- Every row carries `source_url` (the XML url) — schema-enforced + asserted.
+
+Migration **0002_member_lis_id.sql** adds `members.lis_id` (+ partial unique
+index allowing many NULLs). Applied-and-validated against throwaway Postgres in
+sequence with 0001.
+
+UI: member profile gains a **Voting record** table (date, question, position
+badge, bill link, and a per-row link to the source XML). `lib/queries.ts` adds
+`getMemberVotes`; `app/_components/VotePositionBadge.tsx` added.
+
+**Known dependency (not a bug):** Senate votes only resolve once `members.lis_id`
+is populated (a LIS↔Bioguide crosswalk seed, e.g. from
+unitedstates/congress-legislators). Until then Senate rows are skipped and
+counted in `skippedUnresolved`. House votes need no crosswalk.
+
+**Live fetch note:** clerk.house.gov / senate.gov are blocked by this session's
+egress policy (same as api.congress.gov), so the live XML fetch can't run here;
+parsing is fully covered by unit tests against real-shaped XML.
+
+QA gate: `npm test` → 96/96 passing (26 new in `votes.test.ts`).
+`npm run typecheck` + `npm run build` clean.
 
 ### Phase 3 — Members ingestion (done)
 

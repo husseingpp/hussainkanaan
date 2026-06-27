@@ -28,6 +28,8 @@ export interface Member {
   image_url: string | null;
   congress_url: string | null;
   current_wing: Wing | null;
+  /** Senate LIS member id (e.g. "S354"); crosswalk for Senate roll-call votes. */
+  lis_id: string | null;
   source_updated_at: string | null;
   created_at: string;
   updated_at: string;
