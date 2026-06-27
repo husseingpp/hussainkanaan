@@ -1,0 +1,32 @@
+[
+  {
+    "_comment": "TEMPLATE ONLY — not real data. CongressTracker never fabricates promises about real people. Each entry below is an illustrative shape; the placeholder bioguide_id 'EXAMPLE0' does not exist in the members table, so the loader SKIPS it (skippedUnknownMember) and nothing is inserted. To seed a real promise, replace bioguide_id with a real one, write the promise text exactly as stated, and set source_url to where it was actually made. Give each entry a stable uuid `id` so re-running is idempotent. Leave `status` as 'unverified' unless a human reviewer has assessed it against the record AND can cite evidence (status_source_url) — a resolved status also requires reviewed_by.",
+
+    "id": "00000000-0000-0000-0000-000000000001",
+    "bioguide_id": "EXAMPLE0",
+    "text": "<the promise, quoted or closely paraphrased as actually stated>",
+    "topic": "<e.g. healthcare, taxes, ethics>",
+    "made_date": "2024-01-15",
+    "made_context": "<e.g. 2024 campaign website / debate / press release>",
+    "source_url": "https://example.org/where-the-promise-was-made",
+    "status": "unverified",
+    "status_rationale": null,
+    "status_source_url": null,
+    "reviewed_by": null
+  },
+  {
+    "_comment": "Example of a RESOLVED promise. A non-unverified status is a reviewer judgement and the schema (and seed loader) require BOTH reviewed_by (a reviewer's auth.users id) and status_source_url (the evidence). This placeholder is also skipped because EXAMPLE0 is not a real member.",
+
+    "id": "00000000-0000-0000-0000-000000000002",
+    "bioguide_id": "EXAMPLE0",
+    "text": "<the promise, as actually stated>",
+    "topic": "<topic>",
+    "made_date": "2024-01-15",
+    "made_context": "<where it was made>",
+    "source_url": "https://example.org/where-the-promise-was-made",
+    "status": "partial",
+    "status_rationale": "<why a reviewer reached this verdict, in neutral terms>",
+    "status_source_url": "https://example.org/evidence-from-the-record",
+    "reviewed_by": "00000000-0000-0000-0000-00000000reviewer"
+  }
+]

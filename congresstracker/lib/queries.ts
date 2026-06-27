@@ -15,6 +15,7 @@ import type {
   Sponsorship,
   Vote,
   AlignmentScore,
+  PromiseRow,
 } from "./database.types.ts";
 
 export const PER_PAGE = 100;
@@ -320,5 +321,33 @@ export async function getMemberAlignment(
     return (data as AlignmentScore) ?? null;
   } catch {
     return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Promises
+// ---------------------------------------------------------------------------
+
+/**
+ * A member's promises (public read). Every promise carries a source_url
+ * (schema-enforced); resolved statuses additionally carry a reviewer + a
+ * status source. Ordered with resolved promises first, then by recency.
+ */
+export async function getMemberPromises(
+  bioguideId: string,
+): Promise<PromiseRow[]> {
+  const db = safeDb();
+  if (!db) return [];
+  try {
+    const { data, error } = await (db as any)
+      .from("promises")
+      .select("*")
+      .eq("bioguide_id", bioguideId)
+      .order("made_date", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return (data as PromiseRow[]) ?? [];
+  } catch {
+    return [];
   }
 }

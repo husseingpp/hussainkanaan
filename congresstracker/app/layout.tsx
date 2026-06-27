@@ -60,6 +60,10 @@ export default function RootLayout({
             <Link href="/methodology" className="underline hover:text-gray-600">
               methodology
             </Link>
+            .{" "}
+            <Link href="/admin" className="underline hover:text-gray-600">
+              Reviewer sign-in
+            </Link>
             .
           </p>
         </footer>

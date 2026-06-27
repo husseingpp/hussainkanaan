@@ -19,6 +19,27 @@ export function createPublicClient() {
 }
 
 /**
+ * Browser client for the reviewer admin tool (/admin). Uses the anon key but
+ * PERSISTS the auth session, so once a reviewer signs in their JWT is sent with
+ * every request. Writes to `promises` are still gated by RLS — only the
+ * `authenticated` role may INSERT/UPDATE, and never any other table. Returns
+ * null when Supabase is not configured so the UI can show a setup message
+ * instead of crashing.
+ */
+export function createBrowserClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+  return createClient<Database>(url, anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      storageKey: "congresstracker-admin-auth",
+    },
+  });
+}
+
+/**
  * Privileged client used ONLY by server-side ingestion jobs. Uses the
  * service-role key, which bypasses RLS. Throws if called where the key is not
  * available (e.g. the browser) so the secret can never leak client-side.

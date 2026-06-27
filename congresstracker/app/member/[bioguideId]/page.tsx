@@ -7,6 +7,7 @@ import {
   getMemberSponsorships,
   getMemberVotes,
   getMemberAlignment,
+  getMemberPromises,
   type SponsorshipWithBill,
   type VoteWithBill,
 } from "../../../lib/queries.ts";
@@ -19,10 +20,15 @@ import {
 } from "../../../lib/constants.ts";
 import { BillStatusBadge } from "../../_components/BillStatusBadge.tsx";
 import { VotePositionBadge } from "../../_components/VotePositionBadge.tsx";
+import { PromiseStatusBadge } from "../../_components/PromiseStatusBadge.tsx";
 import { PartyBadge } from "../../_components/PartyBadge.tsx";
 import { WingBadge } from "../../_components/WingBadge.tsx";
 import { MemberPhoto } from "../../_components/MemberPhoto.tsx";
-import type { Term, AlignmentScore } from "../../../lib/database.types.ts";
+import type {
+  Term,
+  AlignmentScore,
+  PromiseRow,
+} from "../../../lib/database.types.ts";
 
 export const revalidate = 3600;
 
@@ -40,13 +46,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function MemberProfilePage({ params }: PageProps) {
-  const [member, terms, sponsorships, votes, alignment] = await Promise.all([
-    getMember(params.bioguideId),
-    getMemberTerms(params.bioguideId),
-    getMemberSponsorships(params.bioguideId),
-    getMemberVotes(params.bioguideId),
-    getMemberAlignment(params.bioguideId),
-  ]);
+  const [member, terms, sponsorships, votes, alignment, promises] =
+    await Promise.all([
+      getMember(params.bioguideId),
+      getMemberTerms(params.bioguideId),
+      getMemberSponsorships(params.bioguideId),
+      getMemberVotes(params.bioguideId),
+      getMemberAlignment(params.bioguideId),
+      getMemberPromises(params.bioguideId),
+    ]);
 
   if (!member) notFound();
 
@@ -170,11 +178,24 @@ export default async function MemberProfilePage({ params }: PageProps) {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold mb-3">Promises &amp; record</h2>
-        <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
-          Promise tracking will appear here after Phase 8 (promises review tool).
-          Every promise status is human-reviewed and source-linked.
-        </div>
+        <h2 className="text-lg font-semibold mb-1">Promises &amp; record</h2>
+        <p className="mb-3 text-xs text-gray-500">
+          What was promised, and the reviewed verdict on what was done. Every
+          promise and every verdict links to its source — nothing here is
+          auto-generated.
+        </p>
+        {promises.length > 0 ? (
+          <ul className="space-y-3">
+            {promises.map((p) => (
+              <PromiseCard key={p.id} promise={p} />
+            ))}
+          </ul>
+        ) : (
+          <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
+            No promises recorded yet. Promises are entered and reviewed by hand
+            in the reviewer tool, each linked to where it was made.
+          </div>
+        )}
       </section>
 
       {/* Source note */}
@@ -218,6 +239,69 @@ function formatShortDate(d: string | null): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function PromiseCard({ promise: p }: { promise: PromiseRow }) {
+  const resolved = p.status !== "unverified";
+  return (
+    <li className="rounded-lg border border-gray-200 bg-white shadow-sm p-4">
+      <div className="grid gap-4 sm:grid-cols-3">
+        {/* The promise (what was said) */}
+        <div className="sm:col-span-2">
+          <div className="flex items-center gap-2 mb-1">
+            {p.topic && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                {p.topic}
+              </span>
+            )}
+            {p.made_date && (
+              <span className="text-xs text-gray-400">
+                {formatShortDate(p.made_date)}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-900">{p.text}</p>
+          <p className="mt-2 text-xs text-gray-400">
+            {p.made_context ? `${p.made_context} · ` : ""}
+            <a
+              href={p.source_url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline hover:text-gray-600"
+            >
+              Source ↗
+            </a>
+          </p>
+        </div>
+
+        {/* The verdict (what was done) — only meaningful once reviewed */}
+        <div className="sm:border-l sm:border-gray-100 sm:pl-4">
+          <PromiseStatusBadge status={p.status} />
+          {resolved ? (
+            <>
+              {p.status_rationale && (
+                <p className="mt-2 text-xs text-gray-600">{p.status_rationale}</p>
+              )}
+              {p.status_source_url && (
+                <a
+                  href={p.status_source_url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="mt-2 inline-block text-xs text-blue-600 hover:underline"
+                >
+                  Evidence ↗
+                </a>
+              )}
+            </>
+          ) : (
+            <p className="mt-2 text-xs text-gray-400">
+              Not yet reviewed against the record.
+            </p>
+          )}
+        </div>
+      </div>
+    </li>
+  );
 }
 
 function AlignmentCard({ score }: { score: AlignmentScore }) {

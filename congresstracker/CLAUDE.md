@@ -54,7 +54,7 @@ enforced by the schema.**
    messiest module; isolate it and test parsing hard. ✅ done
 7. **Wings + scores** — classification + `ingest/scores.ts` → `alignment_scores`. ✅ done
 8. **Promises** — admin review tool (`/admin`) + seed data; promise/record
-   split view on profiles.
+   split view on profiles. ✅ done
 9. **Polish** — three-wing UI, `/compare`, `/methodology`, accessibility, launch.
 
 Do not start a phase until the previous phase's QA gate passes.
@@ -250,6 +250,53 @@ parsing is fully covered by unit tests against real-shaped XML.
 
 QA gate: `npm test` → 96/96 passing (26 new in `votes.test.ts`).
 `npm run typecheck` + `npm run build` clean.
+
+### Phase 8 — Promises (done)
+
+Promises are the most defamation-sensitive data, so nothing here is
+auto-generated (hard rules 1, 2, 5). Promises come only from a human — typed
+into the reviewer tool or loaded from a seed file — and every promise carries a
+source; every resolved verdict carries a reviewer + evidence.
+
+Reviewer admin tool — `app/admin/page.tsx` (a `"use client"` island):
+- Signs a reviewer in with Supabase Auth (email/password) using a new
+  `createBrowserClient()` in `lib/supabase.ts` — the anon key with a PERSISTED
+  session, so the reviewer's JWT rides along. Writes hit only `promises`, gated
+  by RLS to the `authenticated` role; the service-role key is never used here.
+- **Add a promise:** bioguide id + text + source_url (required); status starts
+  `unverified`.
+- **Review:** set status + rationale + evidence URL. The UI blocks a resolved
+  status (kept/broken/partial/stalled) without an evidence URL, and attaches
+  `reviewed_by` (the signed-in reviewer) + `reviewed_at` automatically — the
+  same invariant the DB CHECK enforces. Degrades to a clear message when
+  Supabase isn't configured. Reviewer accounts are provisioned in the Supabase
+  dashboard (no self sign-up). Linked discreetly from the footer.
+
+Seed loader — `ingest/promises.ts`:
+- Pure, exported, unit-tested: `validatePromiseSeed` (requires bioguide_id +
+  text + source_url; a resolved status requires reviewed_by + status_source_url,
+  mirroring the DB), `loadPromiseSeeds` (partitions valid rows from rejections).
+- `ingestPromises(opts)` is FK-safe (skips unknown members) and idempotent for
+  seeds carrying a stable `id` (upsert on PK); id-less seeds are plain inserts.
+- `supabase/seed/promises.example.json` is a TEMPLATE only — placeholder
+  bioguide id `EXAMPLE0` is not a real member, so the loader skips it and
+  nothing fabricated is ever inserted. Real promises replace the placeholders
+  with genuine ids + source URLs.
+
+Public UI:
+- Member profile **Promises & record** section now renders real data as a
+  promise/record split: left = the promise (text, topic, when/where, source);
+  right = the reviewed verdict (status badge, rationale, evidence link), or
+  "Not yet reviewed" for `unverified`. `lib/queries.ts` adds `getMemberPromises`.
+- `app/_components/PromiseStatusBadge.tsx` + `PROMISE_STATUS_LABELS` /
+  `PROMISE_STATUSES` in `lib/constants.ts`.
+
+QA gate: `npm test` → 121/121 passing (9 new in `promises.test.ts`).
+`npm run typecheck` + `npm run build` clean (new route `/admin`).
+
+**Note:** Supabase Auth flow can't be exercised live in this session (no
+configured project / egress blocked), but the page builds, typechecks, and the
+seed/validation logic is fully unit-tested.
 
 ### Phase 7 — Wings + alignment scores (done)
 

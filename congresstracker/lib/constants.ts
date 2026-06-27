@@ -92,6 +92,28 @@ export const DW_NOMINATE_CENTER_THRESHOLD = 0.25;
 /** The canonical source for the DW-NOMINATE ideology metric. */
 export const VOTEVIEW_URL = "https://voteview.com";
 
+/**
+ * Promise lifecycle labels. `unverified` is the default and the only status a
+ * non-reviewer (or a seed) may set; every other status is a reviewer judgement
+ * that the schema requires to carry a reviewer + a status source.
+ */
+export const PROMISE_STATUS_LABELS: Record<string, string> = {
+  unverified: "Unverified",
+  kept: "Kept",
+  broken: "Broken",
+  partial: "Partial",
+  stalled: "Stalled",
+};
+
+/** The set of statuses a reviewer can assign, in display order. */
+export const PROMISE_STATUSES = [
+  "unverified",
+  "kept",
+  "partial",
+  "stalled",
+  "broken",
+] as const;
+
 /** Congress N started in January of this year. */
 export function congressStartYear(congress: number): number {
   return 1789 + (congress - 1) * 2;
