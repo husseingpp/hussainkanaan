@@ -351,3 +351,142 @@ export async function getMemberPromises(
     return [];
   }
 }
+
+// ---------------------------------------------------------------------------
+// Three-wing browse
+// ---------------------------------------------------------------------------
+
+export interface WingColumn {
+  members: Member[];
+  total: number;
+}
+
+export interface WingBrowse {
+  left: WingColumn;
+  center: WingColumn;
+  right: WingColumn;
+}
+
+/**
+ * Members grouped into left / center / right for the Ground-News-style browse.
+ * Runs one query per wing: a capped list for display plus an exact total, so a
+ * column can say "showing 50 of 213" and link to the full filtered list.
+ */
+export async function getMembersByWing(
+  filters: { chamber?: string; state?: string } = {},
+  perColumn = 50,
+): Promise<WingBrowse> {
+  const empty: WingBrowse = {
+    left: { members: [], total: 0 },
+    center: { members: [], total: 0 },
+    right: { members: [], total: 0 },
+  };
+  const db = safeDb();
+  if (!db) return empty;
+
+  async function column(wing: string): Promise<WingColumn> {
+    try {
+      // eslint-disable-next-line
+      let q: any = (db as any)
+        .from("members")
+        .select("*", { count: "exact" })
+        .eq("current_wing", wing)
+        .order("last_name")
+        .order("first_name")
+        .limit(perColumn);
+      if (filters.chamber === "house" || filters.chamber === "senate") {
+        q = q.eq("current_chamber", filters.chamber);
+      }
+      if (filters.state && /^[A-Z]{2}$/.test(filters.state)) {
+        q = q.eq("state", filters.state);
+      }
+      const { data, error, count } = await q;
+      if (error) throw error;
+      return { members: (data as Member[]) ?? [], total: count ?? 0 };
+    } catch {
+      return { members: [], total: 0 };
+    }
+  }
+
+  const [left, center, right] = await Promise.all([
+    column("left"),
+    column("center"),
+    column("right"),
+  ]);
+  return { left, center, right };
+}
+
+// ---------------------------------------------------------------------------
+// Member stats (compare view)
+// ---------------------------------------------------------------------------
+
+export interface MemberStats {
+  sponsored: number;
+  cosponsored: number;
+  billsBecameLaw: number;
+  votes: number;
+}
+
+/** Lightweight head-only counts for the compare view (no row payloads). */
+export async function getMemberStats(bioguideId: string): Promise<MemberStats> {
+  const zero: MemberStats = {
+    sponsored: 0,
+    cosponsored: 0,
+    billsBecameLaw: 0,
+    votes: 0,
+  };
+  const db = safeDb();
+  if (!db) return zero;
+
+  async function count(
+    build: (q: any) => any,
+    table: string,
+  ): Promise<number> {
+    try {
+      const { count, error } = await build(
+        (db as any).from(table).select("*", { count: "exact", head: true }),
+      );
+      if (error) return 0;
+      return count ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  const [sponsored, cosponsored, votes] = await Promise.all([
+    count(
+      (q) => q.eq("bioguide_id", bioguideId).eq("is_sponsor", true),
+      "sponsorships",
+    ),
+    count(
+      (q) => q.eq("bioguide_id", bioguideId).eq("is_sponsor", false),
+      "sponsorships",
+    ),
+    count((q) => q.eq("bioguide_id", bioguideId), "votes"),
+  ]);
+
+  return { sponsored, cosponsored, billsBecameLaw: 0, votes };
+}
+
+/** Minimal member options (id + name + party/state) for the compare pickers. */
+export type MemberOption = Pick<
+  Member,
+  "bioguide_id" | "full_name" | "party" | "state"
+>;
+
+export async function getMemberOptions(): Promise<MemberOption[]> {
+  const db = safeDb();
+  if (!db) return [];
+  try {
+    const { data, error } = await (db as any)
+      .from("members")
+      .select("bioguide_id, full_name, party, state")
+      .order("last_name")
+      .order("first_name")
+      .limit(1000);
+    if (error) return [];
+    return (data as MemberOption[]) ?? [];
+  } catch {
+    return [];
+  }
+}

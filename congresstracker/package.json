@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test ingest/**/*.test.ts"
+    "test": "tsx --test ingest/**/*.test.ts lib/**/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",

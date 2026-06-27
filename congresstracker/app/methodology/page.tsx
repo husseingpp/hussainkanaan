@@ -98,6 +98,28 @@ export default function Methodology() {
           published DW-NOMINATE score is shown with no wing — we never guess.
         </p>
       </section>
+
+      <section className="mt-8 space-y-3">
+        <h2 className="text-xl font-semibold">Limitations &amp; corrections</h2>
+        <ul className="list-disc space-y-1 pl-6 text-gray-700">
+          <li>
+            We aim to describe the record, not to judge it. Wing labels and
+            promise statuses are descriptive and reviewable, never pejorative.
+          </li>
+          <li>
+            Data is only as current as our most recent sync, and gaps in the
+            underlying public sources are reflected here rather than filled in.
+          </li>
+          <li>
+            A promise with no reviewed verdict stays <em>unverified</em> — its
+            absence of a status is not a claim either way.
+          </li>
+          <li>
+            Spotted an error or a missing source? Every figure links to where it
+            came from, so corrections can be checked against the original record.
+          </li>
+        </ul>
+      </section>
     </main>
   );
 }

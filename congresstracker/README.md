@@ -17,10 +17,23 @@ Clerk / Senate roll-call XML.
 
 ## Status
 
-This is the **Phase 1 (schema)** scaffold. The database schema, RLS, project
-configuration, and a non-factual landing + `/methodology` page exist. Member
-data, ingestion, and profiles arrive in later phases — see the build order in
-[`CLAUDE.md`](./CLAUDE.md).
+All nine build phases are implemented (see the build order and per-phase notes
+in [`CLAUDE.md`](./CLAUDE.md)):
+
+- **Schema + RLS** — seven tables with source-provenance enforced in the DB.
+- **Ingestion** — a rate-limited Congress.gov client, plus members, bills,
+  votes (House/Senate roll-call XML), and DW-NOMINATE alignment scores.
+- **Public UI** — member list with filters, member profiles (terms, sponsored
+  legislation, voting record, political alignment, promises), bill list +
+  detail, a **Left / Center / Right** browse view (`/wings`), and a side-by-side
+  **`/compare`**.
+- **Promises** — a reviewer tool (`/admin`) where humans enter sourced promises
+  and record source-backed verdicts; nothing about a person is auto-generated.
+- **Methodology** — `/methodology` documents sourcing, the wing cutoff, and
+  limitations.
+
+Pages are server-rendered against Supabase; deploy on a Node host (Vercel).
+GitHub Pages cannot host it (static export only).
 
 ## Getting started
 
@@ -66,6 +79,23 @@ With the anon key, confirm:
 4. Setting a promise to `broken` without `reviewed_by` + `status_source_url`
    fails.
 
+## Ingestion
+
+Ingestion modules live in [`ingest/`](./ingest) and write with the service-role
+key. All transforms are pure and unit-tested (`npm test`); the network and
+Supabase clients are injectable, so the suite runs offline.
+
+| Module | Source | Populates |
+| --- | --- | --- |
+| `members.ts` | api.congress.gov | `members`, `terms` |
+| `bills.ts` | api.congress.gov | `bills`, `sponsorships` |
+| `votes.ts` | House Clerk / Senate roll-call XML | `votes` |
+| `scores.ts` | Voteview DW-NOMINATE CSV | `alignment_scores`, `members.current_wing` |
+| `promises.ts` | hand-authored seed (`supabase/seed/promises.example.json`) | `promises` |
+
+Senate votes resolve through a LIS↔Bioguide crosswalk (`members.lis_id`, see
+migration `0002`); unresolved voters are skipped, never name-guessed.
+
 ## Environment
 
 See [`.env.example`](./.env.example): `CONGRESS_API_KEY`,
@@ -77,13 +107,23 @@ See [`.env.example`](./.env.example): `CONGRESS_API_KEY`,
 ```
 congresstracker/
 ├── app/                       # Next.js App Router
-│   ├── page.tsx               # Landing (non-factual placeholder)
-│   └── methodology/page.tsx   # How the site sources and classifies
-├── ingest/                    # Ingestion modules (added per phase)
+│   ├── page.tsx               # Member list + filters
+│   ├── member/[bioguideId]/   # Member profile
+│   ├── bills/, bill/[id]/     # Bill list + detail
+│   ├── wings/                 # Left / Center / Right browse
+│   ├── compare/               # Side-by-side comparison
+│   ├── admin/                 # Reviewer tool (promises)
+│   ├── methodology/           # Sourcing, classification, limitations
+│   └── _components/           # Badges, photo, etc.
+├── ingest/                    # Ingestion modules + unit tests
 ├── lib/
-│   ├── supabase.ts            # Public (anon) + service-role clients
+│   ├── supabase.ts            # anon / browser-auth / service-role clients
+│   ├── queries.ts             # Read helpers (RLS-gated)
+│   ├── wings.ts               # Pure grouping/tally helpers
+│   ├── constants.ts           # Labels, wing cutoff, etc.
 │   └── database.types.ts      # TS mirror of the schema
-├── supabase/migrations/
-│   └── 0001_init.sql          # Phase 1 schema + RLS
+├── supabase/
+│   ├── migrations/            # 0001 schema + RLS, 0002 lis_id
+│   └── seed/                  # promises.example.json (template)
 └── CLAUDE.md                  # Single source of truth (spec + hard rules)
 ```

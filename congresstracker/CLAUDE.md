@@ -55,7 +55,7 @@ enforced by the schema.**
 7. **Wings + scores** — classification + `ingest/scores.ts` → `alignment_scores`. ✅ done
 8. **Promises** — admin review tool (`/admin`) + seed data; promise/record
    split view on profiles. ✅ done
-9. **Polish** — three-wing UI, `/compare`, `/methodology`, accessibility, launch.
+9. **Polish** — three-wing UI, `/compare`, `/methodology`, accessibility, launch. ✅ done
 
 Do not start a phase until the previous phase's QA gate passes.
 
@@ -250,6 +250,37 @@ parsing is fully covered by unit tests against real-shaped XML.
 
 QA gate: `npm test` → 96/96 passing (26 new in `votes.test.ts`).
 `npm run typecheck` + `npm run build` clean.
+
+### Phase 9 — Polish (done)
+
+The launch phase: the signature three-wing browse, a compare view, an
+accessibility pass, and launch docs.
+
+- **Three-wing browse — `/wings`:** the Ground-News-style split. Members are
+  grouped into Left / Center / Right columns (from the sourced `current_wing`),
+  with chamber/state filters, per-column totals, and a "See all N →" link into
+  the filtered member list (`/?wing=…`). Column accents are neutral sky/stone/
+  rose, deliberately not party blue/red. `getMembersByWing` runs one
+  count+limit query per wing.
+- **Compare — `/compare?a=&b=`:** two members side by side — party, state,
+  chamber, wing + raw score, bills sponsored/cosponsored, votes recorded, recent
+  yea/nay split, and promises tracked (kept/partial/broken). Member pickers are
+  a plain GET form (`getMemberOptions`). Counts use head-only queries
+  (`getMemberStats`); tallies use pure helpers in `lib/wings.ts`.
+- **Pure helpers — `lib/wings.ts`:** `groupByWing`, `tallyVotes`,
+  `tallyPromises`, `pct` — unit-tested in `lib/wings.test.ts`. The test script
+  now globs `{ingest,lib}/**/*.test.ts`.
+- **Accessibility:** skip-to-content link + `id="main"` landmark in the layout;
+  the compare table uses `<caption>` + `scope`d row/col headers; nav gains Wings
+  and Compare.
+- **Methodology:** adds a "Limitations & corrections" section (descriptive not
+  pejorative; data only as current as the last sync; unverified is not a claim;
+  every figure links to its source for correction).
+- **Launch:** `README.md` updated from the Phase-1 stub to reflect the full app,
+  ingestion table, and project layout.
+
+QA gate: `npm test` → 125/125 passing (4 new in `lib/wings.test.ts`).
+`npm run typecheck` + `npm run build` clean; new routes `/wings`, `/compare`.
 
 ### Phase 8 — Promises (done)
 

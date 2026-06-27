@@ -16,6 +16,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-gray-900 focus:px-3 focus:py-2 focus:text-sm focus:text-white"
+        >
+          Skip to content
+        </a>
         <header className="bg-white border-b border-gray-200">
           <nav
             className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between"
@@ -35,10 +41,22 @@ export default function RootLayout({
                 Members
               </Link>
               <Link
+                href="/wings"
+                className="text-sm text-gray-500 hover:text-gray-900"
+              >
+                Wings
+              </Link>
+              <Link
                 href="/bills"
                 className="text-sm text-gray-500 hover:text-gray-900"
               >
                 Bills
+              </Link>
+              <Link
+                href="/compare"
+                className="text-sm text-gray-500 hover:text-gray-900"
+              >
+                Compare
               </Link>
               <Link
                 href="/methodology"
@@ -50,7 +68,9 @@ export default function RootLayout({
           </nav>
         </header>
 
-        <main className="flex-1">{children}</main>
+        <main id="main" className="flex-1">
+          {children}
+        </main>
 
         <footer className="border-t border-gray-200 mt-12">
           <p className="mx-auto max-w-6xl px-4 sm:px-6 py-6 text-xs text-gray-400">
