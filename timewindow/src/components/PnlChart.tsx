@@ -19,14 +19,14 @@ export interface ChartRow {
   i: number;
   label: string;
   pnl: number;
-  equity: number;
+  balance: number; // account balance after this day (startingBalance + cumulative P&L)
 }
 
-export function toChartRows(trades: DailyTrade[]): ChartRow[] {
-  let equity = 0;
+export function toChartRows(trades: DailyTrade[], startingBalance: number): ChartRow[] {
+  let balance = startingBalance;
   return trades.map((t, i) => {
-    equity += t.pnl;
-    return { i, label: fmtDateUTC(t.date), pnl: t.pnl, equity };
+    balance += t.pnl;
+    return { i, label: fmtDateUTC(t.date), pnl: t.pnl, balance };
   });
 }
 
@@ -39,24 +39,27 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { paylo
       <div style={{ color: row.pnl >= 0 ? tokens.trade.win : tokens.trade.loss }}>
         P&L {fmtMoney(row.pnl)}
       </div>
-      <div style={{ color: tokens.trade.curve }}>Equity {fmtMoney(row.equity)}</div>
+      <div style={{ color: tokens.trade.curve }}>Balance {fmtMoney(row.balance).replace('+', '')}</div>
     </div>
   );
 }
 
 export function PnlChart({
   rows,
+  startingBalance,
   selected,
   onSelect,
   onHover,
 }: {
   rows: ChartRow[];
+  startingBalance: number;
   selected: number | null;
   onSelect: (i: number | null) => void;
   onHover: (i: number | null) => void;
 }) {
   const reduce = usePrefersReducedMotion();
   const bars = useMemo(() => rows, [rows]);
+  const blownLabel = useMemo(() => rows.find((r) => r.balance <= 0)?.label, [rows]);
 
   if (rows.length === 0) {
     return (
@@ -88,14 +91,20 @@ export function PnlChart({
           stroke={tokens.floor.border}
         />
         <YAxis
-          yAxisId="equity"
+          yAxisId="balance"
           orientation="right"
           tick={{ fill: tokens.trade.curve, fontSize: 11 }}
-          tickFormatter={(v) => fmtMoney(v)}
-          width={72}
+          tickFormatter={(v) => fmtMoney(v).replace('+', '')}
+          width={78}
           stroke={tokens.floor.border}
         />
         <ReferenceLine yAxisId="pnl" y={0} stroke={tokens.floor.border} />
+        {/* Starting balance (dim) and the zero/blow-up line (loss red) on the balance axis. */}
+        <ReferenceLine yAxisId="balance" y={startingBalance} stroke={tokens.floor.border} strokeDasharray="3 3" />
+        <ReferenceLine yAxisId="balance" y={0} stroke={tokens.trade.loss} strokeDasharray="4 2" />
+        {blownLabel && (
+          <ReferenceLine yAxisId="balance" x={blownLabel} stroke={tokens.trade.loss} strokeDasharray="4 2" />
+        )}
         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
         <Bar
           yAxisId="pnl"
@@ -114,9 +123,9 @@ export function PnlChart({
           ))}
         </Bar>
         <Line
-          yAxisId="equity"
+          yAxisId="balance"
           type="monotone"
-          dataKey="equity"
+          dataKey="balance"
           stroke={tokens.trade.curve}
           strokeWidth={2}
           dot={false}

@@ -1,4 +1,4 @@
-import type { BacktestStats } from '@/engine';
+import type { AccountResult, BacktestStats } from '@/engine';
 import { fmtDateUTC, fmtMoney, fmtPct } from '@/lib/format';
 
 function Stat({
@@ -28,12 +28,27 @@ function Stat({
   );
 }
 
-export function StatsCard({ stats }: { stats: BacktestStats }) {
+export function StatsCard({ stats, account }: { stats: BacktestStats; account: AccountResult }) {
   const totalTone = stats.totalPnl > 0 ? 'win' : stats.totalPnl < 0 ? 'loss' : 'default';
+  const returnTone = account.returnPct > 0 ? 'win' : account.returnPct < 0 ? 'loss' : 'default';
 
   return (
-    <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+    <section className="space-y-3">
+      {account.blownDate && (
+        <div className="num rounded-lg border border-trade-loss/50 bg-trade-loss/10 px-4 py-2 text-sm text-text-primary">
+          ⚠ Account blown up on {fmtDateUTC(account.blownDate)} — balance hit $0 (started at{' '}
+          {fmtMoney(account.startingBalance).replace('+', '')}).
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       <Stat label="Win %" value={fmtPct(stats.winRate)} tone="gold" big />
+      <Stat
+        label="Ending balance"
+        value={fmtMoney(account.endingBalance).replace('+', '')}
+        tone={returnTone}
+        big
+      />
+      <Stat label="Return %" value={`${account.returnPct >= 0 ? '+' : ''}${account.returnPct.toFixed(1)}%`} tone={returnTone} big />
       <Stat label="Total P&L" value={fmtMoney(stats.totalPnl)} tone={totalTone} big />
       <Stat label="Trades" value={String(stats.totalTrades)} />
       <Stat label="Expectancy / trade" value={fmtMoney(stats.expectancy)} />
@@ -53,6 +68,7 @@ export function StatsCard({ stats }: { stats: BacktestStats }) {
       />
       <Stat label="Winners" value={String(stats.winningTrades)} tone="win" />
       <Stat label="Losers" value={String(stats.losingTrades)} tone="loss" />
+      </div>
     </section>
   );
 }

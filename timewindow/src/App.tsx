@@ -15,7 +15,10 @@ export default function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
 
-  const rows = useMemo(() => (backtest ? toChartRows(backtest.trades) : []), [backtest]);
+  const rows = useMemo(
+    () => (backtest ? toChartRows(backtest.trades, backtest.account.startingBalance) : []),
+    [backtest],
+  );
 
   if (!dataset || !backtest) return <Dropzone />;
 
@@ -29,17 +32,18 @@ export default function App() {
 
         <main className="flex-1 space-y-4 p-4">
           <ImportReport report={dataset.importReport} />
-          <StatsCard stats={backtest.stats} />
+          <StatsCard stats={backtest.stats} account={backtest.account} />
 
           <section className="rounded-lg border border-floor-border bg-floor-panel p-4">
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-medium text-text-primary">Daily P&L · equity curve</h2>
+              <h2 className="text-sm font-medium text-text-primary">Daily P&L · account balance</h2>
               <span className="num text-xs text-text-dim">
                 {backtest.trades.length} trades · {backtest.skippedDays} skipped
               </span>
             </div>
             <PnlChart
               rows={rows}
+              startingBalance={backtest.account.startingBalance}
               selected={selected}
               onSelect={setSelected}
               onHover={setHovered}

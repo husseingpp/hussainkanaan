@@ -54,12 +54,18 @@ export function ControlPanel({ skippedDays }: { skippedDays: number }) {
   const window = useStore((s) => s.window);
   const patch = useStore((s) => s.patchWindow);
   const dataset = useStore((s) => s.dataset);
+  const accountBalance = useStore((s) => s.accountBalance);
+  const setAccountBalance = useStore((s) => s.setAccountBalance);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const crossesMidnight =
     window.exitHour * 60 + window.exitMin <= window.entryHour * 60 + window.entryMin;
 
   const range = dataset?.importReport.dateRange;
+
+  // "$ per $1.00 move" for the current lot × contract size — the number the user reasons in.
+  const contractSize = window.contractSize ?? 100;
+  const dollarsPerDollarMove = window.positionSize * contractSize;
 
   return (
     <div className="flex flex-col gap-5 p-4">
@@ -124,6 +130,34 @@ export function ControlPanel({ skippedDays }: { skippedDays: number }) {
           onChange={(e) => patch({ positionSize: Math.max(0, +e.target.value) })}
           className="num mt-2 w-full rounded-md border border-floor-border bg-floor-bg px-2 py-1.5 text-text-primary"
           aria-label="Custom position size"
+        />
+        <span className="num mt-1 block text-xs text-floor-gold">
+          {window.positionSize} lot → ${dollarsPerDollarMove.toFixed(2)} per $1.00 move
+        </span>
+      </Field>
+
+      <Field label="Contract size (per lot)">
+        <input
+          type="number"
+          min={0}
+          step={1}
+          value={contractSize}
+          onChange={(e) => patch({ contractSize: Math.max(0, +e.target.value) })}
+          className="num w-full rounded-md border border-floor-border bg-floor-bg px-2 py-1.5 text-text-primary"
+          aria-label="Contract size per lot"
+        />
+        <span className="mt-1 block text-xs text-text-dim">XAUUSD = 100 (1 lot = 100 oz).</span>
+      </Field>
+
+      <Field label="Account balance ($)">
+        <input
+          type="number"
+          min={0}
+          step={10}
+          value={accountBalance}
+          onChange={(e) => setAccountBalance(+e.target.value)}
+          className="num w-full rounded-md border border-floor-border bg-floor-bg px-2 py-1.5 text-text-primary"
+          aria-label="Account balance"
         />
       </Field>
 

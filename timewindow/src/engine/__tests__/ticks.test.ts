@@ -132,7 +132,7 @@ describe('parseMt5 (tick input)', () => {
       exitHour: 17,
       exitMin: 0,
       positionSize: 1,
-      contractSize: 100_000,
+      contractSize: 100,
       filterDaysOfWeek: ALL_DAYS,
     };
     const fromTicks = backtestWindow(tickDs, window).trades;

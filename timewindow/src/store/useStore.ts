@@ -20,10 +20,14 @@ export interface SavedPreset {
   window: Omit<TimeWindow, 'dateRangeStart' | 'dateRangeEnd'>;
 }
 
+/** Default starting balance for the account view (editable in the UI). */
+export const DEFAULT_ACCOUNT_BALANCE = 1000;
+
 /** Only settings are persisted — candle data is always re-parsed (blueprint §7). */
 interface PersistedState {
   lastWindow: TimeWindow;
   savedPresets: SavedPreset[];
+  accountBalance: number;
 }
 
 interface StoreState extends PersistedState {
@@ -36,6 +40,7 @@ interface StoreState extends PersistedState {
   setParseError: (msg: string | null) => void;
   patchWindow: (patch: Partial<TimeWindow>) => void;
   setWindow: (w: TimeWindow) => void;
+  setAccountBalance: (n: number) => void;
   savePreset: (name: string) => void;
   applyPreset: (id: string) => void;
   deletePreset: (id: string) => void;
@@ -50,6 +55,7 @@ export const useStore = create<StoreState>()(
       window: DEFAULT_WINDOW,
       lastWindow: DEFAULT_WINDOW,
       savedPresets: [],
+      accountBalance: DEFAULT_ACCOUNT_BALANCE,
 
       setDataset: (dataset) =>
         set((s) => {
@@ -72,6 +78,7 @@ export const useStore = create<StoreState>()(
           return { window, lastWindow: window };
         }),
       setWindow: (window) => set({ window, lastWindow: window }),
+      setAccountBalance: (accountBalance) => set({ accountBalance: Math.max(0, accountBalance) }),
 
       savePreset: (name) =>
         set((s) => {
@@ -90,9 +97,27 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'timewindow.v1',
-      version: 1,
-      // Never persist candle data — only the last window + saved presets.
-      partialize: (s): PersistedState => ({ lastWindow: s.lastWindow, savedPresets: s.savedPresets }),
+      version: 2,
+      // Never persist candle data — only settings (last window, presets, balance).
+      partialize: (s): PersistedState => ({
+        lastWindow: s.lastWindow,
+        savedPresets: s.savedPresets,
+        accountBalance: s.accountBalance,
+      }),
+      // v1→v2: the old default contract size was 100_000 (1000× too high). Coerce any
+      // stored inflated value back to the real XAUUSD 100, and seed accountBalance.
+      migrate: (persisted, version) => {
+        const s = persisted as Partial<PersistedState>;
+        if (version < 2) {
+          const fix = (w?: { contractSize?: number }) => {
+            if (w && (w.contractSize === undefined || w.contractSize >= 1000)) w.contractSize = DEFAULT_CONTRACT_SIZE;
+          };
+          fix(s.lastWindow);
+          s.savedPresets?.forEach((p) => fix(p.window));
+          if (s.accountBalance === undefined) s.accountBalance = DEFAULT_ACCOUNT_BALANCE;
+        }
+        return s as PersistedState;
+      },
       onRehydrateStorage: () => (state) => {
         if (state?.lastWindow) state.window = { ...state.lastWindow, dateRangeStart: undefined, dateRangeEnd: undefined };
       },

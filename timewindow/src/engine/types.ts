@@ -45,7 +45,7 @@ export interface TimeWindow {
   exitHour: number;
   exitMin: number;
   positionSize: number; // MT5 lots, e.g. 0.01
-  contractSize?: number; // units per lot; default 100_000 (see blueprint §9.5)
+  contractSize?: number; // units (oz) per lot; XAUUSD = 100 → $100 per $1 move per lot
   filterDaysOfWeek: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]; true = include
   dateRangeStart?: Date;
   dateRangeEnd?: Date;
@@ -79,8 +79,22 @@ export interface BacktestStats {
   expectancy: number; // (avgWin × winFraction) − (avgLoss × lossFraction)
 }
 
-/** Default contract size for XAUUSD per the blueprint P&L formula (§9.5). */
-export const DEFAULT_CONTRACT_SIZE = 100_000;
+export interface AccountResult {
+  startingBalance: number;
+  endingBalance: number;
+  returnPct: number; // (ending − starting) / starting × 100
+  peakBalance: number;
+  lowestBalance: number;
+  maxDrawdownPct: number; // largest peak-to-trough drop, as % of the running peak
+  blownDate: Date | null; // first day the balance would have hit ≤ 0, else null
+}
+
+/**
+ * Default contract size for XAUUSD: 1 lot = 100 troy ounces, so a $1.00 move is
+ * worth $100 per lot (0.1 lot → $10/$1, 0.01 lot → $1/$1). Editable for other
+ * symbols. P&L = (exit − entry) × positionSize × contractSize.
+ */
+export const DEFAULT_CONTRACT_SIZE = 100;
 
 /** Thrown by the parser for user-fixable input problems. `message` is UI-ready. */
 export class ParseError extends Error {

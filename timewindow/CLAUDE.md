@@ -75,13 +75,35 @@ spread-by-time-of-day, sub-minute entry/exit. The parser:
 See `src/engine/types.ts`. Key formulas:
 
 - `pnl = (exitPrice − entryPrice) × positionSize × contractSize`,
-  `contractSize` defaults to **100,000** (blueprint §9.5).
+  `contractSize` defaults to **100** for XAUUSD (1 lot = 100 oz → $100 per $1.00
+  move per lot; 0.1 lot = $10/$1). Editable in the UI for other symbols.
+  (The original blueprint's 100,000 was a 1000× error, corrected here.)
 - Exit is on **D+1** when the exit time is at or before the entry time within a
   day (the 23:57 → 01:00 midnight-crossing case); otherwise same day D.
 - Missing entry/exit candle → skip the day (counted in `skippedDays`).
 - `winRate` is a **percentage (0–100)**. Expectancy uses the win *fraction*:
   `expectancy = avgWin × winFraction − avgLoss × (1 − winFraction)`.
 - `largestDrawdown` = peak-to-trough of the cumulative equity curve (positive).
+- **Account model** (`engine/account.ts`): `calcAccount(trades, startingBalance)`
+  returns ending balance, return %, peak/lowest balance, max drawdown %, and
+  `blownDate` — the first day the running balance would have hit ≤ $0. The chart's
+  overlay line is the **account balance** (start + cumulative), with a zero /
+  blow-up marker.
+
+## Saved files (persistence)
+
+The blueprint's "never persist candle data" stance is **deliberately relaxed** at
+the user's request: every successful import is auto-saved so it can be reopened
+without re-importing.
+- **Local** (`lib/fileStore.ts`): IndexedDB, always on — two stores (`meta` for
+  listing, `data` for the serialized dataset). Instant reopen, no re-parse.
+- **Cloud** (`lib/cloudStore.ts`, optional): Supabase Storage, enabled by pasting
+  a project URL + anon key in-app (kept in localStorage, **never committed**).
+  One-time setup: a **public** bucket `timewindow-datasets` with permissive anon
+  policies (personal tool, no auth by design). Datasets stored as `data/{id}.json`
+  with an `index.json` manifest. All cloud calls are best-effort — failures never
+  block local use.
+- Shared `lib/datasetCodec.ts` serializes Dataset ↔ JSON (Dates ↔ epoch) for both.
 
 ## Architecture
 

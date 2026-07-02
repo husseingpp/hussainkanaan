@@ -10,7 +10,7 @@ function win(overrides: Partial<TimeWindow>): TimeWindow {
     exitHour: 17,
     exitMin: 0,
     positionSize: 1,
-    contractSize: 100_000,
+    contractSize: 100,
     filterDaysOfWeek: ALL_DAYS,
     ...overrides,
   };
@@ -27,7 +27,7 @@ describe('backtestWindow', () => {
     expect(trades).toHaveLength(1);
     expect(trades[0].entryPrice).toBe(2000);
     expect(trades[0].exitPrice).toBe(2010);
-    expect(trades[0].pnl).toBe((2010 - 2000) * 1 * 100_000);
+    expect(trades[0].pnl).toBe((2010 - 2000) * 1 * 100);
   });
 
   it('handles a midnight-crossing window (entry 23:57 → exit 01:00 next day)', () => {
@@ -39,7 +39,7 @@ describe('backtestWindow', () => {
     const { trades } = backtestWindow(ds, w);
     expect(trades).toHaveLength(1);
     expect(trades[0].date.getUTCDate()).toBe(30); // trade is dated to the entry day
-    expect(trades[0].pnl).toBe((2005 - 2000) * 1 * 100_000);
+    expect(trades[0].pnl).toBe((2005 - 2000) * 1 * 100);
   });
 
   it('skips a day when the entry or exit candle is missing', () => {
@@ -112,10 +112,10 @@ describe('backtestWindow', () => {
     ]);
     const { trades } = backtestWindow(ds, win({}));
     expect(trades[0].pnl).toBeLessThan(0);
-    expect(trades[0].pnl).toBe((2000 - 2010) * 1 * 100_000);
+    expect(trades[0].pnl).toBe((2000 - 2010) * 1 * 100);
   });
 
-  it('defaults the contract size to 100,000 when omitted', () => {
+  it('defaults the contract size to 100 (XAUUSD) when omitted', () => {
     const ds = dataset([
       candle('2026.06.30', '09:00', 0, { c: 2000 }),
       candle('2026.06.30', '17:00', 0, { o: 2001 }),
@@ -123,6 +123,6 @@ describe('backtestWindow', () => {
     const w = win({});
     delete w.contractSize;
     const { trades } = backtestWindow(ds, w);
-    expect(trades[0].pnl).toBe(1 * 1 * 100_000);
+    expect(trades[0].pnl).toBe(1 * 1 * 100);
   });
 });

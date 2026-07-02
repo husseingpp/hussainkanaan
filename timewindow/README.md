@@ -19,8 +19,14 @@ in the [portfolio](../README.md).
 - **Handles the hard cases** — midnight-crossing windows (exit on D+1),
   weekend/holiday gaps (skipped, not errored), M1 validation, position-size
   scaling, and day-of-week filtering.
+- **Real account view** — enter your starting balance and lot size; see the
+  running **account balance**, **return %**, and a **blow-up flag** (the day the
+  account would have hit $0). P&L uses the real XAUUSD contract size ($100 per
+  $1.00 move per lot → 0.1 lot = $10/$1), editable for other symbols.
+- **Saved files** — every import is auto-saved locally (IndexedDB) so it reopens
+  instantly, with optional Supabase cloud sync for cross-device access.
 - **"Trading Floor" design** — deep low-lit palette, IBM Plex Mono tabular
-  figures, green/red daily bars with a gold win-rate metric and an orange equity
+  figures, green/red daily bars with a gold win-rate metric and an orange balance
   curve. One animation (bars rise on first render); respects
   `prefers-reduced-motion`.
 
@@ -35,10 +41,20 @@ npm run dev        # → http://localhost:5173
 ```
 
 ```bash
-npm test           # 26 engine unit tests
+npm test           # 40 engine unit tests
 npm run typecheck  # tsc --noEmit (strict)
 npm run build      # static SPA → dist/
 ```
+
+## Optional: cloud sync (Supabase)
+
+Saved files always persist locally. To also sync them across devices, in
+Supabase create a **public** Storage bucket named `timewindow-datasets` with
+permissive anon `select/insert/update/delete` policies (this is a personal tool
+with no auth by design), then paste your project **URL + anon key** into the
+"Cloud sync" panel on the start screen. Credentials are stored only in your
+browser — never committed. Because the bucket is public, treat it as shareable
+data and rotate the key or disconnect any time.
 
 ## Export from MT5 (2 steps)
 

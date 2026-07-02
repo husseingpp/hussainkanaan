@@ -1,9 +1,12 @@
 import type { ParseResponse } from '@/worker/parse.worker';
 import { useStore } from '@/store/useStore';
+import { saveLocal } from './fileStore';
+import { isCloudConfigured, saveCloud } from './cloudStore';
 
 /**
- * Read a File, parse it off the main thread, and push the result into the store.
- * Falls back to synchronous parsing if the Worker can't be constructed.
+ * Read a File, parse it off the main thread, push the result into the store, and
+ * auto-save it (locally always, and to the cloud when configured) so it can be
+ * reopened later. Falls back to synchronous parsing if the Worker can't be built.
  */
 export async function loadFile(file: File): Promise<void> {
   const { setParsing, setParseError, setDataset } = useStore.getState();
@@ -14,6 +17,7 @@ export async function loadFile(file: File): Promise<void> {
     const response = await parseInWorker(text, file.name).catch(() => parseInline(text, file.name));
     if (response.ok) {
       setDataset(response.dataset);
+      void autoSave(response.dataset, file.name);
     } else {
       setDataset(null);
       setParseError(response.error);
@@ -23,6 +27,23 @@ export async function loadFile(file: File): Promise<void> {
     setParseError(err instanceof Error ? err.message : 'Failed to read the file.');
   } finally {
     setParsing(false);
+  }
+}
+
+/** Persist a freshly-imported dataset. Best-effort — failures never block the import. */
+async function autoSave(dataset: Parameters<typeof saveLocal>[0], filename: string): Promise<void> {
+  const name = filename.replace(/\.[^.]+$/, '') || dataset.symbol;
+  try {
+    await saveLocal(dataset, name);
+  } catch (err) {
+    console.warn('Local save failed:', err);
+  }
+  if (isCloudConfigured()) {
+    try {
+      await saveCloud(dataset, name);
+    } catch (err) {
+      console.warn('Cloud save failed:', err);
+    }
   }
 }
 

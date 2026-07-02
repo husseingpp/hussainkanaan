@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { loadFile } from '@/lib/loadFile';
 import { useStore } from '@/store/useStore';
+import { SavedFiles } from './SavedFiles';
 
 /** Full-screen empty state: the import dropzone + a 2-step MT5 export micro-guide. */
 export function Dropzone() {
@@ -75,6 +76,8 @@ export function Dropzone() {
           price. M1 bars remain the exact, primary path.
         </p>
       </div>
+
+      <SavedFiles />
     </div>
   );
 }
