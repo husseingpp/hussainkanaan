@@ -27,6 +27,9 @@ export interface ImportReport {
   timeframe: string; // always "M1" in v1 (non-M1 is rejected before this)
   barGapSeconds: number; // median gap between consecutive bars
   gaps: DataGap[]; // intra-week gaps flagged as errors
+  sourceType: 'bars' | 'ticks'; // whether M1 bars were imported directly or aggregated from ticks
+  tickCount?: number; // number of ticks read, when sourceType === 'ticks'
+  priceBasis?: 'bid'; // the price used to build tick candles (MT5 builds M1 from Bid)
 }
 
 export interface Dataset {

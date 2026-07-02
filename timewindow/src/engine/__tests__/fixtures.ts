@@ -23,6 +23,7 @@ export function dataset(candles: Candle[], symbol = 'XAUUSD'): Dataset {
     timeframe: 'M1',
     barGapSeconds: 60,
     gaps: [],
+    sourceType: 'bars',
   };
   return { id: 'fixture', symbol, candles: sorted, importReport: report };
 }

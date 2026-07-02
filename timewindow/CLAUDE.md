@@ -50,7 +50,14 @@ baseline on first render (~600ms), then the curve draws. Respect
 ## MT5 input contract (§3)
 
 Tab-separated with angle-bracket headers is the canonical format; comma-separated
-and bracket-less headers are also accepted. The parser:
+and bracket-less headers are also accepted. **Tick exports** (`<DATE> <TIME> <BID>
+<ASK> <LAST> …`, or a combined `<DATETIME>` column with milliseconds) are also
+accepted and **aggregated into M1 OHLC using the Bid price** — the same basis MT5
+uses to build its own M1 candles, so backtest results match a bar import ~1:1.
+Aggregation is a single streaming pass (`aggregateTicksToM1`) that discards raw
+ticks, and tick-derived bars skip the M1 median-gap check (they are M1 by
+construction). Deferred follow-ons enabled by keeping Bid/Ask: spread cost,
+spread-by-time-of-day, sub-minute entry/exit. The parser:
 
 - Auto-detects the delimiter (tab vs comma) and normalises headers (`<CLOSE>` → `CLOSE`).
 - Requires columns `DATE TIME OPEN HIGH LOW CLOSE`; a missing column throws a

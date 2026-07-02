@@ -70,6 +70,10 @@ export function Dropzone() {
             default columns. Drop that file above.
           </li>
         </ol>
+        <p className="mt-2 text-xs">
+          Tick exports (with Bid/Ask) also work — they&apos;re auto-aggregated to M1 using the Bid
+          price. M1 bars remain the exact, primary path.
+        </p>
       </div>
     </div>
   );
