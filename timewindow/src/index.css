@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-floor-bg text-text-primary font-ui antialiased;
+  }
+  /* All figures — prices, P&L, %, timestamps — use tabular mono for column alignment. */
+  .num {
+    @apply font-mono tabular-nums;
+  }
+}
+
+/* One-moment motion: bars rise from the baseline on first chart render. */
+@media (prefers-reduced-motion: no-preference) {
+  .bar-rise > .recharts-bar-rectangle {
+    transform-origin: bottom;
+    animation: bar-rise 600ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+}
+
+/* Thin, low-contrast scrollbars to fit the low-lit trading-floor aesthetic. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1a202d transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #1a202d;
+  border-radius: 4px;
+}

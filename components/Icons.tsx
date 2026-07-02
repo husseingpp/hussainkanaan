@@ -97,6 +97,13 @@ export const Icons = {
       <path d="M9 4v14M15 6v14" />
     </I>
   ),
+  candles: (p: P) => (
+    <I {...p}>
+      <path d="M7 3v4M7 15v6M17 3v6M17 17v4" />
+      <rect x="4.5" y="7" width="5" height="8" rx="1" />
+      <rect x="14.5" y="9" width="5" height="8" rx="1" />
+    </I>
+  ),
   external: (p: P) => (
     <I
       {...p}

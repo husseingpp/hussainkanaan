@@ -10,7 +10,8 @@ export type IconKey =
   | "code"
   | "spark"
   | "sun"
-  | "map";
+  | "map"
+  | "candles";
 
 export type SkillGroup = {
   title: string;
@@ -156,6 +157,16 @@ export const data = {
       stack: ["React Native", "Expo", "Supabase", "PostgreSQL", "MapLibre", "TanStack Query"],
       github: "https://github.com/husseingpp/hussainkanaan/tree/main/golden-hour-explorer",
       route: "/sunspot",
+    },
+    {
+      title: "TimeWindow · MT5 Backtester",
+      tag: "Featured",
+      glyph: "candles",
+      feature: true,
+      desc: "A frontend-only backtester for intraday time-of-day trades. Drop an MT5 M1 export, pick a window (e.g. 23:57 close → 01:00 open), set position size, and see every day's P&L over years: win rate, expectancy, best/worst day, largest drawdown — with a daily P&L bar chart and equity curve. Filter by day of week and date range. A pure-TypeScript engine (parser + P&L + stats) with 26 unit tests; parsing runs in a Web Worker so million-row files never freeze the UI.",
+      stack: ["React", "TypeScript", "Vite", "Recharts", "Zustand", "Vitest"],
+      github: "https://github.com/husseingpp/hussainkanaan/tree/main/timewindow",
+      demo: "/hussainkanaan/timewindow-app/",
     },
     {
       title: "Google Maps Scraper",
