@@ -15,7 +15,7 @@ pages) and the look (theme, homepage sections, menu) through a simple admin.
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Scaffold: Next.js 15, Tailwind v4, shadcn, next-intl loader, Supabase local, deploy config | ✅ `/ar` RTL + `/en` LTR; GitHub Pages preview. Cloudflare deploy configured, not yet live |
-| 1 | Database: migrations, RLS, seed, pgTAP | ⏳ |
+| 1 | Database: migrations, RLS, seed, pgTAP | ✅ 5 migrations, RLS on every table, 78 pgTAP tests |
 | 2 | Public site | ⏳ |
 | 3 | Admin core + content | ⏳ |
 | 4 | Appearance | ⏳ |
@@ -34,7 +34,28 @@ pnpm dev                     # http://localhost:3000 → redirects to /ar
 pnpm lint && pnpm typecheck && pnpm build
 ```
 
-Supabase (local, needs Docker): `pnpm supabase start`. Migrations arrive in Phase 1.
+Supabase (local, needs Docker):
+
+```bash
+pnpm supabase start          # Postgres + auth + storage, applies migrations + seed
+pnpm supabase db reset       # re-apply from scratch
+pnpm test:db                 # pgTAP RLS tests
+pnpm db:types                # regenerate src/types/database.ts after a migration
+pnpm seed:ui-strings         # regenerate supabase/seeds/ui_strings.sql after editing defaults/*.json
+```
+
+## Database (Phase 1)
+
+| Migration | Contents |
+|---|---|
+| `…01_base` | enums, `i18n` jsonb domain, `updated_at` trigger, `profiles`, role helpers (`is_admin`, `is_editor`, `is_case_worker`, `is_staff`) |
+| `…02_site` | `locales` (one default), `ui_strings`, `site_settings` (modules: admin-only), `theme`, `nav_items` (one dropdown level), `hero_slides`, `page_sections`, SQL `tr()` |
+| `…03_content` | `media`, `sectors`, `objectives`, `posts` + `post_sectors` + `post_media` (albums), `pages` |
+| `…04_requests` | `request_types`, `requests`, append-only `request_events` (written by triggers), rate-limited `check_request_status()` |
+| `…05_storage` | `public-images` bucket: public read, editor/admin write |
+
+Public sign-up is disabled: an admin creates staff users and their `profiles` row.
+A signed-in user without an active profile only gets public access.
 
 ## How i18n works (Phase 0)
 

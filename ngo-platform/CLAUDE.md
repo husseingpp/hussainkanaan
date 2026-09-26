@@ -77,4 +77,4 @@ docs/OWNER_GUIDE.md
 - Seed content (objectives, sectors, default sections, theme) comes from BLUEPRINT Appendix A.
 
 ## Current phase
-Phase 0 — Scaffold. Done except the live Cloudflare deploy (needs the owner's Cloudflare account). A static preview is published to GitHub Pages via `pnpm build:static`. (Update this line as phases complete.)
+Phase 1 — Database: done (migrations, RLS, storage, seed, 78 pgTAP tests). Next: Phase 2 — Public site. Phase 0's live Cloudflare deploy is still pending the owner's account. (Update this line as phases complete.)
