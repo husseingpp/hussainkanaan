@@ -29,3 +29,37 @@
     font-family: var(--font-sans);
   }
 }
+
+/* Long-form content (Tiptap bodies, pages). Logical properties only. */
+.prose-ngo {
+  line-height: 1.85;
+  font-size: 1.0625rem;
+}
+.prose-ngo > * + * {
+  margin-block-start: 1em;
+}
+.prose-ngo h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-block-start: 1.6em;
+}
+.prose-ngo h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-block-start: 1.4em;
+}
+.prose-ngo ul,
+.prose-ngo ol {
+  padding-inline-start: 1.5em;
+}
+.prose-ngo ul {
+  list-style: disc;
+}
+.prose-ngo ol {
+  list-style: decimal;
+}
+.prose-ngo blockquote {
+  border-inline-start: 4px solid var(--color-primary);
+  padding-inline-start: 1em;
+  opacity: 0.85;
+}
