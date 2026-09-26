@@ -77,4 +77,4 @@ docs/OWNER_GUIDE.md
 - Seed content (objectives, sectors, default sections, theme) comes from BLUEPRINT Appendix A.
 
 ## Current phase
-Phase 0 — Scaffold. Done except the live Cloudflare deploy (needs the owner's Cloudflare account). A static preview is published to GitHub Pages via `pnpm build:static`. (Update this line as phases complete.)
+Phase 2 — Public site: done. Next: Phase 3 — Admin core + content. The preview (GitHub Pages) is a static build of the hosted Supabase project; admin, server actions and ISR need the Cloudflare deploy (Phase 0 item, pending the owner's account). (Update this line as phases complete.)

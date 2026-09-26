@@ -1,21 +1,19 @@
 import { cache } from "react";
+import type { AbstractIntlMessages } from "next-intl";
+import { publicQuery } from "@/lib/data/query";
+import { CACHE_TAGS } from "@/lib/cache";
 import ar from "./defaults/ar.json";
 import en from "./defaults/en.json";
-import type { AbstractIntlMessages } from "next-intl";
-import type { UiStringRow } from "./types";
 
 /** Code-level defaults: they seed `ui_strings` and are the final fallback. */
 const defaults: Record<string, Record<string, string>> = { ar, en };
 
-// Phase 0 stub: build `ui_strings`-shaped rows from the defaults files.
-// Phase 1 replaces this with a cached Supabase query (tag `ui-strings`).
-async function fetchUiStrings(): Promise<UiStringRow[]> {
-  const keys = new Set(Object.values(defaults).flatMap((m) => Object.keys(m)));
-  return [...keys].map((key) => ({
-    key,
-    value: Object.fromEntries(Object.entries(defaults).map(([code, m]) => [code, m[key]])),
-  }));
-}
+const fetchUiStrings = publicQuery(
+  "ui-strings",
+  [CACHE_TAGS.uiStrings],
+  (db) => db.from("ui_strings").select("key, value"),
+  [],
+);
 
 /** Turns flat dotted keys ("home.hero.title") into next-intl's nested shape. */
 function nest(flat: Record<string, string>): AbstractIntlMessages {
@@ -33,15 +31,21 @@ function nest(flat: Record<string, string>): AbstractIntlMessages {
 
 export const loadMessages = cache(
   async (locale: string, defaultLocale: string): Promise<AbstractIntlMessages> => {
-    const rows = await fetchUiStrings();
+    const db = new Map<string, Record<string, unknown>>();
+    for (const row of await fetchUiStrings()) {
+      if (row.value && typeof row.value === "object") db.set(row.key, row.value as Record<string, unknown>);
+    }
+    const keys = new Set([...Object.values(defaults).flatMap(Object.keys), ...db.keys()]);
+    const pick = (v: unknown) => (typeof v === "string" && v ? v : "");
+
     const flat: Record<string, string> = {};
-    for (const { key, value } of rows) {
+    for (const key of keys) {
+      const value = db.get(key);
       flat[key] =
-        value[locale] ||
-        value[defaultLocale] ||
-        defaults[locale]?.[key] ||
-        defaults[defaultLocale]?.[key] ||
-        "";
+        pick(value?.[locale]) ||
+        pick(defaults[locale]?.[key]) ||
+        pick(value?.[defaultLocale]) ||
+        pick(defaults[defaultLocale]?.[key]);
     }
     return nest(flat);
   },

@@ -14,7 +14,7 @@ export type Theme = {
   footer_style: "light" | "dark";
 };
 
-/** Placeholder palette from BLUEPRINT Appendix A. The owner will change it. */
+/** Placeholder palette from BLUEPRINT Appendix A (also the DB column defaults). */
 export const DEFAULT_THEME: Theme = {
   primary_color: "#1F6F4A",
   secondary_color: "#C98A2B",
@@ -33,36 +33,42 @@ const RADIUS: Record<Theme["radius"], string> = {
   sm: "0.25rem",
   md: "0.5rem",
   lg: "1rem",
-  full: "9999px",
+  full: "1.5rem",
 };
 
-// Each curated font is loaded via next/font in the root layout, which exposes
-// it as a CSS variable. Phase 2 preloads the full curated set.
-const FONT_VAR: Record<Theme["font_arabic"] | Theme["font_latin"], string> = {
-  ibm_plex_arabic: "var(--font-ibm-plex-arabic)",
-  cairo: "var(--font-ibm-plex-arabic)",
-  tajawal: "var(--font-ibm-plex-arabic)",
-  noto_kufi: "var(--font-ibm-plex-arabic)",
-  inter: "var(--font-inter)",
-  poppins: "var(--font-inter)",
-  noto_sans: "var(--font-inter)",
-};
+function luminance(hex: string): number {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
 
-// Phase 0 stub. Phase 1 reads the `theme` row (cached, tag `theme`).
-export async function getTheme(): Promise<Theme> {
-  return DEFAULT_THEME;
+/** WCAG contrast ratio between two hex colors (1–21). */
+export function contrastRatio(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Whichever of white / near-black reads better on the given background. */
+export function contrastText(hex: string): string {
+  return contrastRatio(hex, "#ffffff") >= contrastRatio(hex, "#111111") ? "#ffffff" : "#111111";
 }
 
 /** Theme → CSS variables injected on <html>; Tailwind's @theme maps utilities to them. */
 export function themeToCssVars(theme: Theme): CSSProperties {
   return {
     "--color-primary": theme.primary_color,
+    "--color-primary-foreground": contrastText(theme.primary_color),
     "--color-secondary": theme.secondary_color,
+    "--color-secondary-foreground": contrastText(theme.secondary_color),
     "--color-accent": theme.accent_color,
     "--color-background": theme.background_color,
     "--color-foreground": theme.text_color,
     "--radius": RADIUS[theme.radius],
-    "--font-ar": FONT_VAR[theme.font_arabic],
-    "--font-latin": FONT_VAR[theme.font_latin],
+    // Each curated font is loaded by next/font in the locale layout.
+    "--font-ar": `var(--font-${theme.font_arabic.replaceAll("_", "-")})`,
+    "--font-latin": `var(--font-${theme.font_latin.replaceAll("_", "-")})`,
   } as CSSProperties;
 }

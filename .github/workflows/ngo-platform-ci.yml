@@ -33,3 +33,28 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm build
+
+  database:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ngo-platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: ngo-platform/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ngo-platform/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: UI-strings seed matches defaults/*.json
+        run: pnpm seed:ui-strings && git diff --exit-code -- supabase/seeds
+      - name: Start Postgres, apply migrations and seed
+        run: pnpm exec supabase db start
+      - name: pgTAP (RLS) tests
+        run: pnpm exec supabase test db
+      - name: Generated types are up to date
+        run: pnpm db:types && git diff --exit-code -- src/types/database.ts

@@ -7,6 +7,10 @@ on:
       - claude/beautiful-lovelace-rcjqT
       - claude/upbeat-babbage-5CAxl
   workflow_dispatch:
+  # The NGO preview is a static build of its database: rebuild regularly so
+  # content edits show up without a code push (Run workflow = rebuild now).
+  schedule:
+    - cron: "17 */6 * * *"
 
 permissions:
   contents: read
@@ -56,6 +60,10 @@ jobs:
           pnpm run build:static
         env:
           NEXT_PUBLIC_BASE_PATH: /hussainkanaan/ngo-platform
+          NEXT_PUBLIC_SITE_URL: https://husseingpp.github.io/hussainkanaan/ngo-platform
+          # Public by design (the browser-side "publishable" key); RLS limits it to published content.
+          NEXT_PUBLIC_SUPABASE_URL: https://kgfyxsqfwtjxmbvqemsw.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_Zcdfo3JSVN-w75_5nhAjQw_QLEVIQid
           NEXT_TELEMETRY_DISABLED: "1"
 
       - name: Build portfolio (static export)

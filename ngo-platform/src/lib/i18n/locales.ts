@@ -1,15 +1,23 @@
 import { cache } from "react";
+import { publicQuery } from "@/lib/data/query";
+import { CACHE_TAGS } from "@/lib/cache";
 import defaultLocales from "./defaults/locales.json";
 import type { LocaleRow } from "./types";
 
-// Phase 0 stub: rows mirror the future `locales` table. Phase 1 swaps this
-// for a cached Supabase query (tag `locales`); callers stay unchanged.
-async function fetchLocaleRows(): Promise<LocaleRow[]> {
-  return defaultLocales as LocaleRow[];
-}
+const fetchLocaleRows = publicQuery(
+  "locales",
+  [CACHE_TAGS.locales],
+  (db) =>
+    db
+      .from("locales")
+      .select("code, name, dir, is_default, is_enabled, sort_order")
+      .eq("is_enabled", true)
+      .order("sort_order"),
+  defaultLocales as LocaleRow[],
+);
 
 export const getLocales = cache(async (): Promise<LocaleRow[]> => {
-  const rows = await fetchLocaleRows();
+  const rows = (await fetchLocaleRows()) as LocaleRow[];
   return rows.filter((l) => l.is_enabled).sort((a, b) => a.sort_order - b.sort_order);
 });
 
