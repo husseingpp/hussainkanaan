@@ -31,6 +31,11 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Set up pnpm (NGO platform)
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: ngo-platform/package.json
+
       - name: Install portfolio dependencies
         run: npm ci
 
@@ -44,6 +49,15 @@ jobs:
         env:
           EXPO_NO_TELEMETRY: "1"
 
+      - name: Build NGO platform preview (static export)
+        working-directory: ngo-platform
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build:static
+        env:
+          NEXT_PUBLIC_BASE_PATH: /hussainkanaan/ngo-platform
+          NEXT_TELEMETRY_DISABLED: "1"
+
       - name: Build portfolio (static export)
         run: npm run build
 
@@ -56,6 +70,11 @@ jobs:
         run: |
           mkdir -p out/cafe-footfall-tracker
           cp -r cafe-footfall-tracker/docs/. out/cafe-footfall-tracker/
+
+      - name: Inject NGO platform preview into portfolio output
+        run: |
+          mkdir -p out/ngo-platform
+          cp -r ngo-platform/out/. out/ngo-platform/
 
       - name: Disable Jekyll processing
         run: touch out/.nojekyll

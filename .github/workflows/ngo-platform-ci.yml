@@ -1,0 +1,35 @@
+name: NGO platform CI
+
+on:
+  pull_request:
+    paths:
+      - "ngo-platform/**"
+      - ".github/workflows/ngo-platform-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "ngo-platform/**"
+      - ".github/workflows/ngo-platform-ci.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ngo-platform
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: ngo-platform/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ngo-platform/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build

@@ -1094,6 +1094,10 @@ a {
   padding: 40px 28px;
   background: var(--surface-2);
 }
+/* The feature card spans two rows; a CTA that would end up alone in a row spans both columns. */
+.proj.cta:nth-child(even) {
+  grid-column: 1 / -1;
+}
 .proj.cta:hover {
   border-color: var(--accent);
 }

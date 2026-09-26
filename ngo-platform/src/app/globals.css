@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/*
+ * Theme tokens. These are defaults only: the root layout injects the values
+ * from the `theme` table as inline CSS variables on <html>, so an admin
+ * change restyles the site with no rebuild. Never hard-code brand values.
+ */
+@theme {
+  --color-primary: #1f6f4a;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #c98a2b;
+  --color-secondary-foreground: #ffffff;
+  --color-accent: #2b7a9e;
+  --color-background: #faf8f3;
+  --color-foreground: #1c2420;
+  --radius-theme: var(--radius, 0.5rem);
+  --font-sans: var(--font-latin), var(--font-ar), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+  html[dir="rtl"] {
+    --font-sans: var(--font-ar), var(--font-latin), ui-sans-serif, system-ui, sans-serif;
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+}
