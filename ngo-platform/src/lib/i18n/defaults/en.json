@@ -1,0 +1,18 @@
+{
+  "site.name": "Organization Name",
+  "site.tagline": "Together for the sustainable development of our communities",
+  "nav.skip_to_content": "Skip to content",
+  "nav.language": "Language",
+  "home.hero.badge": "Site under construction",
+  "home.hero.title": "Working in agriculture, the environment, health, education, and women's & children's rights",
+  "home.hero.body": "This is a preview build. Soon the team will be able to publish activities with photo albums and participation in invitations and conferences, and restyle the whole site from a simple admin panel.",
+  "home.hero.cta": "Learn more",
+  "home.features.title": "What you'll find here",
+  "home.features.activities.title": "Activities",
+  "home.features.activities.body": "Every activity with its own photo album.",
+  "home.features.events.title": "Invitations & conferences",
+  "home.features.events.body": "Our participation in events and conferences, with date and location.",
+  "home.features.sectors.title": "Sectors",
+  "home.features.sectors.body": "Content organized by sector: agriculture, tourism, environment, health, education and more.",
+  "footer.rights": "All rights reserved"
+}

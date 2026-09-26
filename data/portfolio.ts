@@ -10,7 +10,8 @@ export type IconKey =
   | "code"
   | "spark"
   | "sun"
-  | "map";
+  | "map"
+  | "globe";
 
 export type SkillGroup = {
   title: string;
@@ -156,6 +157,15 @@ export const data = {
       stack: ["React Native", "Expo", "Supabase", "PostgreSQL", "MapLibre", "TanStack Query"],
       github: "https://github.com/husseingpp/hussainkanaan/tree/main/golden-hour-explorer",
       route: "/sunspot",
+    },
+    {
+      title: "Multilingual NGO Platform",
+      tag: "In progress",
+      glyph: "globe",
+      desc: "Arabic-first (RTL) NGO website where the owner edits both content and design — activity photo albums, events, sectors, theme and homepage sections — and adds new languages without a deploy.",
+      stack: ["Next.js 15", "TypeScript", "Tailwind v4", "next-intl", "Supabase", "Cloudflare Workers"],
+      github: "https://github.com/husseingpp/hussainkanaan/tree/main/ngo-platform",
+      demo: "https://husseingpp.github.io/hussainkanaan/ngo-platform/",
     },
     {
       title: "Google Maps Scraper",

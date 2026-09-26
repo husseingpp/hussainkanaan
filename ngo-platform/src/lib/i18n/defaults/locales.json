@@ -1,0 +1,4 @@
+[
+  { "code": "ar", "name": "العربية", "dir": "rtl", "is_default": true, "is_enabled": true, "sort_order": 0 },
+  { "code": "en", "name": "English", "dir": "ltr", "is_default": false, "is_enabled": true, "sort_order": 1 }
+]
