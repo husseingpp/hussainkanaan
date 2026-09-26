@@ -12,7 +12,7 @@ insert into public.site_settings (id, org_name, tagline, socials, footer_text, m
   '{"ar": "اسم الجمعية", "en": "Organization Name"}',
   '{"ar": "معًا من أجل تنمية مستدامة لمجتمعاتنا", "en": "Together for the sustainable development of our communities"}',
   '{"facebook": "https://www.facebook.com/share/14spsC744tT/"}',
-  '{"ar": "جميع الحقوق محفوظة", "en": "All rights reserved"}',
+  '{}',
   '{"requests": false, "donate": true, "facebook_feed": false}'
 );
 
@@ -55,7 +55,7 @@ insert into public.page_sections (page_key, section_type, sort_order, is_active,
     '{"slide_ids": [], "autoplay": true, "interval": 6000}'),
   ('home', 'about_intro', 2, true,
     '{"ar": "من نحن", "en": "About us"}', '{}',
-    '{"image_url": null, "body": {"ar": "نبذة قصيرة عن الجمعية ورسالتها. يمكن تعديل هذا النص من لوحة التحكم.", "en": "A short introduction to the organization and its mission. Edit this text in the admin."}, "cta": {"label": {"ar": "اعرف المزيد", "en": "Learn more"}, "link": "/p/about"}}'),
+    '{"image_url": null, "body": {"ar": "نبذة قصيرة عن الجمعية ورسالتها. يمكن تعديل هذا النص من لوحة التحكم.", "en": "A short introduction to the organization and its mission. Edit this text in the admin."}, "cta": {"label": {"ar": "تعرّف علينا", "en": "About us"}, "link": "/p/about"}}'),
   ('home', 'objectives', 3, true,
     '{"ar": "أهدافنا", "en": "Our objectives"}', '{}',
     '{"layout": "grid", "show_icons": true}'),
