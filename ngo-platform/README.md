@@ -8,7 +8,7 @@ pages) and the look (theme, homepage sections, menu) through a simple admin.
 - **Spec:** [`BLUEPRINT.md`](./BLUEPRINT.md) is the source of truth.
 - **Working rules:** [`CLAUDE.md`](./CLAUDE.md).
 - **Preview:** https://husseingpp.github.io/hussainkanaan/ngo-platform/
-  (static build, Phase 0; the real deployment targets Cloudflare Workers).
+  (static build of the hosted database; the real deployment targets Cloudflare Workers).
 
 ## Status
 
@@ -16,7 +16,7 @@ pages) and the look (theme, homepage sections, menu) through a simple admin.
 |---|---|---|
 | 0 | Scaffold: Next.js 15, Tailwind v4, shadcn, next-intl loader, Supabase local, deploy config | ✅ `/ar` RTL + `/en` LTR; GitHub Pages preview. Cloudflare deploy configured, not yet live |
 | 1 | Database: migrations, RLS, seed, pgTAP | ✅ 5 migrations, RLS on every table, 78 pgTAP tests |
-| 2 | Public site | ⏳ |
+| 2 | Public site | ✅ theme from DB, dynamic menu, 13 section types, all public routes, sitemap + hreflang; Lighthouse mobile 91–96 |
 | 3 | Admin core + content | ⏳ |
 | 4 | Appearance | ⏳ |
 | 5 | Languages | ⏳ |
@@ -66,6 +66,37 @@ A signed-in user without an active profile only gets public access.
 - `<html lang dir>` comes from the locale row. Physical direction utilities
   (`ml-*`, `text-right`…) are rejected by ESLint; use logical ones.
 - The theme is injected as CSS variables on `<html>` (`src/lib/theme`).
+
+## Public site (Phase 2)
+
+- Every page reads through `src/lib/data/*` (cached, tagged by `lib/cache.ts`).
+  With Supabase configured, a failed query **fails the build**, so a broken build
+  never replaces a working site; without Supabase, the site builds from the
+  code defaults.
+- The homepage is `page_sections` rendered by `components/sections/registry.ts`;
+  each type's settings are parsed with its Zod schema (`lib/validation/sections.ts`).
+- Listing filters (`?sector=&year=&page=`) run client-side, so they also work on static hosting.
+
+### Preview database and demo content
+
+The preview is built from the hosted Supabase project `ngo-platform`
+(`kgfyxsqfwtjxmbvqemsw`, Frankfurt). It holds the Phase 1 schema, the seed, and
+**demo content** (sample activities, events, hero slides, stats) with original
+placeholder images from `public/demo/`:
+
+```bash
+node scripts/demo-sql.mjs https://husseingpp.github.io/hussainkanaan/ngo-platform > demo.sql   # generate
+# remove it all again: supabase/demo-cleanup.sql
+```
+
+The Pages workflow rebuilds every 6 hours (or on **Run workflow**), so edits made
+in the database show up without a code push.
+
+### Staff accounts
+
+Public sign-up is off. A staff member is an Auth user plus a `profiles` row with a
+role. The first admin (the site owner's developer) was created directly in the
+hosted project. The admin panel (Phase 3) will let an admin invite the others.
 
 ## Deploying
 
