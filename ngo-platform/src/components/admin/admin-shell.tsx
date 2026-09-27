@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { AdminContext, type AdminContextValue } from "./admin-context";
 import { AdminLanguageSwitch, useAdminLocale } from "./admin-intl";
+import { FirstPassword } from "./password-form";
 import { Spinner } from "./ui";
 
 type Role = AdminContextValue["staff"]["role"];
@@ -67,6 +68,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   if (isLogin) return <>{children}</>;
   if (!ctx) return <Spinner label={t("login.checking")} />;
+  if (ctx.staff.mustChangePassword) {
+    return <FirstPassword email={ctx.staff.email} onDone={() => setCtx({ ...ctx, staff: { ...ctx.staff, mustChangePassword: false } })} />;
+  }
 
   const items = NAV.filter((n) => (!n.roles || n.roles.includes(ctx.staff.role)) && (!n.module || ctx.modules.requests));
   const active = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));

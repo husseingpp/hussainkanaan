@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function LoginPage() {
   const t = useTranslations("admin");
   const router = useRouter();
-  const [mode, setMode] = useState<"link" | "password">("link");
+  const [mode, setMode] = useState<"link" | "password">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,7 +52,7 @@ export default function LoginPage() {
         <AdminLanguageSwitch className="justify-end" />
         <div>
           <h1 className="text-xl font-bold">{t("login.title")}</h1>
-          {mode === "link" && <p className="mt-1 text-sm opacity-75">{t("login.subtitle")}</p>}
+          <p className="mt-1 text-sm opacity-75">{t(mode === "link" ? "login.subtitle" : "login.password_subtitle")}</p>
         </div>
         <Field label={t("login.email")} htmlFor="email">
           <Input id="email" type="email" dir="ltr" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
