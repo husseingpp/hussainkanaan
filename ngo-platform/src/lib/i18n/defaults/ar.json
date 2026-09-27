@@ -207,7 +207,7 @@
   "admin.dashboard.case_worker_note": "حسابك مخصص لمتابعة الطلبات. افتح «الطلبات الواردة» من القائمة.",
   "admin.account.title": "حسابي",
   "admin.account.password_title": "كلمة المرور",
-  "admin.account.password_hint": "اختياري: عيّن كلمة مرور لتدخل بها بدل رابط البريد. 10 أحرف على الأقل.",
+  "admin.account.password_hint": "غيّر كلمة المرور التي تدخل بها. 10 أحرف على الأقل.",
   "admin.account.new_password": "كلمة المرور الجديدة",
   "admin.account.password_saved": "تم حفظ كلمة المرور",
   "admin.errors.forbidden": "ليست لديك صلاحية لهذا الإجراء.",
@@ -363,5 +363,11 @@
   "admin.requests.events.priority_changed": "تغيّرت الأولوية",
   "admin.requests.events.assigned": "تغيّر المسؤول",
   "admin.requests.events.public_note_changed": "تحديث الملاحظة لمقدّم الطلب",
-  "admin.requests.events.note": "ملاحظة داخلية"
+  "admin.requests.events.note": "ملاحظة داخلية",
+  "admin.account.first_title": "اختر كلمة مرور خاصة بك",
+  "admin.account.first_hint": "دخلت بكلمة مرور مؤقتة. اختر كلمة مرور جديدة للمتابعة. 10 أحرف على الأقل.",
+  "admin.account.confirm_password": "أعد كتابة كلمة المرور الجديدة",
+  "admin.errors.password_mismatch": "كلمتا المرور غير متطابقتين.",
+  "admin.errors.same_password": "اختر كلمة مرور مختلفة عن المؤقتة.",
+  "admin.login.password_subtitle": "أدخل بريدك الإلكتروني وكلمة المرور."
 }

@@ -98,6 +98,9 @@ in the admin show up on the public site without a code push.
 Public sign-up is off. A staff member is an Auth user plus a `profiles` row with a
 role. The first admin was created directly in the hosted project; inviting more
 staff from the admin comes later (Users & roles).
+New staff get a temporary password and `profiles.must_change_password = true`: the
+admin then shows only a "choose your own password" screen until they set one (a
+trigger on `auth.users` clears the flag when the password actually changes).
 
 ## Admin (Phase 3)
 
@@ -108,7 +111,7 @@ per locale), sectors, objectives, pages, media library, and **Settings** (organi
 
 **How it talks to the database.** On static hosting there's no server, so the
 admin runs in the browser with the signed-in user's session and **RLS is the
-security boundary** (99 pgTAP tests). All reads/writes go through `src/lib/admin/*`,
+security boundary** (103 pgTAP tests). All reads/writes go through `src/lib/admin/*`,
 which return `{ ok, data } | { ok, error }` and validate with the Zod schemas in
 `src/lib/validation/content.ts`. On Cloudflare these functions can become server
 actions without touching the screens. Album + sector links are replaced atomically

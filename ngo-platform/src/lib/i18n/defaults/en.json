@@ -207,7 +207,7 @@
   "admin.dashboard.case_worker_note": "Your account is for handling requests. Open “Responses” from the menu.",
   "admin.account.title": "My account",
   "admin.account.password_title": "Password",
-  "admin.account.password_hint": "Optional: set a password to sign in without an email link. At least 10 characters.",
+  "admin.account.password_hint": "Change the password you sign in with. At least 10 characters.",
   "admin.account.new_password": "New password",
   "admin.account.password_saved": "Password saved",
   "admin.errors.forbidden": "You don't have permission to do that.",
@@ -363,5 +363,11 @@
   "admin.requests.events.priority_changed": "Priority changed",
   "admin.requests.events.assigned": "Assignee changed",
   "admin.requests.events.public_note_changed": "Note for the applicant updated",
-  "admin.requests.events.note": "Internal note"
+  "admin.requests.events.note": "Internal note",
+  "admin.account.first_title": "Choose your own password",
+  "admin.account.first_hint": "You signed in with a temporary password. Choose a new one to continue. At least 10 characters.",
+  "admin.account.confirm_password": "Repeat the new password",
+  "admin.errors.password_mismatch": "The two passwords don't match.",
+  "admin.errors.same_password": "Choose a password different from the temporary one.",
+  "admin.login.password_subtitle": "Enter your email and password."
 }

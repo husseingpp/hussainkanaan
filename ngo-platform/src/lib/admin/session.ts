@@ -3,16 +3,22 @@ import type { Database } from "@/types/database";
 import { fail, ok, type Result } from "./result";
 
 export type Role = Database["public"]["Enums"]["user_role"];
-export type Staff = { id: string; email: string; name: string; role: Role };
+export type Staff = { id: string; email: string; name: string; role: Role; mustChangePassword: boolean };
 
 /** The signed-in staff member, or null (not signed in / no active profile). */
 export async function currentStaff(): Promise<Staff | null> {
   const db = createClient();
   const { data: { session } } = await db.auth.getSession();
   if (!session) return null;
-  const { data } = await db.from("profiles").select("full_name, role, is_active").eq("user_id", session.user.id).maybeSingle();
+  const { data } = await db.from("profiles").select("full_name, role, is_active, must_change_password").eq("user_id", session.user.id).maybeSingle();
   if (!data?.is_active) return null;
-  return { id: session.user.id, email: session.user.email ?? "", name: data.full_name, role: data.role };
+  return {
+    id: session.user.id,
+    email: session.user.email ?? "",
+    name: data.full_name,
+    role: data.role,
+    mustChangePassword: data.must_change_password,
+  };
 }
 
 export const canEditContent = (s: Staff | null) => s?.role === "admin" || s?.role === "editor";
@@ -34,7 +40,9 @@ export async function signInWithPassword(email: string, password: string): Promi
 export async function setPassword(password: string): Promise<Result<null>> {
   if (password.length < 10) return fail("weak_password");
   const { error } = await createClient().auth.updateUser({ password });
-  return error ? fail(/weak|pwned|leaked/i.test(error.message) ? "weak_password" : "unknown") : ok(null);
+  if (!error) return ok(null);
+  if (/same|different from the old/i.test(error.message)) return fail("same_password");
+  return fail(/weak|pwned|leaked/i.test(error.message) ? "weak_password" : "unknown");
 }
 
 export async function signOut() {
