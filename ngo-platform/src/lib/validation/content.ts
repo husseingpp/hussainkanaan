@@ -66,3 +66,28 @@ export type PostInput = z.infer<typeof postSchema>;
 export type SectorInput = z.infer<typeof sectorSchema>;
 export type ObjectiveInput = z.infer<typeof objectiveSchema>;
 export type PageInput = z.infer<typeof pageSchema>;
+
+const phone = z.string().regex(/^\+[1-9][0-9]{6,14}$/, "phone").nullable();
+const url = z.url().nullable();
+export const SOCIAL_KEYS = ["facebook", "instagram", "x", "youtube", "tiktok", "linkedin"] as const;
+
+export const settingsSchema = z
+  .object({
+    org_name: i18n,
+    tagline: i18n,
+    logo_url: url,
+    logo_dark_url: url,
+    favicon_url: url,
+    phone,
+    whatsapp: phone,
+    email: z.email().nullable(),
+    address: i18n,
+    map_embed_url: url,
+    socials: z.partialRecord(z.enum(SOCIAL_KEYS), z.url()),
+    donate_info: i18n,
+    footer_text: i18n,
+    modules: z.object({ requests: z.boolean(), donate: z.boolean(), facebook_feed: z.boolean() }),
+  })
+  .refine((v) => Object.values(v.org_name).some((x) => x.trim()), { path: ["org_name"], message: "required" });
+
+export type SettingsInput = z.infer<typeof settingsSchema>;

@@ -23,5 +23,8 @@ export function validate<T>(schema: ZodType<T>, input: unknown): Result<T> {
   const issue = parsed.error.issues[0];
   if (issue?.message === "required") return fail("title_required");
   if (issue?.message === "slug") return fail("invalid_slug");
+  if (issue?.message === "phone") return fail("invalid_phone");
+  if (issue?.path[0] === "email") return fail("invalid_email");
+  if (issue?.path.some((p) => typeof p === "string" && /url|socials/.test(p))) return fail("invalid_url");
   return fail("invalid");
 }

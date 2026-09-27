@@ -38,15 +38,16 @@ export function HeaderShell({ style, homePath, homeHasHero, labels, brand, deskt
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const tone =
-    overlay && !scrolled && !open
-      ? "bg-transparent text-white"
-      : style === "dark" || overlay
-        ? "bg-foreground text-background shadow-sm"
-        : "bg-background/95 text-foreground border-b border-foreground/10 backdrop-blur";
+  const transparent = overlay && !scrolled && !open;
+  const dark = transparent || style === "dark" || overlay;
+  const tone = transparent
+    ? "bg-transparent text-white"
+    : dark
+      ? "bg-foreground text-background shadow-sm"
+      : "bg-background/95 text-foreground border-b border-foreground/10 backdrop-blur";
 
   return (
-    <header className={cn("inset-x-0 top-0 z-40 transition-colors", overlay ? "fixed" : "sticky", tone)}>
+    <header data-tone={dark ? "dark" : "light"} className={cn("group inset-x-0 top-0 z-40 transition-colors", overlay ? "fixed" : "sticky", tone)}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         {brand}
         <div className="hidden items-center gap-4 lg:flex">

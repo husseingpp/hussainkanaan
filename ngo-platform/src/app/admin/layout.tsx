@@ -1,30 +1,40 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { NextIntlClientProvider } from "next-intl";
+import type { AbstractIntlMessages } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
-import { Toaster } from "sonner";
+import { AdminIntl, ADMIN_LOCALE_KEY } from "@/components/admin/admin-intl";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { fontVariables } from "@/lib/fonts";
+import { getLocales } from "@/lib/i18n/locales";
 import { loadMessages } from "@/lib/i18n/messages";
 import { getTheme } from "@/lib/data/site";
 import { themeToCssVars } from "@/lib/theme";
 
-// The admin UI is Arabic by default (CLAUDE.md conventions).
-const ADMIN_LOCALE = "ar";
+// Arabic by default (CLAUDE.md conventions); the user can switch in the admin.
+const ADMIN_DEFAULT = "ar";
 
-export const metadata: Metadata = { title: "لوحة التحكم", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "لوحة التحكم · Admin", robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  setRequestLocale(ADMIN_LOCALE);
-  const [messages, theme] = await Promise.all([loadMessages(ADMIN_LOCALE, ADMIN_LOCALE), getTheme()]);
+  setRequestLocale(ADMIN_DEFAULT);
+  const [locales, theme] = await Promise.all([getLocales(), getTheme()]);
+  const languages = locales.map((l) => ({ code: l.code, name: l.name, dir: l.dir }));
+  const messages: Record<string, AbstractIntlMessages> = Object.fromEntries(
+    await Promise.all(languages.map(async (l) => [l.code, await loadMessages(l.code, ADMIN_DEFAULT)] as const)),
+  );
+  const dirs = Object.fromEntries(languages.map((l) => [l.code, l.dir]));
+  // Apply the saved admin language's direction before first paint (no RTL→LTR flash).
+  const preload = `try{var l=localStorage.getItem(${JSON.stringify(ADMIN_LOCALE_KEY)}),d=${JSON.stringify(dirs)};if(l&&d[l]){document.documentElement.lang=l;document.documentElement.dir=d[l]}}catch(e){}`;
 
   return (
-    <html lang={ADMIN_LOCALE} dir="rtl" className={fontVariables} style={themeToCssVars(theme)}>
+    <html lang={ADMIN_DEFAULT} dir="rtl" className={fontVariables} style={themeToCssVars(theme)} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: preload }} />
+      </head>
       <body className="antialiased">
-        <NextIntlClientProvider locale={ADMIN_LOCALE} messages={messages} timeZone="Asia/Beirut">
+        <AdminIntl languages={languages} messages={messages} fallback={ADMIN_DEFAULT}>
           <AdminShell>{children}</AdminShell>
-          <Toaster position="top-center" richColors dir="rtl" />
-        </NextIntlClientProvider>
+        </AdminIntl>
       </body>
     </html>
   );

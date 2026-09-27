@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { KeyRound, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { AdminLanguageSwitch } from "@/components/admin/admin-intl";
 import { Field, Input } from "@/components/admin/ui";
 import { currentStaff, sendLoginLink, signInWithPassword, signOut } from "@/lib/admin/session";
 import { createClient } from "@/lib/supabase/client";
@@ -48,6 +49,7 @@ export default function LoginPage() {
   return (
     <main id="main" className="grid min-h-dvh place-items-center bg-primary/5 p-4">
       <form onSubmit={submit} className="w-full max-w-sm space-y-5 rounded-theme bg-white p-6 shadow-md">
+        <AdminLanguageSwitch className="justify-end" />
         <div>
           <h1 className="text-xl font-bold">{t("login.title")}</h1>
           {mode === "link" && <p className="mt-1 text-sm opacity-75">{t("login.subtitle")}</p>}

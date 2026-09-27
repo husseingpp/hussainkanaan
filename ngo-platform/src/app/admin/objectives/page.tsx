@@ -1,21 +1,20 @@
 "use client";
 
+import { useTr } from "@/components/admin/use-tr";
 import { useEffect, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useAdmin } from "@/components/admin/admin-context";
 import { IconPreview } from "@/components/admin/icon-choices";
 import { ObjectiveForm } from "@/components/admin/objective-form";
 import { SortableList } from "@/components/admin/sortable-list";
 import { Empty, PageHead, Spinner, Toggle } from "@/components/admin/ui";
 import { listObjectives, listSectors, reorder, setActive, type ObjectiveRow, type SectorRow } from "@/lib/admin/taxonomy";
-import { tr } from "@/lib/i18n/tr";
 
 export default function ObjectivesPage() {
   const t = useTranslations("admin");
-  const { defaultLocale } = useAdmin();
+  const trx = useTr();
   const [items, setItems] = useState<ObjectiveRow[] | null>(null);
   const [sectors, setSectors] = useState<SectorRow[]>([]);
   const [editing, setEditing] = useState<ObjectiveRow | "new" | null>(null);
@@ -70,8 +69,8 @@ export default function ObjectivesPage() {
                 {handle}
                 <IconPreview name={o.icon ?? sectorOf(o.sector_id)?.icon} className="size-5 shrink-0 text-primary" />
                 <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2">{tr(o.text, defaultLocale)}</span>
-                  {sectorOf(o.sector_id) && <span className="text-xs opacity-60">{tr(sectorOf(o.sector_id)!.name, defaultLocale)}</span>}
+                  <span className="line-clamp-2">{trx(o.text)}</span>
+                  {sectorOf(o.sector_id) && <span className="text-xs opacity-60">{trx(sectorOf(o.sector_id)!.name)}</span>}
                 </span>
                 <Toggle checked={o.is_active} onChange={(v) => toggle(o, v)} label={o.is_active ? t("common.active") : t("common.inactive")} />
                 <button type="button" onClick={() => setEditing(o)} aria-label={t("common.edit")} className="grid size-9 place-items-center rounded-theme hover:bg-foreground/5"><Pencil aria-hidden className="size-4" /></button>

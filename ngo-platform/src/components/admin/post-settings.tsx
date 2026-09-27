@@ -1,10 +1,9 @@
 "use client";
 
+import { useTr } from "./use-tr";
 import { useTranslations } from "next-intl";
 import type { Media } from "@/lib/admin/media";
 import type { SectorRow } from "@/lib/admin/taxonomy";
-import { tr } from "@/lib/i18n/tr";
-import { useAdmin } from "./admin-context";
 import { CoverPicker } from "./cover-picker";
 import { Card, Field, Input, Select, Toggle } from "./ui";
 
@@ -22,7 +21,7 @@ type Props = { value: PostSettingsValue; onChange: (patch: Partial<PostSettingsV
 /** Right-hand column of the post editor. */
 export function PostSettings({ value, onChange, sectors, slugField }: Props) {
   const t = useTranslations();
-  const { defaultLocale } = useAdmin();
+  const trx = useTr();
 
   return (
     <div className="space-y-4">
@@ -68,7 +67,7 @@ export function PostSettings({ value, onChange, sectors, slugField }: Props) {
                     onChange({ sector_ids: e.target.checked ? [...value.sector_ids, s.id] : value.sector_ids.filter((id) => id !== s.id) })
                   }
                 />
-                {tr(s.name, defaultLocale)}
+                {trx(s.name)}
               </label>
             ))}
           </div>

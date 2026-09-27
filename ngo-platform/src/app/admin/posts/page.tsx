@@ -1,14 +1,13 @@
 "use client";
 
+import { useTr } from "@/components/admin/use-tr";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ImageIcon, Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
-import { useAdmin } from "@/components/admin/admin-context";
 import { Badge, Empty, PageHead, Spinner } from "@/components/admin/ui";
 import { listPosts, type PostListItem } from "@/lib/admin/posts";
-import { tr } from "@/lib/i18n/tr";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +15,8 @@ const KINDS = ["activity", "event", "news"] as const;
 
 export default function PostsPage() {
   const t = useTranslations();
-  const { defaultLocale } = useAdmin();
+  const trx = useTr();
+  const locale = useLocale();
   const [kind, setKind] = useState<(typeof KINDS)[number] | null>(null);
   const [posts, setPosts] = useState<PostListItem[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -56,12 +56,12 @@ export default function PostsPage() {
                   {p.cover ? <img src={p.cover.url} alt="" className="size-full object-cover" /> : <ImageIcon aria-hidden className="size-6 opacity-40" />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{tr(p.title, defaultLocale) || t("admin.posts.untitled")}</span>
+                  <span className="block truncate font-medium">{trx(p.title) || t("admin.posts.untitled")}</span>
                   <span className="mt-1 flex flex-wrap items-center gap-2 text-xs opacity-75">
                     <Badge>{t(`kinds.${p.kind}`)}</Badge>
                     <Badge tone={p.status === "published" ? "success" : "warning"}>{t(`admin.common.${p.status}`)}</Badge>
                     <span>{t("admin.images.count", { count: p.photos[0]?.count ?? 0 })}</span>
-                    <span>{formatDate(p.kind === "event" ? p.event_date : p.updated_at, defaultLocale, "medium")}</span>
+                    <span>{formatDate(p.kind === "event" ? p.event_date : p.updated_at, locale, "medium")}</span>
                   </span>
                 </span>
               </Link>
