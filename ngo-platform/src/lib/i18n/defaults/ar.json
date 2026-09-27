@@ -369,5 +369,9 @@
   "admin.account.confirm_password": "أعد كتابة كلمة المرور الجديدة",
   "admin.errors.password_mismatch": "كلمتا المرور غير متطابقتين.",
   "admin.errors.same_password": "اختر كلمة مرور مختلفة عن المؤقتة.",
-  "admin.login.password_subtitle": "أدخل بريدك الإلكتروني وكلمة المرور."
+  "admin.login.password_subtitle": "أدخل بريدك الإلكتروني وكلمة المرور.",
+  "nav.apply": "قدّم طلبًا",
+  "admin.forms.open_form": "افتح النموذج",
+  "admin.forms.copy_link": "نسخ الرابط",
+  "admin.forms.link_copied": "تم نسخ الرابط. أرسله لمن تريد أن يملأ النموذج."
 }
