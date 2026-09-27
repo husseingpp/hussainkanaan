@@ -1,0 +1,115 @@
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { ExternalLink, FileText, Home, Images, LayoutGrid, LogOut, Menu, Newspaper, Target, UserRound, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { canEditContent, currentStaff, signOut } from "@/lib/admin/session";
+import { listLocales } from "@/lib/admin/taxonomy";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import { AdminContext, type AdminContextValue } from "./admin-context";
+import { Spinner } from "./ui";
+
+const NAV = [
+  { href: "/admin", key: "dashboard", Icon: Home, content: false },
+  { href: "/admin/posts", key: "posts", Icon: Newspaper, content: true },
+  { href: "/admin/sectors", key: "sectors", Icon: LayoutGrid, content: true },
+  { href: "/admin/objectives", key: "objectives", Icon: Target, content: true },
+  { href: "/admin/pages", key: "pages", Icon: FileText, content: true },
+  { href: "/admin/media", key: "media", Icon: Images, content: true },
+  { href: "/admin/account", key: "account", Icon: UserRound, content: false },
+] as const;
+
+/** Client-side guard + chrome. Security itself is enforced by RLS in the database. */
+export function AdminShell({ children }: { children: ReactNode }) {
+  const t = useTranslations("admin");
+  const pathname = usePathname().replace(/\/$/, "") || "/admin";
+  const router = useRouter();
+  const [ctx, setCtx] = useState<AdminContextValue | null>(null);
+  const [open, setOpen] = useState(false);
+  const isLogin = pathname.endsWith("/admin/login");
+
+  useEffect(() => {
+    if (isLogin) return;
+    let alive = true;
+    const load = async () => {
+      const staff = await currentStaff();
+      if (!alive) return;
+      if (!staff) return router.replace("/admin/login");
+      const locales = await listLocales();
+      const rows = locales.ok ? locales.data : [];
+      setCtx({ staff, locales: rows, defaultLocale: rows.find((l) => l.is_default)?.code ?? "ar" });
+    };
+    load();
+    const { data: sub } = createClient().auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") router.replace("/admin/login");
+    });
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [isLogin, router]);
+
+  useEffect(() => setOpen(false), [pathname]);
+
+  if (isLogin) return <>{children}</>;
+  if (!ctx) return <Spinner label={t("login.checking")} />;
+
+  const items = NAV.filter((n) => !n.content || canEditContent(ctx.staff));
+  const active = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
+
+  const nav = (
+    <nav aria-label={t("title")} className="flex flex-col gap-1">
+      {items.map(({ href, key, Icon }) => (
+        <Link key={href} href={href} aria-current={active(href) ? "page" : undefined}
+          className={cn("flex items-center gap-3 rounded-theme px-3 py-2.5 text-sm font-medium hover:bg-foreground/5", active(href) && "bg-primary/10 text-primary")}>
+          <Icon aria-hidden className="size-5" /> {t(`nav.${key}`)}
+        </Link>
+      ))}
+      <hr className="my-2 border-foreground/10" />
+      <a href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/${ctx.defaultLocale}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-theme px-3 py-2.5 text-sm hover:bg-foreground/5">
+        <ExternalLink aria-hidden className="size-5" /> {t("nav.view_site")}
+      </a>
+      <button type="button" onClick={() => signOut()} className="flex items-center gap-3 rounded-theme px-3 py-2.5 text-start text-sm hover:bg-foreground/5">
+        <LogOut aria-hidden className="size-5 rtl:rotate-180" /> {t("nav.sign_out")}
+      </button>
+    </nav>
+  );
+
+  return (
+    <AdminContext.Provider value={ctx}>
+      <div className="min-h-dvh bg-foreground/[0.03] lg:grid lg:grid-cols-[16rem_1fr]">
+        <aside className="hidden border-e border-foreground/10 bg-white p-4 lg:block">
+          <Brand name={ctx.staff.name || ctx.staff.email} role={t(`role.${ctx.staff.role}`)} title={t("title")} />
+          {nav}
+        </aside>
+        <header className="flex items-center justify-between border-b border-foreground/10 bg-white px-4 py-3 lg:hidden">
+          <span className="font-bold">{t("title")}</span>
+          <button type="button" aria-expanded={open} aria-controls="admin-nav" onClick={() => setOpen((v) => !v)} className="grid size-10 place-items-center rounded-theme hover:bg-foreground/5">
+            {open ? <X aria-hidden className="size-6" /> : <Menu aria-hidden className="size-6" />}
+            <span className="sr-only">{t("title")}</span>
+          </button>
+        </header>
+        <div id="admin-nav" hidden={!open} className="border-b border-foreground/10 bg-white p-4 lg:hidden">{nav}</div>
+        <main id="main" className="min-w-0 p-4 sm:p-8">
+          {process.env.NEXT_PUBLIC_STATIC_PREVIEW === "1" && (
+            <p className="mb-6 rounded-theme bg-secondary/15 px-4 py-2 text-sm">{t("common.preview_note")}</p>
+          )}
+          {children}
+        </main>
+      </div>
+    </AdminContext.Provider>
+  );
+}
+
+function Brand({ name, role, title }: { name: string; role: string; title: string }) {
+  return (
+    <div className="mb-6 border-b border-foreground/10 pb-4">
+      <p className="text-lg font-bold">{title}</p>
+      <p className="mt-1 truncate text-sm opacity-75">{name}</p>
+      <p className="text-xs opacity-60">{role}</p>
+    </div>
+  );
+}
