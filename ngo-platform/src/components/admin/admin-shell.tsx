@@ -3,9 +3,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ExternalLink, FileText, Home, Images, LayoutGrid, LogOut, Menu, Newspaper, Settings, Target, UserRound, X } from "lucide-react";
+import { ClipboardList, ExternalLink, FileText, Home, Images, Inbox, LayoutGrid, LogOut, Menu, Newspaper, Settings, Target, UserRound, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { canEditContent, currentStaff, signOut } from "@/lib/admin/session";
+import { modulesState } from "@/lib/admin/requests";
+import { currentStaff, signOut } from "@/lib/admin/session";
 import { listLocales } from "@/lib/admin/taxonomy";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -13,16 +14,23 @@ import { AdminContext, type AdminContextValue } from "./admin-context";
 import { AdminLanguageSwitch, useAdminLocale } from "./admin-intl";
 import { Spinner } from "./ui";
 
-const NAV = [
-  { href: "/admin", key: "dashboard", Icon: Home, content: false },
-  { href: "/admin/posts", key: "posts", Icon: Newspaper, content: true },
-  { href: "/admin/sectors", key: "sectors", Icon: LayoutGrid, content: true },
-  { href: "/admin/objectives", key: "objectives", Icon: Target, content: true },
-  { href: "/admin/pages", key: "pages", Icon: FileText, content: true },
-  { href: "/admin/media", key: "media", Icon: Images, content: true },
-  { href: "/admin/settings", key: "settings", Icon: Settings, content: true },
-  { href: "/admin/account", key: "account", Icon: UserRound, content: false },
-] as const;
+type Role = AdminContextValue["staff"]["role"];
+const CONTENT: Role[] = ["admin", "editor"];
+const REQUESTS: Role[] = ["admin", "case_worker"];
+
+// `module: true` items only show while the requests module is on (BLUEPRINT §7).
+const NAV: { href: string; key: string; Icon: typeof Home; roles?: Role[]; module?: boolean }[] = [
+  { href: "/admin", key: "dashboard", Icon: Home },
+  { href: "/admin/posts", key: "posts", Icon: Newspaper, roles: CONTENT },
+  { href: "/admin/sectors", key: "sectors", Icon: LayoutGrid, roles: CONTENT },
+  { href: "/admin/objectives", key: "objectives", Icon: Target, roles: CONTENT },
+  { href: "/admin/pages", key: "pages", Icon: FileText, roles: CONTENT },
+  { href: "/admin/media", key: "media", Icon: Images, roles: CONTENT },
+  { href: "/admin/requests", key: "requests", Icon: Inbox, roles: REQUESTS, module: true },
+  { href: "/admin/forms", key: "forms", Icon: ClipboardList, roles: ["admin"], module: true },
+  { href: "/admin/settings", key: "settings", Icon: Settings, roles: CONTENT },
+  { href: "/admin/account", key: "account", Icon: UserRound },
+];
 
 /** Client-side guard + chrome. Security itself is enforced by RLS in the database. */
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -41,9 +49,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
       const staff = await currentStaff();
       if (!alive) return;
       if (!staff) return router.replace("/admin/login");
-      const locales = await listLocales();
+      const [locales, modules] = await Promise.all([listLocales(), modulesState()]);
       const rows = locales.ok ? locales.data : [];
-      setCtx({ staff, locales: rows, defaultLocale: rows.find((l) => l.is_default)?.code ?? "ar" });
+      setCtx({ staff, locales: rows, defaultLocale: rows.find((l) => l.is_default)?.code ?? "ar", modules });
     };
     load();
     const { data: sub } = createClient().auth.onAuthStateChange((event) => {
@@ -60,7 +68,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   if (isLogin) return <>{children}</>;
   if (!ctx) return <Spinner label={t("login.checking")} />;
 
-  const items = NAV.filter((n) => !n.content || canEditContent(ctx.staff));
+  const items = NAV.filter((n) => (!n.roles || n.roles.includes(ctx.staff.role)) && (!n.module || ctx.modules.requests));
   const active = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
 
   const nav = (

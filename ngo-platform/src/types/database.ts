@@ -531,6 +531,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      request_submit_log: {
+        Row: {
+          client_key: string;
+          created_at: string;
+          id: number;
+        };
+        Insert: {
+          client_key: string;
+          created_at?: string;
+          id?: never;
+        };
+        Update: {
+          client_key?: string;
+          created_at?: string;
+          id?: never;
+        };
+        Relationships: [];
+      };
       request_types: {
         Row: {
           created_at: string;
@@ -842,6 +860,17 @@ export type Database = {
       set_post_links: {
         Args: { p_album: Json; p_post_id: string; p_sector_ids: string[] };
         Returns: undefined;
+      };
+      submit_request: {
+        Args: {
+          p_answers: Json;
+          p_consent: boolean;
+          p_full_name: string;
+          p_locale: string;
+          p_phone: string;
+          p_type_slug: string;
+        };
+        Returns: string;
       };
       tr: { Args: { field: Json; locale: string }; Returns: string };
     };

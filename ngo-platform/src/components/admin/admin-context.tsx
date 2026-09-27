@@ -8,6 +8,7 @@ export type AdminContextValue = {
   staff: Staff;
   locales: LocaleRow[];
   defaultLocale: string;
+  modules: { requests: boolean };
 };
 
 export const AdminContext = createContext<AdminContextValue | null>(null);

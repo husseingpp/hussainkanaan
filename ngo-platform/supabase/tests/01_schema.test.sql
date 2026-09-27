@@ -37,7 +37,7 @@ select is_empty(
 select is_empty(
   $$ select c.relname::text from pg_class c join pg_namespace n on n.oid = c.relnamespace
      where n.nspname = 'public' and c.relkind = 'r'
-       and c.relname <> 'request_status_lookups'
+       and c.relname not in ('request_status_lookups', 'request_submit_log')
        and not exists (select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = c.relname) $$,
   'every public table has explicit policies'
 );

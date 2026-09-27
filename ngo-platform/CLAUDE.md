@@ -77,4 +77,4 @@ docs/OWNER_GUIDE.md
 - Seed content (objectives, sectors, default sections, theme) comes from BLUEPRINT Appendix A.
 
 ## Current phase
-Phase 3 — Admin core + content: done (client-side admin on static hosting; RLS enforces access; lib/admin/* is the data layer to move to server actions on Cloudflare). Next: connect Cloudflare (Phase 0 item), then Phase 4 — Appearance. (Update this line as phases complete.)
+Phase 3 — Admin core + content: done (client-side admin on static hosting; RLS enforces access; lib/admin/* is the data layer to move to server actions on Cloudflare). Requests module (Phase 6 core) pulled forward: form builder, apply/track pages via the `submit_request` / `check_request_status` RPCs, responses inbox; Turnstile + staff email pending Cloudflare. Next: connect Cloudflare (Phase 0 item), then Phase 4 — Appearance. (Update this line as phases complete.)
