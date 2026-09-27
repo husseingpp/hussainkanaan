@@ -17,7 +17,7 @@ pages) and the look (theme, homepage sections, menu) through a simple admin.
 | 0 | Scaffold: Next.js 15, Tailwind v4, shadcn, next-intl loader, Supabase local, deploy config | ✅ `/ar` RTL + `/en` LTR; GitHub Pages preview. Cloudflare deploy configured, not yet live |
 | 1 | Database: migrations, RLS, seed, pgTAP | ✅ 5 migrations, RLS on every table, 78 pgTAP tests |
 | 2 | Public site | ✅ theme from DB, dynamic menu, 13 section types, all public routes, sitemap + hreflang; Lighthouse mobile 91–96 |
-| 3 | Admin core + content | ⏳ |
+| 3 | Admin core + content | ✅ sign-in (email link / password), posts with 20-photo albums, sectors, objectives, pages, media library |
 | 4 | Appearance | ⏳ |
 | 5 | Languages | ⏳ |
 | 6 | Requests module (if confirmed) | ⏳ |
@@ -89,14 +89,33 @@ node scripts/demo-sql.mjs https://husseingpp.github.io/hussainkanaan/ngo-platfor
 # remove it all again: supabase/demo-cleanup.sql
 ```
 
-The Pages workflow rebuilds every 6 hours (or on **Run workflow**), so edits made
-in the database show up without a code push.
+The Pages workflow rebuilds every hour (or on **Run workflow**), so edits made
+in the admin show up on the public site without a code push.
 
 ### Staff accounts
 
 Public sign-up is off. A staff member is an Auth user plus a `profiles` row with a
-role. The first admin (the site owner's developer) was created directly in the
-hosted project. The admin panel (Phase 3) will let an admin invite the others.
+role. The first admin was created directly in the hosted project; inviting more
+staff from the admin comes later (Users & roles).
+
+## Admin (Phase 3)
+
+`/admin` — Arabic UI. Sign in with an emailed link (or a password set under
+**حسابي**). Content: posts (activities / events / news) with locale tabs, Tiptap
+body, cover, album uploader (compressed to WebP ≤1600px, drag to reorder, caption
+per locale), sectors, objectives, pages, media library.
+
+**How it talks to the database.** On static hosting there's no server, so the
+admin runs in the browser with the signed-in user's session and **RLS is the
+security boundary** (84 pgTAP tests). All reads/writes go through `src/lib/admin/*`,
+which return `{ ok, data } | { ok, error }` and validate with the Zod schemas in
+`src/lib/validation/content.ts`. On Cloudflare these functions can become server
+actions without touching the screens. Album + sector links are replaced atomically
+by the `set_post_links` RPC (security invoker).
+
+**Supabase Auth settings** (dashboard → Authentication → URL Configuration) must
+allow the admin URL as a redirect, e.g.
+`https://husseingpp.github.io/hussainkanaan/ngo-platform/**`.
 
 ## Deploying
 

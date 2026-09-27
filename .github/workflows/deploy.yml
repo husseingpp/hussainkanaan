@@ -10,7 +10,7 @@ on:
   # The NGO preview is a static build of its database: rebuild regularly so
   # content edits show up without a code push (Run workflow = rebuild now).
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "17 * * * *"
 
 permissions:
   contents: read
@@ -61,6 +61,8 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: /hussainkanaan/ngo-platform
           NEXT_PUBLIC_SITE_URL: https://husseingpp.github.io/hussainkanaan/ngo-platform
+          # Shows the admin note that public pages update on the next rebuild.
+          NEXT_PUBLIC_STATIC_PREVIEW: "1"
           # Public by design (the browser-side "publishable" key); RLS limits it to published content.
           NEXT_PUBLIC_SUPABASE_URL: https://kgfyxsqfwtjxmbvqemsw.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_Zcdfo3JSVN-w75_5nhAjQw_QLEVIQid
