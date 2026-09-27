@@ -369,5 +369,9 @@
   "admin.account.confirm_password": "Repeat the new password",
   "admin.errors.password_mismatch": "The two passwords don't match.",
   "admin.errors.same_password": "Choose a password different from the temporary one.",
-  "admin.login.password_subtitle": "Enter your email and password."
+  "admin.login.password_subtitle": "Enter your email and password.",
+  "nav.apply": "Apply",
+  "admin.forms.open_form": "Open form",
+  "admin.forms.copy_link": "Copy link",
+  "admin.forms.link_copied": "Link copied. Share it with anyone who should fill in the form."
 }

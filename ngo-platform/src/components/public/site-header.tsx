@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, Leaf } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { getNav, getSections, getSiteSettings, getTheme } from "@/lib/data/site";
+import { getModules, getNav, getSections, getSiteSettings, getTheme, type NavItem } from "@/lib/data/site";
 import { getLocales, getDefaultLocale } from "@/lib/i18n/locales";
 import { tr } from "@/lib/i18n/tr";
 import { isExternal, localePath, navHref } from "@/lib/routes";
@@ -22,9 +22,10 @@ function NavLink({ href, children, className }: { href: string; children: React.
 }
 
 export async function SiteHeader({ locale }: { locale: string }) {
-  const [t, nav, settings, theme, sections, locales, def] = await Promise.all([
+  const [t, menu, modules, settings, theme, sections, locales, def] = await Promise.all([
     getTranslations("nav"),
     getNav(),
+    getModules(),
     getSiteSettings(),
     getTheme(),
     getSections("home"),
@@ -34,6 +35,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
   const siteT = await getTranslations("site");
   const name = tr(settings?.org_name, locale, def.code) || siteT("name");
   const label = (v: unknown) => tr(v, locale, def.code);
+  const nav = withRequestsLink(menu, modules.requests, t("apply"), locale);
 
   // Both logos are rendered; the header's live tone (data-tone) shows the right one.
   const img = (src: string, className: string) => (
@@ -130,4 +132,14 @@ export async function SiteHeader({ locale }: { locale: string }) {
       }
     />
   );
+}
+
+const isRequestRoute = (i: NavItem) => i.link_type === "route" && /^\/(apply|track)(\/|$)/.test(i.target);
+
+/** While the requests module is on, the menu links to /apply (unless the owner added it); while off, request links are hidden (CLAUDE.md rule 9). */
+function withRequestsLink(nav: NavItem[], on: boolean, text: string, locale: string): NavItem[] {
+  if (!on) return nav.filter((i) => !isRequestRoute(i)).map((i) => ({ ...i, children: i.children.filter((c) => !isRequestRoute(c as NavItem)) }));
+  if (nav.some((i) => isRequestRoute(i) || i.children.some((c) => isRequestRoute(c as NavItem)))) return nav;
+  const apply = { ...nav[0], id: "requests-apply", label: { [locale]: text }, link_type: "route", target: "/apply", parent_id: null, children: [] } as NavItem;
+  return [...nav, apply];
 }
