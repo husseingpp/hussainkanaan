@@ -20,7 +20,7 @@ pages) and the look (theme, homepage sections, menu) through a simple admin.
 | 3 | Admin core + content | ✅ sign-in (email link / password), posts with 20-photo albums, sectors, objectives, pages, media library |
 | 4 | Appearance | ⏳ |
 | 5 | Languages | ⏳ |
-| 6 | Requests module (if confirmed) | ⏳ |
+| 6 | Requests module | 🟡 form builder (Google-Forms style), public apply + track pages, responses inbox with status/notes/history. Turnstile + staff email come with Cloudflare |
 | 7 | Hardening & handover | ⏳ |
 
 ## Getting started
@@ -53,6 +53,7 @@ pnpm seed:ui-strings         # regenerate supabase/seeds/ui_strings.sql after ed
 | `…03_content` | `media`, `sectors`, `objectives`, `posts` + `post_sectors` + `post_media` (albums), `pages` |
 | `…04_requests` | `request_types`, `requests`, append-only `request_events` (written by triggers), rate-limited `check_request_status()` |
 | `…05_storage` | `public-images` bucket: public read, editor/admin write |
+| `…0001_submit_request` | `submit_request()` RPC: validates answers against the form's questions, rate-limited (5 / 10 min per client), returns the tracking code |
 
 Public sign-up is disabled: an admin creates staff users and their `profiles` row.
 A signed-in user without an active profile only gets public access.
@@ -107,11 +108,28 @@ per locale), sectors, objectives, pages, media library, and **Settings** (organi
 
 **How it talks to the database.** On static hosting there's no server, so the
 admin runs in the browser with the signed-in user's session and **RLS is the
-security boundary** (84 pgTAP tests). All reads/writes go through `src/lib/admin/*`,
+security boundary** (99 pgTAP tests). All reads/writes go through `src/lib/admin/*`,
 which return `{ ok, data } | { ok, error }` and validate with the Zod schemas in
 `src/lib/validation/content.ts`. On Cloudflare these functions can become server
 actions without touching the screens. Album + sector links are replaced atomically
 by the `set_post_links` RPC (security invoker).
+
+### Forms & requests
+
+Switch on **Settings → Optional features → Requests** (admin only). Then:
+
+- **Forms** (`/admin/forms`, admin): build a form like Google Forms: add questions
+  (short/long text, number, email, phone, date, dropdown, single choice, checkboxes),
+  mark them required, translate each label, reorder by dragging, preview, open/close.
+  Every form also asks for full name + phone (used for tracking) and consent.
+- **Public**: `/{locale}/apply` lists open forms, `/{locale}/apply/form?type=<slug>`
+  fills one and shows a tracking code, `/{locale}/track` checks status by code + phone.
+  Submissions go through the `submit_request` RPC; requests are never publicly readable.
+- **Responses** (`/admin/requests`, admin + case worker): filter by form/status, open a
+  response to change status, priority, assignee, a note shown to the applicant, and
+  internal notes. Every change is logged in `request_events`.
+
+When the module is off, `/apply` and `/track` 404 and the admin entries are hidden.
 
 **Supabase Auth settings** (dashboard → Authentication → URL Configuration) must
 allow the admin URL as a redirect, e.g.
