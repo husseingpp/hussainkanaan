@@ -3,13 +3,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ExternalLink, FileText, Home, Images, LayoutGrid, LogOut, Menu, Newspaper, Target, UserRound, X } from "lucide-react";
+import { ExternalLink, FileText, Home, Images, LayoutGrid, LogOut, Menu, Newspaper, Settings, Target, UserRound, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { canEditContent, currentStaff, signOut } from "@/lib/admin/session";
 import { listLocales } from "@/lib/admin/taxonomy";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { AdminContext, type AdminContextValue } from "./admin-context";
+import { AdminLanguageSwitch, useAdminLocale } from "./admin-intl";
 import { Spinner } from "./ui";
 
 const NAV = [
@@ -19,6 +20,7 @@ const NAV = [
   { href: "/admin/objectives", key: "objectives", Icon: Target, content: true },
   { href: "/admin/pages", key: "pages", Icon: FileText, content: true },
   { href: "/admin/media", key: "media", Icon: Images, content: true },
+  { href: "/admin/settings", key: "settings", Icon: Settings, content: true },
   { href: "/admin/account", key: "account", Icon: UserRound, content: false },
 ] as const;
 
@@ -27,6 +29,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const t = useTranslations("admin");
   const pathname = usePathname().replace(/\/$/, "") || "/admin";
   const router = useRouter();
+  const { locale } = useAdminLocale();
   const [ctx, setCtx] = useState<AdminContextValue | null>(null);
   const [open, setOpen] = useState(false);
   const isLogin = pathname.endsWith("/admin/login");
@@ -69,9 +72,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </Link>
       ))}
       <hr className="my-2 border-foreground/10" />
-      <a href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/${ctx.defaultLocale}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-theme px-3 py-2.5 text-sm hover:bg-foreground/5">
+      <a href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/${ctx.locales.some((l) => l.code === locale) ? locale : ctx.defaultLocale}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-theme px-3 py-2.5 text-sm hover:bg-foreground/5">
         <ExternalLink aria-hidden className="size-5" /> {t("nav.view_site")}
       </a>
+      <AdminLanguageSwitch className="px-3 py-2" />
       <button type="button" onClick={() => signOut()} className="flex items-center gap-3 rounded-theme px-3 py-2.5 text-start text-sm hover:bg-foreground/5">
         <LogOut aria-hidden className="size-5 rtl:rotate-180" /> {t("nav.sign_out")}
       </button>

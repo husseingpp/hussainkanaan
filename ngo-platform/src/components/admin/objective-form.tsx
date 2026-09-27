@@ -1,13 +1,12 @@
 "use client";
 
+import { useTr } from "./use-tr";
 import { useState } from "react";
 import { Save, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { remove, saveObjective, type ObjectiveRow, type SectorRow } from "@/lib/admin/taxonomy";
-import { tr } from "@/lib/i18n/tr";
-import { useAdmin } from "./admin-context";
 import { IconPicker } from "./icon-choices";
 import { hasText, LocaleTabs, setLocale } from "./locale-tabs";
 import { Card, Field, Select, Textarea } from "./ui";
@@ -17,7 +16,7 @@ type Props = { objective: ObjectiveRow | null; sectors: SectorRow[]; onSaved: (o
 /** Inline editor for one objective (new when `objective` is null). */
 export function ObjectiveForm({ objective, sectors, onSaved, onDeleted, onClose }: Props) {
   const t = useTranslations("admin");
-  const { defaultLocale } = useAdmin();
+  const trx = useTr();
   const [text, setText] = useState<Record<string, string>>((objective?.text as Record<string, string>) ?? {});
   const [icon, setIcon] = useState<string | null>(objective?.icon ?? null);
   const [sectorId, setSectorId] = useState<string | null>(objective?.sector_id ?? null);
@@ -56,7 +55,7 @@ export function ObjectiveForm({ objective, sectors, onSaved, onDeleted, onClose 
       <Field label={t("fields.sector")} htmlFor="sector">
         <Select id="sector" value={sectorId ?? ""} onChange={(e) => setSectorId(e.target.value || null)}>
           <option value="">{t("fields.no_sector")}</option>
-          {sectors.map((s) => <option key={s.id} value={s.id}>{tr(s.name, defaultLocale)}</option>)}
+          {sectors.map((s) => <option key={s.id} value={s.id}>{trx(s.name)}</option>)}
         </Select>
       </Field>
       <IconPicker label={t("fields.icon")} value={icon} onChange={setIcon} />

@@ -100,10 +100,10 @@ staff from the admin comes later (Users & roles).
 
 ## Admin (Phase 3)
 
-`/admin` — Arabic UI. Sign in with an emailed link (or a password set under
+`/admin` — Arabic UI by default, switchable to English (or any enabled language) from the sidebar; the choice is remembered per browser. Sign in with an emailed link (or a password set under
 **حسابي**). Content: posts (activities / events / news) with locale tabs, Tiptap
 body, cover, album uploader (compressed to WebP ≤1600px, drag to reorder, caption
-per locale), sectors, objectives, pages, media library.
+per locale), sectors, objectives, pages, media library, and **Settings** (organization name and tagline per language, logo / dark logo / favicon, contacts, socials, footer, donation info; modules are admin-only).
 
 **How it talks to the database.** On static hosting there's no server, so the
 admin runs in the browser with the signed-in user's session and **RLS is the

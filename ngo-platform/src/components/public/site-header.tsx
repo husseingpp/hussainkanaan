@@ -35,10 +35,17 @@ export async function SiteHeader({ locale }: { locale: string }) {
   const name = tr(settings?.org_name, locale, def.code) || siteT("name");
   const label = (v: unknown) => tr(v, locale, def.code);
 
+  // Both logos are rendered; the header's live tone (data-tone) shows the right one.
+  const img = (src: string, className: string) => (
+    <Image src={src} alt="" width={40} height={40} className={`h-10 w-auto max-w-32 object-contain ${className}`} />
+  );
   const brand = (
     <Link href={localePath(locale)} className="flex min-w-0 items-center gap-2 font-bold">
       {settings?.logo_url ? (
-        <Image src={settings.logo_url} alt="" width={36} height={36} className="size-9 object-contain" />
+        <>
+          {img(settings.logo_url, settings.logo_dark_url ? "group-data-[tone=dark]:hidden" : "")}
+          {settings.logo_dark_url && img(settings.logo_dark_url, "hidden group-data-[tone=dark]:block")}
+        </>
       ) : (
         <span className="grid size-9 shrink-0 place-items-center rounded-theme bg-current/15">
           <Leaf aria-hidden className="size-5" />

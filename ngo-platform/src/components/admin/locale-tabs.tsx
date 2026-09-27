@@ -36,7 +36,8 @@ export function LocaleTabs({ filled, children }: Props) {
           </button>
         ))}
       </div>
-      <div role="tabpanel" lang={current.code} dir={current.dir} className="space-y-4">
+      {/* Labels keep the admin's UI direction; each input sets its own lang/dir. */}
+      <div role="tabpanel" className="space-y-4">
         {children({ code: current.code, dir: current.dir, name: current.name })}
       </div>
     </div>
