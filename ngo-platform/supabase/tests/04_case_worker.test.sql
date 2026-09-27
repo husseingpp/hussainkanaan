@@ -77,6 +77,8 @@ select is((select count(*)::int from public.requests), 1, 'case worker cannot de
 select is((select count(*)::int from public.posts), 2, 'case worker reads all posts');
 select throws_ok($$ insert into public.posts (slug, title) values ('x', '{}') $$,
   '42501', null, 'case worker cannot create posts');
+select throws_ok($$ select public.set_post_links('00000000-0000-0000-0000-00000000b001', '{}', '[{"media_id": "00000000-0000-0000-0000-00000000d001"}]') $$,
+  '42501', null, 'case worker cannot change albums');
 update public.site_settings set org_name = '{"ar": "x"}';
 update public.site_settings set modules = '{}';
 reset role;

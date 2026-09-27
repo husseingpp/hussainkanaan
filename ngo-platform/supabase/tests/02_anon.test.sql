@@ -58,6 +58,8 @@ select is_empty($$ select * from public.check_request_status('R-TEST-0001', '+96
 -- No writes
 select throws_ok($$ insert into public.posts (slug, title) values ('x', '{}') $$,
   '42501', null, 'anon cannot insert posts');
+select throws_ok($$ select public.set_post_links('00000000-0000-0000-0000-00000000b001', '{}', '[]') $$,
+  '42501', null, 'anon cannot call set_post_links');
 update public.site_settings set org_name = '{"ar": "hacked"}';
 reset role;
 select is((select org_name ->> 'ar' from public.site_settings), 'اسم الجمعية', 'anon cannot update settings');

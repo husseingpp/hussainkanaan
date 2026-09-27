@@ -43,6 +43,26 @@ select lives_ok($$ update public.theme set primary_color = '#224466' $$, 'editor
 select lives_ok($$ update public.site_settings set org_name = '{"ar": "جمعية", "en": "NGO"}' $$,
   'editor can change general settings');
 
+select lives_ok(
+  $$ select public.set_post_links('00000000-0000-0000-0000-00000000b001',
+       array[(select id from public.sectors where slug = 'health')],
+       '[{"media_id": "00000000-0000-0000-0000-00000000d001", "caption": {"ar": "صورة"}}]') $$,
+  'editor can replace a post''s sectors and album'
+);
+select results_eq(
+  $$ select (select count(*)::int from public.post_sectors where post_id = '00000000-0000-0000-0000-00000000b001'),
+            (select caption ->> 'ar' from public.post_media where post_id = '00000000-0000-0000-0000-00000000b001') $$,
+  $$ values (1, 'صورة'::text) $$,
+  'set_post_links wrote sectors and captions'
+);
+select throws_ok(
+  $$ select public.set_post_links('00000000-0000-0000-0000-00000000b001', '{}',
+       '[{"media_id": "00000000-0000-0000-0000-00000000dead"}]') $$,
+  '23503', null, 'a bad album entry rolls the whole replacement back'
+);
+select is((select count(*)::int from public.post_media where post_id = '00000000-0000-0000-0000-00000000b001'), 1,
+  'album unchanged after the failed replacement');
+
 -- Locales: read-only
 select throws_ok($$ insert into public.locales (code, name) values ('de', 'Deutsch') $$,
   '42501', null, 'editor cannot add locales');

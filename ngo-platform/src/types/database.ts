@@ -839,6 +839,10 @@ export type Database = {
       is_post_public: { Args: { p_post_id: string }; Returns: boolean };
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean };
       requests_enabled: { Args: Record<PropertyKey, never>; Returns: boolean };
+      set_post_links: {
+        Args: { p_album: Json; p_post_id: string; p_sector_ids: string[] };
+        Returns: undefined;
+      };
       tr: { Args: { field: Json; locale: string }; Returns: string };
     };
     Enums: {
