@@ -1,0 +1,21 @@
+{
+  "_comment": "Shared by tool/ingest (Python) and lib/core/arabic_normalizer.dart. Both implementations must pass every vector; change them together.",
+  "vectors": [
+    { "in": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", "out": "بسم الله الرحمن الرحيم", "why": "harakat, dagger alef and alef wasla" },
+    { "in": "بسم الله الرحمن الرحيم", "out": "بسم الله الرحمن الرحيم", "why": "already clean" },
+    { "in": "إياك نعبد وإياك نستعين", "out": "اياك نعبد واياك نستعين", "why": "alef with hamza below" },
+    { "in": "أنعمت عليهم", "out": "انعمت عليهم", "why": "alef with hamza above" },
+    { "in": "آمنوا", "out": "امنوا", "why": "alef madda" },
+    { "in": "هدى للمتقين", "out": "هدي للمتقين", "why": "alef maqsura folds to ya" },
+    { "in": "الصلاة", "out": "الصلاه", "why": "ta marbuta folds to ha" },
+    { "in": "مؤمنين", "out": "مومنين", "why": "waw with hamza" },
+    { "in": "الملائكة", "out": "الملايكه", "why": "ya with hamza" },
+    { "in": "یوم الدین", "out": "يوم الدين", "why": "Persian yeh typed on an Iranian keyboard" },
+    { "in": "الکتاب", "out": "الكتاب", "why": "Persian keheh" },
+    { "in": "الـــله", "out": "الله", "why": "tatweel" },
+    { "in": "  قل   هو\tالله  ", "out": "قل هو الله", "why": "whitespace collapsed and trimmed" },
+    { "in": "ذَٰلِكَ ٱلْكِتَٰبُ لَا رَيْبَ ۛ فِيهِ ۛ", "out": "ذلك الكتب لا ريب فيه", "why": "Quranic pause marks stripped (dagger alef is dropped, not restored)" },
+    { "in": "لَّهُۥ", "out": "له", "why": "small waw" },
+    { "in": "٢٥٥", "out": "٢٥٥", "why": "Arabic-Indic digits untouched" }
+  ]
+}

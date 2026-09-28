@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Test fixture: two surahs in Tanzil quran-data.xml shape. Page/juz/quarter markers are synthetic. -->
+<quran type="metadata" version="1.0">
+  <suras alias="chapters">
+    <sura index="1" ayas="7" start="0" name="الفاتحة" tname="Al-Faatiha" ename="The Opening" type="Meccan" order="5" rukus="1" />
+    <sura index="112" ayas="4" start="6221" name="الإخلاص" tname="Al-Ikhlaas" ename="Sincerity" type="Meccan" order="22" rukus="1" />
+  </suras>
+  <juzs alias="parts">
+    <juz index="1" sura="1" aya="1" />
+    <juz index="2" sura="112" aya="1" />
+  </juzs>
+  <hizbs alias="groups">
+    <quarter index="1" sura="1" aya="1" />
+    <quarter index="2" sura="1" aya="5" />
+    <quarter index="3" sura="112" aya="1" />
+  </hizbs>
+  <pages>
+    <page index="1" sura="1" aya="1" />
+    <page index="2" sura="112" aya="1" />
+    <page index="3" sura="112" aya="3" />
+  </pages>
+  <sajdas>
+    <sajda index="1" sura="112" aya="2" type="recommended" />
+  </sajdas>
+</quran>

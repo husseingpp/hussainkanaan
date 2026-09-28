@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "alafasy",
+    "name": "Mishary Rashid Alafasy",
+    "name_ar": "مشاري راشد العفاسي",
+    "style": "murattal",
+    "bitrate": 128,
+    "base_url": "https://everyayah.com/data/Alafasy_128kbps"
+  },
+  {
+    "slug": "husary",
+    "name": "Mahmoud Khalil Al-Husary",
+    "name_ar": "محمود خليل الحصري",
+    "style": "murattal",
+    "bitrate": 128,
+    "base_url": "https://everyayah.com/data/Husary_128kbps"
+  },
+  {
+    "slug": "minshawi-murattal",
+    "name": "Mohamed Siddiq El-Minshawi",
+    "name_ar": "محمد صديق المنشاوي",
+    "style": "murattal",
+    "bitrate": 128,
+    "base_url": "https://everyayah.com/data/Minshawy_Murattal_128kbps"
+  },
+  {
+    "slug": "abdul-basit-murattal",
+    "name": "Abdul Basit Abdul Samad",
+    "name_ar": "عبد الباسط عبد الصمد",
+    "style": "murattal",
+    "bitrate": 192,
+    "base_url": "https://everyayah.com/data/Abdul_Basit_Murattal_192kbps"
+  },
+  {
+    "slug": "parhizgar",
+    "name": "Shahriar Parhizgar",
+    "name_ar": "شهريار پرهيزگار",
+    "style": "murattal",
+    "bitrate": 48,
+    "base_url": "https://everyayah.com/data/Parhizgar_48kbps"
+  }
+]

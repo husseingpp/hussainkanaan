@@ -1,0 +1,72 @@
+{
+ "version": "fixture-1",
+ "reviewed": false,
+ "source": "Test fixture only. Not a sourced dataset.",
+ "events": [
+  {
+   "slug": "test-range",
+   "name_ar": "مناسبة تجريبية",
+   "name_en": "Test range event",
+   "category": "mourning",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 1,
+     "day": 1,
+     "span_days": 10,
+     "primary": true
+    }
+   ],
+   "amaal": [
+    {
+     "kind": "recitation",
+     "title_ar": "قراءة تجريبية",
+     "source_note": "fixture",
+     "ayahs": [
+      {
+       "surah": 112,
+       "from": 1,
+       "to": 4
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slug": "test-variants",
+   "name_ar": "مناسبة بتاريخين",
+   "name_en": "Test two-date event",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 5,
+     "day": 13,
+     "variant": "narration A",
+     "primary": false
+    },
+    {
+     "month": 6,
+     "day": 3,
+     "variant": "narration B",
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "test-eid",
+   "name_ar": "عيد تجريبي",
+   "name_en": "Test eid",
+   "category": "eid",
+   "importance": 3,
+   "sighting_dependent": true,
+   "dates": [
+    {
+     "month": 10,
+     "day": 1,
+     "primary": true
+    }
+   ]
+  }
+ ]
+}

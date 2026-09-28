@@ -1,0 +1,43 @@
+name: Quran app CI
+
+on:
+  pull_request:
+    paths:
+      - "quran-app/**"
+      - ".github/workflows/quran-app-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "quran-app/**"
+      - ".github/workflows/quran-app-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: quran-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Ingest tests
+        run: python3 -m unittest discover -s tool/ingest/tests -v
+
+      - name: Install packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Flutter tests
+        run: flutter test
