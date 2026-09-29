@@ -71,16 +71,21 @@ CREATE TABLE reciters (
   name       TEXT    NOT NULL,
   name_ar    TEXT,
   style      TEXT    NOT NULL,                          -- murattal | mujawwad | muallim
-  bitrate    INTEGER NOT NULL,                          -- kbps
-  base_url   TEXT    NOT NULL,                          -- {base_url}/{SSS}{AAA}.mp3
-  -- Derived by the ingest from what ayah_timings actually holds, never
-  -- hand-set: A = word segments for every ayah, B = ayah timings only,
-  -- C = nothing. Follow Mode promises exactly what this column says.
-  sync_tier  TEXT    NOT NULL CHECK (sync_tier IN ('A', 'B', 'C'))
+  bitrate    INTEGER,                                   -- kbps, when the source states it
+  base_url   TEXT    NOT NULL,                          -- per_ayah: {base_url}/{SSS}{AAA}.mp3
+  audio      TEXT    NOT NULL CHECK (audio IN ('per_ayah', 'per_surah')),
+  -- Derived by the ingest from the data, never hand-set (BLUEPRINT §4):
+  --   A  word timing for >= 98% of ayahs; the rest highlight the whole ayah
+  --   B  whole-ayah highlight only (per-ayah audio, or ayah spans)
+  --   C  audio only
+  -- Follow Mode promises exactly what this column says.
+  sync_tier  TEXT    NOT NULL CHECK (sync_tier IN ('A', 'B', 'C')),
+  word_timed_ayahs INTEGER NOT NULL DEFAULT 0
 );
 
 -- Times are relative to the start of that ayah's own audio file.
--- word_position 0 is the whole-ayah span (tier B); 1..n are words (tier A).
+-- word_position 0 is the whole-ayah span; 1..n are words. An ayah is either
+-- fully word-timed or absent/span-only, never half-timed.
 CREATE TABLE ayah_timings (
   reciter_id     INTEGER NOT NULL REFERENCES reciters (id),
   ayah_id        INTEGER NOT NULL REFERENCES ayahs (id),

@@ -34,6 +34,7 @@ from sources import (  # noqa: E402
     parse_ayah_text,
     parse_metadata,
     parse_segments,
+    parse_word_layout,
     parse_word_values,
 )
 
@@ -43,6 +44,14 @@ SCHEMA_VERSION = 1
 # The canonical Madani (Hafs) mus'haf. Checked in strict mode only, so the
 # test fixtures can be a couple of surahs.
 CANON = {"surahs": 114, "ayahs": 6236, "pages": 604, "juz": 30, "quarters": 240, "sajdas": 15}
+
+# A reciter is Tier A when this share of ayahs has clean word timing. Upstream
+# segment data is ~99% clean for murattal recordings; the defective ayahs are
+# dropped by fetch_quran_com.py and fall back to whole-ayah highlight, which
+# per-ayah audio files give for free. Never interpolated (BLUEPRINT §4).
+MIN_WORD_TIMING_COVERAGE = 0.98
+
+BISMILLAH = "بسم الله الرحمن الرحيم"
 
 CALENDAR_CATEGORIES = {"mourning", "birth", "martyrdom", "eid", "blessed_night", "fast", "other"}
 
@@ -90,6 +99,7 @@ class SourceSet:
         self.words_qcf = self._opt(qul / "words-qcf-v1.json")
         self.words_translation = self._opt(qul / "words-translation-en.json")
         self.words_root = self._opt(qul / "words-root.json")
+        self.words_layout = self._opt(qul / "words-layout-v1.json")
         self.segments = sorted((root / "segments").glob("*.json"))
         self.calendar = self._opt(root / "calendar" / "events.json")
 
@@ -99,7 +109,8 @@ class SourceSet:
 
     def files(self) -> list[Path]:
         fs = [self.metadata, self.uthmani, self.simple_clean, self.translation, self.words_uthmani,
-              self.words_qcf, self.words_translation, self.words_root, self.calendar, *self.segments]
+              self.words_qcf, self.words_translation, self.words_root, self.words_layout, self.calendar,
+              *self.segments]
         return sorted(f for f in fs if f is not None)
 
     def fingerprint(self) -> dict[str, str]:
@@ -120,7 +131,8 @@ def marker_lookup(markers: list[tuple[int, int, int]], name: str):
     return lookup
 
 
-def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar: bool) -> dict:
+def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar: bool,
+          reciters_path: Path = HERE / "reciters.json") -> dict:
     meta = parse_metadata(src.metadata)
     surahs = meta.surahs
 
@@ -164,6 +176,11 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
     uthmani = load_text(src.uthmani, "uthmani text")
     simple = load_text(src.simple_clean, "simple-clean text")
     translation = load_text(src.translation, "translation") if src.translation else None
+    # Tanzil's .txt export glues the bismillah onto ayah 1 of every surah; the
+    # XML export keeps it in an attribute. Only Al-Fatiha's first ayah is it.
+    glued = [s.id for s in surahs if s.id != 1 and normalize(uthmani[(s.id, 1)]).startswith(BISMILLAH)]
+    check(not glued, f"uthmani text has the bismillah inside ayah 1 of surahs {glued[:5]}…; "
+                     "use Tanzil's XML export, which keeps it separate")
 
     # ---- words: positions 1..n per ayah, every ayah covered
     words = parse_word_values(src.words_uthmani)
@@ -191,12 +208,19 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
     qcf = load_word_extra(src.words_qcf, "QCF glyphs", allow_end_marker=True)
     wbw = load_word_extra(src.words_translation, "word translation")
     roots = load_word_extra(src.words_root, "word roots")
+    layout = {}
+    if src.words_layout:
+        layout = parse_word_layout(src.words_layout)
+        bad = [loc for loc in layout if loc[:2] not in word_count or not 1 <= loc[2] <= word_count[loc[:2]]]
+        check(not bad, f"word layout: unknown words {bad[:3]}")
+        missing = [(s, a, w) for (s, a), n in word_count.items() for w in range(1, n + 1) if (s, a, w) not in layout]
+        check(not missing, f"word layout missing for {len(missing)} words, first {missing[:3]}")
     if qcf:
         missing = [(s, a, w) for (s, a), n in word_count.items() for w in range(1, n + 1) if (s, a, w) not in qcf]
         check(not missing, f"QCF glyphs missing for {len(missing)} words, first {missing[:3]}")
 
     # ---- reciters + timing segments; tier is derived, never declared
-    reciters = json.loads((HERE / "reciters.json").read_text(encoding="utf-8"))
+    reciters = json.loads(reciters_path.read_text(encoding="utf-8"))
     slugs = [r["slug"] for r in reciters]
     check(len(set(slugs)) == len(slugs), "duplicate reciter slug in reciters.json")
     timings: dict[str, dict] = {}
@@ -215,14 +239,24 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
             # Words may not overlap or run backwards: Follow Mode binary-searches this list.
             for x, y in zip(word_rows, word_rows[1:]):
                 check(y[1] >= x[2], f"{slug} {s}:{a}: word {y[0]} starts before word {x[0]} ends")
-        covered = set(segs)
-        check(covered == set(keys),
-              f"segments/{path.name} covers {len(covered)}/{len(keys)} ayahs; partial timing data "
-              "would make Follow Mode highlight some ayahs and silently skip others")
-        full_words = all(
-            sorted(r[0] for r in segs[k] if r[0] >= 1) == list(range(1, word_count[k] + 1)) for k in keys
-        )
-        timings[slug] = {"tier": "A" if full_words else "B", "segments": segs}
+            # Each ayah is either fully word-timed or a single whole-ayah span:
+            # a half-timed ayah would highlight some words and skip others.
+            got = sorted(r[0] for r in word_rows)
+            check(not got or got == list(range(1, n + 1)),
+                  f"{slug} {s}:{a}: word timings cover {len(got)}/{n} words; drop the ayah instead")
+        word_timed = sum(1 for rows in segs.values() if any(r[0] >= 1 for r in rows))
+        timings[slug] = {"segments": segs, "word_timed": word_timed,
+                         "ayah_spans": all(k in segs for k in keys)}
+
+    def tier(r: dict) -> str:
+        t = timings.get(r["slug"], {})
+        if t.get("word_timed", 0) >= MIN_WORD_TIMING_COVERAGE * len(keys):
+            return "A"
+        # A per-ayah file *is* the ayah's timing: the file playing is the ayah.
+        return "B" if r["audio"] == "per_ayah" or t.get("ayah_spans") else "C"
+
+    for r in reciters:
+        check(r.get("audio") in ("per_ayah", "per_surah"), f"reciter {r['slug']}: audio must be per_ayah|per_surah")
 
     calendar = load_calendar(src.calendar, ayah_id, allow_unreviewed_calendar) if src.calendar else None
 
@@ -266,18 +300,19 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
             for w in range(1, word_count[k] + 1):
                 word_id += 1
                 loc = (*k, w)
+                page, line = layout.get(loc, (None, None))
                 db.execute(
-                    "INSERT INTO words (id, ayah_id, position, text_uthmani, text_qcf, translation_en, root)"
-                    " VALUES (?,?,?,?,?,?,?)",
-                    (word_id, ayah_id[k], w, words[loc], qcf.get(loc), wbw.get(loc), roots.get(loc) or None),
+                    "INSERT INTO words VALUES (?,?,?,?,?,?,?,?,?)",
+                    (word_id, ayah_id[k], w, words[loc], qcf.get(loc), wbw.get(loc), roots.get(loc) or None,
+                     page, line),
                 )
         db.execute("INSERT INTO ayahs_fts (ayahs_fts) VALUES ('rebuild')")
 
         for rid, r in enumerate(sorted(reciters, key=lambda r: r["slug"]), 1):
-            tier = timings.get(r["slug"], {}).get("tier", "C")
             db.execute(
-                "INSERT INTO reciters VALUES (?,?,?,?,?,?,?,?)",
-                (rid, r["slug"], r["name"], r.get("name_ar"), r["style"], r["bitrate"], r["base_url"], tier),
+                "INSERT INTO reciters VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (rid, r["slug"], r["name"], r.get("name_ar"), r["style"], r.get("bitrate"), r["base_url"],
+                 r["audio"], tier(r), timings.get(r["slug"], {}).get("word_timed", 0)),
             )
             segs = timings.get(r["slug"], {}).get("segments", {})
             for k in keys:
@@ -317,7 +352,8 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
         "surahs": len(surahs),
         "ayahs": len(keys),
         "words": word_id,
-        "reciters": {r["slug"]: timings.get(r["slug"], {}).get("tier", "C") for r in reciters},
+        "reciters": {r["slug"]: f"{tier(r)} ({timings.get(r['slug'], {}).get('word_timed', 0)} word-timed ayahs)"
+                     for r in sorted(reciters, key=lambda r: r["slug"])},
         "translation": src.translation.name if src.translation else None,
         "calendar": calendar["version"] if calendar else None,
     }
@@ -398,6 +434,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--sources", type=Path, default=HERE / "sources")
     p.add_argument("--out", type=Path, default=APP_ROOT / "assets" / "db" / "content.db")
+    p.add_argument("--reciters", type=Path, default=HERE / "reciters.json")
     p.add_argument("--lock", type=Path, default=HERE / "sources.lock.json")
     p.add_argument("--update-lock", action="store_true", help="re-pin the sources' sha256 in the lock file")
     p.add_argument("--no-lock", action="store_true", help="skip the lock check (tests and experiments)")
@@ -409,7 +446,7 @@ def main(argv: list[str] | None = None) -> int:
         if not args.no_lock:
             verify_lock(src, args.lock, args.update_lock)
         report = build(src, args.out, strict=not args.partial,
-                       allow_unreviewed_calendar=args.allow_unreviewed_calendar)
+                       allow_unreviewed_calendar=args.allow_unreviewed_calendar, reciters_path=args.reciters)
     except (BuildError, SourceError) as e:
         print(f"ingest failed: {e}", file=sys.stderr)
         return 1

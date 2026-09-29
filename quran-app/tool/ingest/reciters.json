@@ -4,39 +4,119 @@
     "name": "Mishary Rashid Alafasy",
     "name_ar": "مشاري راشد العفاسي",
     "style": "murattal",
-    "bitrate": 128,
-    "base_url": "https://everyayah.com/data/Alafasy_128kbps"
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/Alafasy/mp3",
+    "quran_com_recitation": 7
   },
   {
     "slug": "husary",
     "name": "Mahmoud Khalil Al-Husary",
     "name_ar": "محمود خليل الحصري",
     "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://everyayah.com/data/Husary_64kbps",
+    "bitrate": 64,
+    "quran_com_recitation": 6
+  },
+  {
+    "slug": "husary-muallim",
+    "name": "Mahmoud Khalil Al-Husary (Muallim)",
+    "name_ar": "محمود خليل الحصري (المعلم)",
+    "style": "muallim",
+    "audio": "per_ayah",
+    "base_url": "https://everyayah.com/data/Husary_Muallim_128kbps",
     "bitrate": 128,
-    "base_url": "https://everyayah.com/data/Husary_128kbps"
+    "quran_com_recitation": 12
   },
   {
     "slug": "minshawi-murattal",
-    "name": "Mohamed Siddiq El-Minshawi",
+    "name": "Mohamed Siddiq Al-Minshawi",
     "name_ar": "محمد صديق المنشاوي",
     "style": "murattal",
-    "bitrate": 128,
-    "base_url": "https://everyayah.com/data/Minshawy_Murattal_128kbps"
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/Minshawi/Murattal/mp3",
+    "quran_com_recitation": 9
+  },
+  {
+    "slug": "minshawi-mujawwad",
+    "name": "Mohamed Siddiq Al-Minshawi (Mujawwad)",
+    "name_ar": "محمد صديق المنشاوي (مجود)",
+    "style": "mujawwad",
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/Minshawi/Mujawwad/mp3",
+    "quran_com_recitation": 8
   },
   {
     "slug": "abdul-basit-murattal",
     "name": "Abdul Basit Abdul Samad",
     "name_ar": "عبد الباسط عبد الصمد",
     "style": "murattal",
-    "bitrate": 192,
-    "base_url": "https://everyayah.com/data/Abdul_Basit_Murattal_192kbps"
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/AbdulBaset/Murattal/mp3",
+    "quran_com_recitation": 2
+  },
+  {
+    "slug": "abdul-basit-mujawwad",
+    "name": "Abdul Basit Abdul Samad (Mujawwad)",
+    "name_ar": "عبد الباسط عبد الصمد (مجود)",
+    "style": "mujawwad",
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/AbdulBaset/Mujawwad/mp3",
+    "quran_com_recitation": 1
+  },
+  {
+    "slug": "sudais",
+    "name": "Abdur-Rahman As-Sudais",
+    "name_ar": "عبد الرحمن السديس",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/Sudais/mp3",
+    "quran_com_recitation": 3
+  },
+  {
+    "slug": "shatri",
+    "name": "Abu Bakr Al-Shatri",
+    "name_ar": "أبو بكر الشاطري",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/Shatri/mp3",
+    "quran_com_recitation": 4
+  },
+  {
+    "slug": "rifai",
+    "name": "Hani Ar-Rifai",
+    "name_ar": "هاني الرفاعي",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/Rifai/mp3",
+    "quran_com_recitation": 5
+  },
+  {
+    "slug": "shuraym",
+    "name": "Saud Ash-Shuraym",
+    "name_ar": "سعود الشريم",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://verses.quran.com/Shuraym/mp3",
+    "quran_com_recitation": 10
+  },
+  {
+    "slug": "tablawi",
+    "name": "Mohamed Al-Tablawi",
+    "name_ar": "محمد الطبلاوي",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://everyayah.com/data/Mohammad_al_Tablaway_128kbps",
+    "bitrate": 128,
+    "quran_com_recitation": 11
   },
   {
     "slug": "parhizgar",
     "name": "Shahriar Parhizgar",
     "name_ar": "شهريار پرهيزگار",
     "style": "murattal",
-    "bitrate": 48,
-    "base_url": "https://everyayah.com/data/Parhizgar_48kbps"
+    "audio": "per_ayah",
+    "base_url": "https://everyayah.com/data/Parhizgar_48kbps",
+    "bitrate": 48
   }
 ]

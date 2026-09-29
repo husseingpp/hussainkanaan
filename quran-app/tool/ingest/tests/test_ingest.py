@@ -15,6 +15,7 @@ import ingest  # noqa: E402
 from normalize import normalize  # noqa: E402
 
 FIXTURES = HERE / "fixtures" / "sources"
+RECITERS = HERE / "fixtures" / "reciters.json"
 VECTORS = HERE.parent.parent.parent / "schema" / "search_normalization_vectors.json"
 
 
@@ -38,7 +39,7 @@ class IngestTest(unittest.TestCase):
     def build(self, *extra):
         with _capture_stderr() as out:
             code = ingest.main(["--sources", str(self.sources), "--out", str(self.out), "--no-lock",
-                                "--partial", "--allow-unreviewed-calendar", *extra])
+                                "--reciters", str(RECITERS), "--partial", "--allow-unreviewed-calendar", *extra])
         self.output = out.getvalue()
         return code
 
@@ -105,10 +106,16 @@ class IngestTest(unittest.TestCase):
 
     def test_sync_tier_is_derived_from_data(self):
         self.build()
-        tiers = dict(self.db().execute("SELECT slug, sync_tier FROM reciters"))
-        self.assertEqual(tiers["alafasy"], "A")
-        self.assertEqual(tiers["husary"], "B")
-        self.assertEqual(tiers["minshawi-murattal"], "C")
+        rows = {r[0]: r[1:] for r in self.db().execute("SELECT slug, sync_tier, word_timed_ayahs FROM reciters")}
+        self.assertEqual(rows["alafasy"], ("A", 11))
+        self.assertEqual(rows["husary"], ("B", 0), "ayah spans only")
+        self.assertEqual(rows["no-data"], ("B", 0), "a per-ayah file is its own ayah timing")
+        self.assertEqual(rows["surah-files"], ("C", 0))
+
+    def test_word_layout_is_imported(self):
+        self.build()
+        self.assertEqual(self.db().execute(
+            "SELECT page, line FROM words WHERE ayah_id = 6222 AND position = 1").fetchone(), (2, 2))
 
     def test_calendar_multi_date_and_amaal_links(self):
         self.build()
@@ -128,7 +135,7 @@ class IngestTest(unittest.TestCase):
     def test_strict_mode_requires_the_whole_mushaf(self):
         with _capture_stderr() as err:
             code = ingest.main(["--sources", str(self.sources), "--out", str(self.out), "--no-lock",
-                                "--allow-unreviewed-calendar"])
+                                "--reciters", str(RECITERS), "--allow-unreviewed-calendar"])
         self.assertEqual(code, 1)
         self.assertIn("expected 114 surahs", err.getvalue())
 
@@ -146,9 +153,22 @@ class IngestTest(unittest.TestCase):
         self.edit_json("segments/alafasy.json", lambda d: d["1:2"].__setitem__(1, [2, 100, 900]))
         self.assertBuildFails(contains="starts before word 1 ends")
 
-    def test_partial_segment_coverage_fails(self):
-        self.edit_json("segments/husary.json", lambda d: d.pop("112:4"))
-        self.assertBuildFails(contains="covers 10/11 ayahs")
+    def test_dropped_ayahs_lower_the_tier_below_coverage_threshold(self):
+        # 10/11 word-timed is under 98%: the reciter can't promise word highlight.
+        self.edit_json("segments/alafasy.json", lambda d: d.pop("112:4"))
+        self.assertEqual(self.build(), 0)
+        self.assertEqual(self.db().execute(
+            "SELECT sync_tier, word_timed_ayahs FROM reciters WHERE slug='alafasy'").fetchone(), ("B", 10))
+
+    def test_half_timed_ayah_fails(self):
+        self.edit_json("segments/alafasy.json", lambda d: d.__setitem__("1:7", d["1:7"][:-1]))
+        self.assertBuildFails(contains="word timings cover 8/9 words")
+
+    def test_bismillah_glued_to_ayah_one_fails(self):
+        p = self.sources / "tanzil" / "quran-uthmani.xml"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            'text="قُلْ هُوَ', 'text="بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قُلْ هُوَ'), encoding="utf-8")
+        self.assertBuildFails(contains="bismillah inside ayah 1 of surahs [112]")
 
     def test_unknown_reciter_segments_fail(self):
         shutil.copy(self.sources / "segments" / "husary.json", self.sources / "segments" / "nobody.json")
@@ -156,7 +176,8 @@ class IngestTest(unittest.TestCase):
 
     def test_unreviewed_calendar_needs_explicit_flag(self):
         with _capture_stderr() as err:
-            code = ingest.main(["--sources", str(self.sources), "--out", str(self.out), "--no-lock", "--partial"])
+            code = ingest.main(["--sources", str(self.sources), "--out", str(self.out), "--no-lock",
+                                "--reciters", str(RECITERS), "--partial"])
         self.assertEqual(code, 1)
         self.assertIn("not marked reviewed", err.getvalue())
 
@@ -172,7 +193,7 @@ class IngestTest(unittest.TestCase):
     def test_lock_detects_changed_source(self):
         lock = self.tmp / "sources.lock.json"
         base = ["--sources", str(self.sources), "--out", str(self.out), "--lock", str(lock),
-                "--partial", "--allow-unreviewed-calendar"]
+                "--reciters", str(RECITERS), "--partial", "--allow-unreviewed-calendar"]
         with _capture_stderr():
             self.assertEqual(ingest.main(base + ["--update-lock"]), 0)
         with _capture_stderr():

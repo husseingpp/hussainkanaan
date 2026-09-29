@@ -8,23 +8,21 @@ An offline-first Quran app for Android, iOS and desktop, built with Flutter. It 
 
 ## Status
 
-**Phase 0 (data pipeline) is in progress.** Done so far:
+**Phase 0 (data pipeline) is nearly done.** The ingest builds the full mus'haf from Tanzil and the Quran Foundation API:
 
-- Schemas for the content DB and the user DB
-- The ingest, with validation, reproducible output and source pinning
-- Shared search normalization
-- An RTL app shell with responsive navigation
-- The database layer, and a surah index read from the content DB
+- 114 surahs, 6,236 ayahs and 77,429 words, with v1 page and line layout for all 604 pages
+- Word timing for 12 reciters, 10 of them Tier A
+- Search under 1 ms
+- Byte-reproducible output, pinned by `sources.lock.json`
 
-Still to do: run the ingest against the real Tanzil and QUL exports, confirm which reciters have Tier A timing data, and start sourcing the calendar dataset.
+Still open: choosing the bundled translation, word roots (these need a QUL sign-in), verifying the everyayah audio copies, and the calendar dataset. See [`tool/ingest/README.md`](tool/ingest/README.md).
 
 ## Run
 
 ```bash
 cd quran-app
-# 1. put the sources in tool/ingest/sources/ (see tool/ingest/README.md), then:
-python3 tool/ingest/ingest.py --update-lock   # first time only; commit the lock
-python3 tool/ingest/ingest.py
+python3 tool/ingest/fetch_sources.py   # 1. download sources (~2 min)
+python3 tool/ingest/ingest.py          #    build assets/db/content.db
 # 2.
 flutter run
 ```

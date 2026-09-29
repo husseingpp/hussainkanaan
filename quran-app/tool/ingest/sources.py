@@ -12,6 +12,7 @@ Formats:
                     {"1:1:1": {"text": "<value>", ...}}. Used for the
                     word-level Uthmani script, the QCF v1 glyph script,
                     the word-by-word translation and word roots.
+                    words-layout-v1.json holds {"page": p, "line": l} instead.
   Timing segments   {"1:1": [[word_position, start_ms, end_ms], ...]},
                     times relative to that ayah's own audio file.
                     An ayah with only a whole-ayah span uses word_position 0.
@@ -146,6 +147,18 @@ def parse_word_values(path: Path) -> dict[tuple[int, int, int], str]:
         if not isinstance(value, str):
             raise SourceError(f"{path}: {key!r} has no text value")
         out[_parse_location(key, 3, path)] = value
+    return out
+
+
+def parse_word_layout(path: Path) -> dict[tuple[int, int, int], tuple[int, int]]:
+    """{"1:1:1": {"page": 1, "line": 2}}: where each word sits in the printed mus'haf."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    out = {}
+    for key, value in data.items():
+        try:
+            out[_parse_location(key, 3, path)] = (int(value["page"]), int(value["line"]))
+        except (KeyError, TypeError, ValueError) as e:
+            raise SourceError(f"{path}: {key!r} needs integer page and line") from e
     return out
 
 

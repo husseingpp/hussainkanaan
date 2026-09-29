@@ -1,0 +1,21 @@
+{
+  "qul/words-layout-v1.json": "439c792f5bb4d952312344ea51d4ed29e44e436e9d3c8de9fc3188965d0fa18a",
+  "qul/words-qcf-v1.json": "1ba8bfd9b0a673b3ec337e7550b612a94d3aa6e02e87760b79a48b2d315e926f",
+  "qul/words-translation-en.json": "34aaae2f94a64a11a993e6fb7594bf928b46059be41f6d3cd994cafb2723a790",
+  "qul/words-uthmani.json": "923388550a98dfc3a563996ffd1046911d588bbd9d36adfe1939beec82b55b71",
+  "segments/abdul-basit-mujawwad.json": "df5d5e4b250ba56905474d45aa8fd498a588c556929f42d3cff25c4e7aa9184e",
+  "segments/abdul-basit-murattal.json": "2f404c8263aefe6dd552b47aaa9536023dee3be73e2239a4bb630c1e6b9ae8e5",
+  "segments/alafasy.json": "78a1dd11d2130f61544f478de06ff11a0aaec3dfb03037d6d39667a0604dd189",
+  "segments/husary-muallim.json": "0d9fc25d95d7b677cb25099d717c8c0224b395bb158a471e0437ffa77504d8c5",
+  "segments/husary.json": "87a23d7e062f02b7d946a4d5689553fa71c604d7efcc328935ca5aa8e38576a2",
+  "segments/minshawi-mujawwad.json": "eaa19a58a65dbb5f66ea12eed7dfca62a22fb863eac3e35402af7274fafa7cf2",
+  "segments/minshawi-murattal.json": "7dc06dbe9205103ed1d96f533b65d4e6a2e576885a6db04790a35f47994dcc15",
+  "segments/rifai.json": "769b58c683e6cf679ec686dc2d079c4ecc4f68748fda0bb92971c0bc002d6fab",
+  "segments/shatri.json": "764e4aa72c391ed311b1e474f4336fb54884d7e0ac750fe6a403f645d62e3b33",
+  "segments/shuraym.json": "3c6fd7dcf58421cae0337e87e0fdee6bb8ea18db5e0f1eefb81d53279612ea47",
+  "segments/sudais.json": "c7d516639735d835423075b5d30561de04f3aa4cdb05d76b7239f6ed277a1422",
+  "segments/tablawi.json": "1d72d26005107ad86e85a3e1c549ae3a323f29b50865706986619de8cd7f3298",
+  "tanzil/quran-data.xml": "8867c1d88191472adec9db694b3cd9f135b1a2ef580574d32cf888dcb22c5c7a",
+  "tanzil/quran-simple-clean.xml": "140787b7c399b11d54bfa72c237075916084232efa8a4cddf704cc8a2a74b1fe",
+  "tanzil/quran-uthmani.xml": "203f0f1bf3158b1e5be4ab9f8f6870e570aab6d9a626fe6192a70b75d4afe0fd"
+}

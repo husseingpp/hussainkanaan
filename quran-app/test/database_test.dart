@@ -36,6 +36,7 @@ void main() {
       'tool/ingest/ingest.py',
       '--sources', 'tool/ingest/tests/fixtures/sources',
       '--out', built.path,
+      '--reciters', 'tool/ingest/tests/fixtures/reciters.json',
       '--no-lock', '--partial', '--allow-unreviewed-calendar',
     ]);
     expect(r.exitCode, 0, reason: '${r.stdout}${r.stderr}');

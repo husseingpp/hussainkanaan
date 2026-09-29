@@ -1,0 +1,31 @@
+[
+  {
+    "slug": "alafasy",
+    "name": "Fixture word-timed",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://example.invalid/a"
+  },
+  {
+    "slug": "husary",
+    "name": "Fixture ayah spans",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://example.invalid/b",
+    "bitrate": 64
+  },
+  {
+    "slug": "no-data",
+    "name": "Fixture per-ayah, no timing",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://example.invalid/c"
+  },
+  {
+    "slug": "surah-files",
+    "name": "Fixture per-surah, no timing",
+    "style": "murattal",
+    "audio": "per_surah",
+    "base_url": "https://example.invalid/d"
+  }
+]

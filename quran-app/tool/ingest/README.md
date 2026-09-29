@@ -6,40 +6,36 @@ Builds `assets/db/content.db` from pinned upstream sources in one command:
 python3 tool/ingest/ingest.py
 ```
 
-It uses the Python 3.11+ standard library only and never touches the network. The same sources always give a byte-identical DB. The build refuses anything inconsistent, including missing or extra ayahs, word-position gaps, overlapping timing segments, partial reciter coverage, and an unreviewed calendar pack.
+It uses the Python 3.11+ standard library only and never touches the network. The same sources always give a byte-identical DB. The build refuses anything inconsistent, including missing or extra ayahs, word-position gaps, overlapping or half-timed ayah timing, a bismillah glued into ayah 1, and an unreviewed calendar pack.
 
 ## Sources
 
-Download these by hand into `tool/ingest/sources/` (gitignored). **Read each asset's terms first** (BLUEPRINT §12). Recitations and many translations are not freely redistributable, and licensing is what gets these apps pulled at store review.
-
-| Path | From | Required |
-| --- | --- | --- |
-| `tanzil/quran-data.xml` | Tanzil metadata: surahs, juz, hizb quarters, pages, sajdas | yes |
-| `tanzil/quran-uthmani.{xml,txt}` | Tanzil Uthmani text | yes |
-| `tanzil/quran-simple-clean.{xml,txt}` | Tanzil Simple Clean text (the basis of `search_text`) | yes |
-| `tanzil/translation.<id>.{txt,xml}` | Exactly one Tanzil translation, e.g. `translation.en.sahih.txt` | no |
-| `qul/words-uthmani.json` | QUL word-level Uthmani script | yes |
-| `qul/words-qcf-v1.json` | QUL word-level QCF v1 glyph codes (Page View) | no |
-| `qul/words-translation-en.json` | QUL word-by-word English translation | no |
-| `qul/words-root.json` | QUL morphology: root per word | no |
-| `segments/<reciter-slug>.json` | Timing segments for a reciter in `reciters.json` | no |
-| `calendar/events.json` | The calendar event pack (see below) | no |
-
-Word files are location-keyed JSON: `{"1:1:1": "…"}` or `{"1:1:1": {"text": "…"}}`. Segment files are `{"1:1": [[word_position, start_ms, end_ms], …]}`, with times relative to **that ayah's own audio file**. A whole-ayah span uses `word_position` 0. The parsers for all of these live in `sources.py`, so when an export's shape differs, adapt it there.
-
-After placing or changing sources, review the diff and re-pin them:
-
 ```bash
-python3 tool/ingest/ingest.py --update-lock   # writes sources.lock.json; commit it
+python3 tool/ingest/fetch_sources.py   # downloads everything into sources/ (gitignored), ~2 min
+python3 tool/ingest/ingest.py          # verifies against sources.lock.json, then builds
 ```
 
-## Things to verify against the real exports
+| Path | From |
+| --- | --- |
+| `tanzil/quran-data.xml` | Tanzil metadata: surahs, juz, hizb quarters, pages, sajdas |
+| `tanzil/quran-uthmani.xml` | Tanzil Uthmani text (CC BY 3.0: the app must credit Tanzil) |
+| `tanzil/quran-simple-clean.xml` | Tanzil Simple Clean text, the basis of `search_text` |
+| `tanzil/translation.<id>.{txt,xml}` | Optional: exactly one bundled translation (not chosen yet) |
+| `qul/words-*.json` | Quran Foundation API (api.quran.com v4): word text, QCF v1 glyphs, word-by-word English, v1 page/line layout |
+| `qul/words-root.json` | Optional: word roots. Not in the public API; QUL's morphology download needs a sign-in |
+| `segments/<slug>.json` | Word timing, cleaned from `quran-com/recitation-<id>.json` |
+| `calendar/events.json` | The calendar event pack (see below) |
 
-The environment this was scaffolded in couldn't reach tanzil.net, qul.tarteel.ai or everyayah.com, so these points are **unverified**:
+Always use Tanzil's **XML** export. The `.txt` export glues the bismillah onto ayah 1 of every surah, and the ingest rejects that.
 
-1. **QUL word-script shape.** Some QUL scripts include the ayah-number medallion as a final "word". `words-uthmani.json` must not include it (it would pass the contiguity check and be stored as a word). QCF may include it as position n+1, which the ingest handles.
-2. **Which reciters have Tier A data.** This is the first-session question from BLUEPRINT §13. Segments must be timed against the **same per-ayah files** the app plays. Quran.com/QUL segment data for gapless *surah-level* recordings does not carry over to everyayah's per-ayah MP3s, even for the same reciter, because the edits differ. For each candidate reciter, record which audio files the segments were cut against.
-3. **`reciters.json` folder names** on everyayah.com (and the bitrates) should be checked against the live index.
+When an upstream source changes, `ingest.py` refuses to build. Review the change, then re-pin with `--update-lock` and commit `sources.lock.json`.
+
+## What the real data showed (2026-09-29)
+
+- **Word timing (Tier A).** Quran Foundation segments exist for 12 recitations. They're clean for 98.7–99.5% of ayahs in murattal recordings and 89–91% in mujawwad ones, because mujawwad repeats phrases. Defective ayahs are dropped whole and never repaired: missing or out-of-range word numbers (often around muqatta'at letters), zero-length words, or overlaps. Each dropped ayah and the reason is listed in `sources/quran-com/<slug>.report.json`. A reciter is Tier A at 98% or more coverage, and ayahs without word timing fall back to whole-ayah highlight. Result: 10 reciters are Tier A. The two mujawwad recitations and Parhizgar are Tier B.
+- **Timing only matches its own audio.** The segments are cut against specific files: `verses.quran.com/<Reciter>/mp3/` for 9 recitations, and everyayah folders (via a quranicaudio.com mirror) for Husary 64kbps, Husary Muallim and Tablawi. `reciters.json` plays exactly those files, and `fetch_sources.py` refuses a mismatch. **Still to verify:** that the everyayah.com copies are byte-identical to the mirror the timings were made against.
+- **Word text vs Tanzil.** The API's word split agrees with Tanzil's ayah text on every ayah except four, all known Madani spelling conventions: 2:181, 8:6 and 13:37 write "بعد ما" as one word, and 37:130 writes "إل ياسين" as one word. Follow Mode should render from `words`, and the Reading View from `ayahs.text_uthmani`.
+- **Sajdas.** Tanzil marks 4 obligatory (32:15, 41:37, 53:62, 96:19) and 11 recommended, which matches Jafari fiqh.
 
 ## Calendar pack
 

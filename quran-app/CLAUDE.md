@@ -21,7 +21,8 @@ Add phase dependencies (`just_audio`, `audio_service`, `wakelock_plus`, `dio`, `
 ## Commands
 ```bash
 # from quran-app/
-python3 tool/ingest/ingest.py                         # build assets/db/content.db (needs tool/ingest/sources/)
+python3 tool/ingest/fetch_sources.py                  # download sources (network; the only networked step)
+python3 tool/ingest/ingest.py                         # build assets/db/content.db, checked against the lock
 python3 -m unittest discover -s tool/ingest/tests     # ingest tests (fixtures, no real sources needed)
 flutter analyze && flutter test                       # must pass before any commit
 flutter run -d linux|macos|windows|<device>
@@ -36,7 +37,7 @@ schema/
   user.sql                         # on-device user DB (created by the app)
   search_normalization_vectors.json  # pins the Python and Dart normalizers together
 tool/ingest/                       # Phase 0 pipeline (see its README for sources and licensing)
-  ingest.py sources.py normalize.py reciters.json tests/
+  fetch_sources.py ingest.py sources.py normalize.py reciters.json tests/
   sources.lock.json                # sha256 pins, created by the first --update-lock
 assets/db/                         # ingest output, gitignored
 lib/
@@ -59,4 +60,4 @@ lib/
 - **Location permission** is requested when prayer times or qibla are first opened, with a plain explanation, never at launch. Manual city entry is a first-class alternative.
 
 ## Phases
-One feature per session, with a hard QA gate between phases (BLUEPRINT §10). Current: **Phase 0, data pipeline**. The pipeline and scaffold exist; it has not yet been run against the real Tanzil/QUL sources.
+One feature per session, with a hard QA gate between phases (BLUEPRINT §10). Current: **Phase 0, data pipeline**. The ingest builds the full mus'haf from the real sources (114 surahs, 6236 ayahs, 77,429 words, 604 pages, 10 Tier A reciters), reproducibly. Still open: the bundled translation, word roots, verifying the everyayah audio copies, and the calendar dataset. See `tool/ingest/README.md`.
