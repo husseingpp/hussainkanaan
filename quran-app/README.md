@@ -15,7 +15,7 @@ An offline-first Quran app for Android, iOS and desktop, built with Flutter. It 
 - Search under 1 ms
 - Byte-reproducible output, pinned by `sources.lock.json`
 
-The bundled translation is Qara'i's English, and Fussilat's sajda is at 41:37 following Shia references. Still open: word roots (from QUL), verifying the everyayah audio copies, and the calendar dataset. See [`tool/ingest/README.md`](tool/ingest/README.md).
+The bundled translation is Qara'i's English, and Fussilat's sajda is at 41:37 following Shia references. Word roots are in, from QUL. Still open: verifying the everyayah audio copies, and the calendar dataset. See [`tool/ingest/README.md`](tool/ingest/README.md).
 
 ## Run
 

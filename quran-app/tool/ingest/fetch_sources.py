@@ -23,6 +23,8 @@ Location-keyed (see sources.py):
   segments/<slug>.json            clean, fully word-timed ayahs only (for reciters.json
                                   entries with "quran_com_recitation")
   quran-com/<slug>.report.json    every dropped ayah and why
+  qul/words-root.json             converted from vendor/qul-word-root.db.zip (QUL
+                                  downloads need a sign-in, so that file is committed)
 
 Upstream segments are ~99% clean for murattal recordings. An ayah whose
 timing is defective (missing or out-of-range word numbers, zero-length or
@@ -34,10 +36,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import sqlite3
 import sys
+import tempfile
 import time
 import urllib.parse
 import urllib.request
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -192,6 +198,65 @@ def prepare(reciters: list[dict], out: Path) -> None:
         print(f"{r['slug']:<22} word-timed {len(kept):>4}/{len(raw)} ({100 * len(kept) / len(raw):.1f}%)")
 
 
+ROOTS_ZIP = HERE / "vendor" / "qul-word-root.db.zip"
+_LETTER = re.compile("[\u0621-\u064a\u0671-\u06d3]")
+
+
+def align_roots(roots: dict[str, str], words: dict[str, str]) -> dict[str, str]:
+    """Map QUL root locations onto the app's word numbering.
+
+    QUL numbers words the Quranic Arabic Corpus way, which splits a few words
+    the Madani mus'haf writes as one ("بَعْدَ مَا" in 2:181, 8:6 and 13:37).
+    There the roots run one past the ayah's last word. Only in such an ayah,
+    positions after the merged word shift back by one, and the root of its
+    second half (a particle, which has none) is dropped.
+    """
+    count: dict[str, int] = {}
+    for loc in words:
+        key = loc.rsplit(":", 1)[0]
+        count[key] = count.get(key, 0) + 1
+    by_ayah: dict[str, dict[int, str]] = {}
+    for loc, root in roots.items():
+        key, pos = loc.rsplit(":", 1)
+        if key not in count:
+            raise RuntimeError(f"roots: unknown ayah {key}")
+        by_ayah.setdefault(key, {})[int(pos)] = root
+    out = {}
+    for key, positions in sorted(by_ayah.items()):
+        n = count[key]
+        if max(positions) > n:
+            merged = [w for w in range(1, n + 1)
+                      if sum(1 for t in words[f"{key}:{w}"].split() if _LETTER.search(t)) == 2]
+            if len(merged) != 1 or max(positions) != n + 1:
+                raise RuntimeError(f"roots: can't align {key}: positions up to {max(positions)} for {n} words")
+            k = merged[0]
+            if positions.get(k + 1):
+                raise RuntimeError(f"roots: {key}: second half of merged word {k} has a root")
+            positions = {(p if p <= k else p - 1): r for p, r in positions.items() if p != k + 1}
+        for pos, root in positions.items():
+            out[f"{key}:{pos}"] = root
+    return out
+
+
+def convert_roots(out: Path) -> None:
+    with zipfile.ZipFile(ROOTS_ZIP) as z, tempfile.TemporaryDirectory() as tmp:
+        z.extract("word-root.db", tmp)
+        db = sqlite3.connect(Path(tmp) / "word-root.db")
+        rows = db.execute("SELECT w.word_location, r.arabic_trilateral FROM root_words w "
+                          "JOIN roots r ON r.id = w.root_id").fetchall()
+        db.close()
+    roots = {}
+    for loc, root in rows:
+        if loc in roots:
+            raise RuntimeError(f"roots: {loc} has two roots")
+        roots[loc] = " ".join(root.split())  # upstream pads letters with runs of spaces
+    words = json.loads((out / "qul" / "words-uthmani.json").read_text(encoding="utf-8"))
+    aligned = align_roots(roots, words)
+    (out / "qul" / "words-root.json").write_text(
+        json.dumps(aligned, ensure_ascii=False, sort_keys=True, indent=0) + "\n", encoding="utf-8")
+    print(f"roots: {len(aligned)} words")
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--out", type=Path, default=HERE / "sources")
@@ -205,6 +270,7 @@ def main() -> int:
             if r.get("quran_com_recitation") is not None:
                 fetch_recitation(r["quran_com_recitation"], args.out)
     prepare(reciters, args.out)
+    convert_roots(args.out)
     return 0
 
 

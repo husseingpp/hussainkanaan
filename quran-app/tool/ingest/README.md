@@ -22,7 +22,7 @@ python3 tool/ingest/ingest.py          # verifies against sources.lock.json, the
 | `tanzil/quran-simple-clean.xml` | Tanzil Simple Clean text, the basis of `search_text` |
 | `tanzil/translation.en.qarai.txt` | The bundled translation: Ali Quli Qara'i (English). **Check redistribution rights with the translator/publisher before a store release;** Tanzil's copy doesn't state a license |
 | `qul/words-*.json` | Quran Foundation API (api.quran.com v4): word text, QCF v1 glyphs, word-by-word English, v1 page/line layout |
-| `qul/words-root.json` | Optional: word roots. Not in the public API; QUL's morphology download needs a sign-in |
+| `qul/words-root.json` | Word roots, converted from `vendor/qul-word-root.db.zip` (QUL morphology; committed because QUL downloads need a sign-in). **Check its license before release:** QUL's morphology derives from the Quranic Arabic Corpus, whose data has its own terms |
 | `segments/<slug>.json` | Word timing, cleaned from `quran-com/recitation-<id>.json` |
 | `calendar/events.json` | The calendar event pack (see below) |
 
@@ -37,6 +37,7 @@ When an upstream source changes, `ingest.py` refuses to build. Review the change
 - **Word timing (Tier A).** Quran Foundation segments exist for 12 recitations. They're clean for 98.7–99.5% of ayahs in murattal recordings and 89–91% in mujawwad ones, because mujawwad repeats phrases. Defective ayahs are dropped whole and never repaired: missing or out-of-range word numbers (often around muqatta'at letters), zero-length words, or overlaps. Each dropped ayah and the reason is listed in `sources/quran-com/<slug>.report.json`. A reciter is Tier A at 98% or more coverage, and ayahs without word timing fall back to whole-ayah highlight. Result: 10 reciters are Tier A. The two mujawwad recitations and Parhizgar are Tier B.
 - **Timing only matches its own audio.** The segments are cut against specific files: `verses.quran.com/<Reciter>/mp3/` for 9 recitations, and everyayah folders (via a quranicaudio.com mirror) for Husary 64kbps, Husary Muallim and Tablawi. `reciters.json` plays exactly those files, and `fetch_sources.py` refuses a mismatch. **Still to verify:** that the everyayah.com copies are byte-identical to the mirror the timings were made against.
 - **Word text vs Tanzil.** The API's word split agrees with Tanzil's ayah text on every ayah except four, all known Madani spelling conventions: 2:181, 8:6 and 13:37 write "بعد ما" as one word, and 37:130 writes "إل ياسين" as one word. Follow Mode should render from `words`, and the Reading View from `ayahs.text_uthmani`.
+- **Word roots.** 50,298 words have a root. The other 27,131 are particles and pronouns, which have none. QUL numbers words the Quranic Arabic Corpus way, which splits "بعد ما" in two, so in 2:181, 8:6 and 13:37 every root after it was one word off. `fetch_sources.py` realigns those ayahs, and only ayahs whose roots run past the last word. 5:52 and 37:130 also contain a written break but were already aligned, and are left alone.
 - **Sajdas.** Tanzil marks 4 obligatory and 11 recommended, and puts Fussilat's obligatory sajda at 41:38. Following Shia references (project owner's decision, 2026-09-29), `overrides.json` moves it to **41:37**. The ingest fails if Tanzil ever stops having a sajda at 41:38, so the correction can't silently go stale.
 
 ## Calendar pack
