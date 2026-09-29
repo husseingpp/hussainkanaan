@@ -45,7 +45,9 @@ dependencies:
   crypto: ^3.0.7
   just_audio: ^0.10.6
   audio_session: ^0.2.4
-  permission_handler: ^13.0.2
+  # Pinned: 13.x pulls permission_handler_android 14.x, which needs Android
+  # compileSdk 37, beyond what this Flutter's Android Gradle plugin supports (36).
+  permission_handler: 12.0.3
   device_info_plus: ^13.2.0
   audio_service: ^0.18.19
 
