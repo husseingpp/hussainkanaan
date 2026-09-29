@@ -1,0 +1,11 @@
+{
+  "_comment": "Deliberate corrections applied on top of upstream sources. Each one names what it replaces, so the ingest fails if upstream changes underneath it.",
+  "sajdas": [
+    {
+      "from": "41:38",
+      "to": "41:37",
+      "type": "obligatory",
+      "reason": "Jafari fiqh: the obligatory sajda of Fussilat is on ayah 37. Tanzil follows the other placement (38). Chosen by the project owner, 2026-09-29."
+    }
+  ]
+}

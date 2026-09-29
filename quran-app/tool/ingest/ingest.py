@@ -131,9 +131,22 @@ def marker_lookup(markers: list[tuple[int, int, int]], name: str):
     return lookup
 
 
+def apply_sajda_overrides(sajdas: dict[tuple[int, int], str], overrides: list[dict]) -> None:
+    for o in overrides:
+        src_key = tuple(int(x) for x in o["from"].split(":"))
+        dst_key = tuple(int(x) for x in o["to"].split(":"))
+        check(src_key in sajdas, f"sajda override: upstream has no sajda at {o['from']} any more; re-check it")
+        check(dst_key not in sajdas, f"sajda override: {o['to']} already has a sajda")
+        check(o["type"] in ("recommended", "obligatory") and o.get("reason"), f"sajda override {o}: type and reason")
+        del sajdas[src_key]
+        sajdas[dst_key] = o["type"]
+
+
 def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar: bool,
-          reciters_path: Path = HERE / "reciters.json") -> dict:
+          reciters_path: Path = HERE / "reciters.json", overrides_path: Path = HERE / "overrides.json") -> dict:
     meta = parse_metadata(src.metadata)
+    overrides = json.loads(overrides_path.read_text(encoding="utf-8")) if overrides_path.exists() else {}
+    apply_sajda_overrides(meta.sajdas, overrides.get("sajdas", []))
     surahs = meta.surahs
 
     # ---- metadata self-consistency
@@ -275,6 +288,7 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
             "schema_version": str(SCHEMA_VERSION),
             "sources": json.dumps(fingerprint, sort_keys=True),
             "strict": "1" if strict else "0",
+            "overrides": json.dumps(overrides.get("sajdas", []), ensure_ascii=False, sort_keys=True),
         }
         if calendar:
             meta_rows["calendar_version"] = calendar["version"]
@@ -435,6 +449,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--sources", type=Path, default=HERE / "sources")
     p.add_argument("--out", type=Path, default=APP_ROOT / "assets" / "db" / "content.db")
     p.add_argument("--reciters", type=Path, default=HERE / "reciters.json")
+    p.add_argument("--overrides", type=Path, default=HERE / "overrides.json")
     p.add_argument("--lock", type=Path, default=HERE / "sources.lock.json")
     p.add_argument("--update-lock", action="store_true", help="re-pin the sources' sha256 in the lock file")
     p.add_argument("--no-lock", action="store_true", help="skip the lock check (tests and experiments)")
@@ -446,7 +461,8 @@ def main(argv: list[str] | None = None) -> int:
         if not args.no_lock:
             verify_lock(src, args.lock, args.update_lock)
         report = build(src, args.out, strict=not args.partial,
-                       allow_unreviewed_calendar=args.allow_unreviewed_calendar, reciters_path=args.reciters)
+                       allow_unreviewed_calendar=args.allow_unreviewed_calendar, reciters_path=args.reciters,
+                       overrides_path=args.overrides)
     except (BuildError, SourceError) as e:
         print(f"ingest failed: {e}", file=sys.stderr)
         return 1

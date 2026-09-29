@@ -37,6 +37,7 @@ void main() {
       '--sources', 'tool/ingest/tests/fixtures/sources',
       '--out', built.path,
       '--reciters', 'tool/ingest/tests/fixtures/reciters.json',
+      '--overrides', 'tool/ingest/tests/fixtures/overrides.json',
       '--no-lock', '--partial', '--allow-unreviewed-calendar',
     ]);
     expect(r.exitCode, 0, reason: '${r.stdout}${r.stderr}');

@@ -10,7 +10,8 @@ never runs it: a plain `ingest.py` then checks the result against
 sources.lock.json, so an upstream change can't slip into a build unnoticed.
 
 Writes:
-  tanzil/quran-data.xml, quran-uthmani.xml, quran-simple-clean.xml
+  tanzil/quran-data.xml, quran-uthmani.xml, quran-simple-clean.xml,
+  tanzil/translation.en.qarai.txt
                                   XML, not .txt: the .txt export glues the
                                   bismillah onto ayah 1 of every surah
 Location-keyed (see sources.py):
@@ -47,6 +48,9 @@ TANZIL = {
     "quran-simple-clean.xml":
         "https://tanzil.net/pub/download/index.php?quranType=simple-clean&outType=xml&agree=true",
 }
+# The one bundled translation: Ali Quli Qara'i. Tanzil's translation XML is
+# not well-formed (its comment block contains "--"), so take the .txt.
+TRANSLATION = ("translation.en.qarai.txt", "https://tanzil.net/trans/?transID=en.qarai&type=txt-2")
 HERE = Path(__file__).resolve().parent
 
 
@@ -71,7 +75,8 @@ def fetch_tanzil(out: Path) -> None:
     (out / "tanzil").mkdir(parents=True, exist_ok=True)
     for name, url in TANZIL.items():
         (out / "tanzil" / name).write_bytes(download(url))
-    print("tanzil: " + ", ".join(TANZIL))
+    (out / "tanzil" / TRANSLATION[0]).write_bytes(download(TRANSLATION[1]))
+    print("tanzil: " + ", ".join([*TANZIL, TRANSLATION[0]]))
 
 
 def paged(path: str, key: str, **params) -> list[dict]:

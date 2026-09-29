@@ -17,5 +17,6 @@
   "segments/tablawi.json": "1d72d26005107ad86e85a3e1c549ae3a323f29b50865706986619de8cd7f3298",
   "tanzil/quran-data.xml": "8867c1d88191472adec9db694b3cd9f135b1a2ef580574d32cf888dcb22c5c7a",
   "tanzil/quran-simple-clean.xml": "140787b7c399b11d54bfa72c237075916084232efa8a4cddf704cc8a2a74b1fe",
-  "tanzil/quran-uthmani.xml": "203f0f1bf3158b1e5be4ab9f8f6870e570aab6d9a626fe6192a70b75d4afe0fd"
+  "tanzil/quran-uthmani.xml": "203f0f1bf3158b1e5be4ab9f8f6870e570aab6d9a626fe6192a70b75d4afe0fd",
+  "tanzil/translation.en.qarai.txt": "1207b98ee7ae47891b4dd01b608416da2278820acf54cdaf3943d0a6f9823fdf"
 }

@@ -16,6 +16,7 @@ from normalize import normalize  # noqa: E402
 
 FIXTURES = HERE / "fixtures" / "sources"
 RECITERS = HERE / "fixtures" / "reciters.json"
+NO_OVERRIDES = HERE / "fixtures" / "overrides.json"
 VECTORS = HERE.parent.parent.parent / "schema" / "search_normalization_vectors.json"
 
 
@@ -39,7 +40,7 @@ class IngestTest(unittest.TestCase):
     def build(self, *extra):
         with _capture_stderr() as out:
             code = ingest.main(["--sources", str(self.sources), "--out", str(self.out), "--no-lock",
-                                "--reciters", str(RECITERS), "--partial", "--allow-unreviewed-calendar", *extra])
+                                "--reciters", str(RECITERS), "--overrides", str(NO_OVERRIDES), "--partial", "--allow-unreviewed-calendar", *extra])
         self.output = out.getvalue()
         return code
 
@@ -135,7 +136,7 @@ class IngestTest(unittest.TestCase):
     def test_strict_mode_requires_the_whole_mushaf(self):
         with _capture_stderr() as err:
             code = ingest.main(["--sources", str(self.sources), "--out", str(self.out), "--no-lock",
-                                "--reciters", str(RECITERS), "--allow-unreviewed-calendar"])
+                                "--reciters", str(RECITERS), "--overrides", str(NO_OVERRIDES), "--allow-unreviewed-calendar"])
         self.assertEqual(code, 1)
         self.assertIn("expected 114 surahs", err.getvalue())
 
@@ -160,6 +161,20 @@ class IngestTest(unittest.TestCase):
         self.assertEqual(self.db().execute(
             "SELECT sync_tier, word_timed_ayahs FROM reciters WHERE slug='alafasy'").fetchone(), ("B", 10))
 
+    def test_sajda_override_moves_the_sajda(self):
+        ov = self.tmp / "overrides.json"
+        ov.write_text(json.dumps({"sajdas": [
+            {"from": "112:2", "to": "112:3", "type": "obligatory", "reason": "test"}]}), encoding="utf-8")
+        self.assertEqual(self.build("--overrides", str(ov)), 0)
+        self.assertEqual(self.db().execute(
+            "SELECT surah_id, ayah_no, sajda FROM ayahs WHERE sajda IS NOT NULL").fetchall(), [(112, 3, "obligatory")])
+
+    def test_sajda_override_fails_when_upstream_moved(self):
+        ov = self.tmp / "overrides.json"
+        ov.write_text(json.dumps({"sajdas": [
+            {"from": "112:4", "to": "112:3", "type": "obligatory", "reason": "test"}]}), encoding="utf-8")
+        self.assertBuildFails("--overrides", str(ov), contains="no sajda at 112:4")
+
     def test_half_timed_ayah_fails(self):
         self.edit_json("segments/alafasy.json", lambda d: d.__setitem__("1:7", d["1:7"][:-1]))
         self.assertBuildFails(contains="word timings cover 8/9 words")
@@ -177,7 +192,7 @@ class IngestTest(unittest.TestCase):
     def test_unreviewed_calendar_needs_explicit_flag(self):
         with _capture_stderr() as err:
             code = ingest.main(["--sources", str(self.sources), "--out", str(self.out), "--no-lock",
-                                "--reciters", str(RECITERS), "--partial"])
+                                "--reciters", str(RECITERS), "--overrides", str(NO_OVERRIDES), "--partial"])
         self.assertEqual(code, 1)
         self.assertIn("not marked reviewed", err.getvalue())
 
@@ -193,7 +208,7 @@ class IngestTest(unittest.TestCase):
     def test_lock_detects_changed_source(self):
         lock = self.tmp / "sources.lock.json"
         base = ["--sources", str(self.sources), "--out", str(self.out), "--lock", str(lock),
-                "--reciters", str(RECITERS), "--partial", "--allow-unreviewed-calendar"]
+                "--reciters", str(RECITERS), "--overrides", str(NO_OVERRIDES), "--partial", "--allow-unreviewed-calendar"]
         with _capture_stderr():
             self.assertEqual(ingest.main(base + ["--update-lock"]), 0)
         with _capture_stderr():
