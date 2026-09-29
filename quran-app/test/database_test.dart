@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_app/data/content_db.dart';
 import 'package:quran_app/data/models.dart';
+import 'package:quran_app/data/reader_settings.dart';
 import 'package:quran_app/data/user_db.dart';
+import 'package:quran_app/data/user_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// Serves assets from real files, standing in for the app bundle.
@@ -93,6 +95,63 @@ void main() {
         ContentDb.open(factory: databaseFactoryFfi, directory: dir.path, bundle: _FileBundle({})),
         throwsA(isA<ContentDbMissing>()),
       );
+    });
+  });
+
+  group('ContentDb reader queries', () {
+    late ContentDb db;
+    setUpAll(() async {
+      db = await ContentDb.open(factory: databaseFactoryFfi, directory: (await tmp.createTemp('app')).path, bundle: bundle());
+    });
+    tearDownAll(() => db.close());
+
+    test('a page lists titles, bismillah and ayat lines with words then medallions', () async {
+      final page = await db.page(2);
+      expect(page.lines.map((l) => l.kind),
+          [PageLineKind.surahName, PageLineKind.bismillah, PageLineKind.ayat, PageLineKind.ayat]);
+      expect(page.lines.first.surah, 112);
+      final line3 = page.lines[2].glyphs;
+      expect(line3.map((g) => g.position), [1, 2, 3, 4, 1000]);
+      expect(line3.last.isAyahEnd, isTrue);
+      expect(line3.last.text, '1');
+      expect(line3.first.qcf, isNotNull);
+      expect(page.firstAyah, const AyahRef(112, 1));
+    });
+
+    test('juz starts and page lookup', () async {
+      final juzs = await db.juzStarts();
+      expect(juzs.map((j) => (j.juz, j.start, j.page)), [(1, const AyahRef(1, 1), 1), (2, const AyahRef(112, 1), 2)]);
+      expect(await db.pageOf(const AyahRef(112, 3)), 3);
+    });
+
+    test('ayahs of a surah, with and without the translation', () async {
+      final plain = await db.ayahsOfSurah(112);
+      expect(plain.map((a) => a.number), [1, 2, 3, 4]);
+      expect(plain.first.translation, isNull);
+      expect(plain[1].sajda, 'recommended');
+      final withT = await db.ayahsOfSurah(112, withTranslation: true);
+      expect(withT.first.translation, '[fixture translation 112:1]');
+    });
+  });
+
+  group('UserRepository', () {
+    test('settings and the latest reading position persist', () async {
+      final dir = await tmp.createTemp('app');
+      var now = DateTime(2026, 1, 1);
+      final repo = UserRepository(
+        await UserDb.open(factory: databaseFactoryFfi, directory: dir.path, bundle: bundle()),
+        clock: () => now,
+      );
+      expect((await repo.loadSettings()).view, ReaderView.page);
+      await repo.saveSettings(const ReaderSettings(view: ReaderView.reading, fontScale: 1.3));
+      expect((await repo.loadSettings()).fontScale, closeTo(1.3, 1e-9));
+
+      expect(await repo.lastPosition(), isNull);
+      await repo.savePosition(const ReadingPosition(view: ReaderView.page, ayah: AyahRef(2, 255), page: 42));
+      now = now.add(const Duration(minutes: 1));
+      await repo.savePosition(const ReadingPosition(view: ReaderView.reading, ayah: AyahRef(36, 1), page: 440));
+      final last = await repo.lastPosition();
+      expect((last!.view, last.ayah, last.page), (ReaderView.reading, const AyahRef(36, 1), 440));
     });
   });
 

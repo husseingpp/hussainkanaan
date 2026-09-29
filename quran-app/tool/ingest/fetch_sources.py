@@ -18,7 +18,7 @@ Location-keyed (see sources.py):
   qul/words-uthmani.json          word text, end-of-ayah markers excluded
   qul/words-qcf-v1.json           QCF v1 glyphs; the ayah's end marker is position n+1
   qul/words-translation-en.json   word-by-word English
-  qul/words-layout-v1.json        {"page": p, "line": l} per word (Page View, v1 mus'haf)
+  qul/words-layout-v1.json        {"page": p, "line": l} per word and end marker (n+1)
   quran-com/recitation-<id>.json  raw segments + audio paths as served
   segments/<slug>.json            clean, fully word-timed ayahs only (for reciters.json
                                   entries with "quran_com_recitation")
@@ -110,9 +110,11 @@ def fetch_words(out: Path) -> None:
             for w in words:
                 loc = f"{key}:{w['position']}"
                 qcf[loc] = w["code_v1"]
+                # Layout covers the end-of-ayah medallion too (position n+1):
+                # Page View has to know which line it sits on.
+                layout[loc] = {"page": w["v1_page"], "line": w["line_number"]}
                 if w["char_type_name"] == "word":
                     uthmani[loc] = w["text_uthmani"]
-                    layout[loc] = {"page": w["v1_page"], "line": w["line_number"]}
                     if (w.get("translation") or {}).get("text"):
                         wbw[loc] = w["translation"]["text"]
                 elif w["char_type_name"] != "end":

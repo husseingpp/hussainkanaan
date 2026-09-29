@@ -4,7 +4,9 @@ import 'package:sqflite/sqflite.dart';
 
 import 'content_db.dart';
 import 'models.dart';
+import 'reader_settings.dart';
 import 'user_db.dart';
+import 'user_repository.dart';
 
 /// sqflite on mobile, sqflite_common_ffi on desktop; chosen in main().
 final databaseFactoryProvider = Provider<DatabaseFactory>(
@@ -36,3 +38,38 @@ final userDbProvider = FutureProvider<UserDb>((ref) async {
 final surahsProvider = FutureProvider<List<Surah>>(
   (ref) async => (await ref.watch(contentDbProvider.future)).surahs(),
 );
+
+final userRepositoryProvider = FutureProvider<UserRepository>(
+  (ref) async => UserRepository(await ref.watch(userDbProvider.future)),
+);
+
+final juzStartsProvider = FutureProvider<List<JuzStart>>(
+  (ref) async => (await ref.watch(contentDbProvider.future)).juzStarts(),
+);
+
+final surahAyahsProvider = FutureProvider.family<List<Ayah>, ({int surah, bool translation})>(
+  (ref, q) async =>
+      (await ref.watch(contentDbProvider.future)).ayahsOfSurah(q.surah, withTranslation: q.translation),
+);
+
+final mushafPageProvider = FutureProvider.family<MushafPage, int>(
+  (ref, page) async => (await ref.watch(contentDbProvider.future)).page(page),
+);
+
+final lastPositionProvider = FutureProvider<ReadingPosition?>(
+  (ref) async => (await ref.watch(userRepositoryProvider.future)).lastPosition(),
+);
+
+/// Reader settings, loaded from the user DB and written back on every change.
+class SettingsNotifier extends AsyncNotifier<ReaderSettings> {
+  @override
+  Future<ReaderSettings> build() async => (await ref.watch(userRepositoryProvider.future)).loadSettings();
+
+  Future<void> change(ReaderSettings Function(ReaderSettings) edit) async {
+    final next = edit(state.value ?? const ReaderSettings());
+    state = AsyncData(next);
+    await (await ref.read(userRepositoryProvider.future)).saveSettings(next);
+  }
+}
+
+final settingsProvider = AsyncNotifierProvider<SettingsNotifier, ReaderSettings>(SettingsNotifier.new);

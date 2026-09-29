@@ -224,10 +224,15 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
     layout = {}
     if src.words_layout:
         layout = parse_word_layout(src.words_layout)
-        bad = [loc for loc in layout if loc[:2] not in word_count or not 1 <= loc[2] <= word_count[loc[:2]]]
+        # Positions 1..n are words; n+1 is the ayah's end-of-ayah medallion.
+        bad = [loc for loc in layout if loc[:2] not in word_count or not 1 <= loc[2] <= word_count[loc[:2]] + 1]
         check(not bad, f"word layout: unknown words {bad[:3]}")
-        missing = [(s, a, w) for (s, a), n in word_count.items() for w in range(1, n + 1) if (s, a, w) not in layout]
+        missing = [(s, a, w) for (s, a), n in word_count.items() for w in range(1, n + 2) if (s, a, w) not in layout]
         check(not missing, f"word layout missing for {len(missing)} words, first {missing[:3]}")
+    page_lines = build_page_lines(layout, surahs, word_count, strict) if layout else {}
+    if layout:
+        wrong = [k for k in keys if layout[(*k, 1)][0] != page_of(k)]
+        check(not wrong, f"word layout and Tanzil disagree on the page of {len(wrong)} ayahs, first {wrong[:3]}")
     if qcf:
         missing = [(s, a, w) for (s, a), n in word_count.items() for w in range(1, n + 1) if (s, a, w) not in qcf]
         check(not missing, f"QCF glyphs missing for {len(missing)} words, first {missing[:3]}")
@@ -304,10 +309,11 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
         for k in keys:
             n = word_count[k]
             qcf_text = "".join(qcf[(*k, w)] for w in range(1, n + 2) if (*k, w) in qcf) or None
+            end_page, end_line = layout.get((*k, n + 1), (None, None))
             db.execute(
-                "INSERT INTO ayahs VALUES (?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO ayahs VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (ayah_id[k], k[0], k[1], uthmani[k], normalize(simple[k]), qcf_text,
-                 page_of(k), juz_of(k), quarter_of(k), meta.sajdas.get(k)),
+                 page_of(k), juz_of(k), quarter_of(k), meta.sajdas.get(k), end_page, end_line),
             )
         word_id = 0
         for k in keys:
@@ -321,6 +327,8 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
                      page, line),
                 )
         db.execute("INSERT INTO ayahs_fts (ayahs_fts) VALUES ('rebuild')")
+        db.executemany("INSERT INTO page_lines VALUES (?,?,?,?)",
+                       [(p, ln, kind, sid) for (p, ln), (kind, sid) in sorted(page_lines.items())])
 
         for rid, r in enumerate(sorted(reciters, key=lambda r: r["slug"]), 1):
             db.execute(
@@ -371,6 +379,48 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
         "translation": src.translation.name if src.translation else None,
         "calendar": calendar["version"] if calendar else None,
     }
+
+
+MUSHAF_LINES = 15
+
+
+def build_page_lines(layout: dict, surahs: list, word_count: dict, strict: bool) -> dict:
+    """Account for every line of every page: ayat, a surah title, or the bismillah.
+
+    A surah's title sits two lines above its first word and the bismillah one
+    line above (Al-Fatiha's bismillah is its first ayah; At-Tawbah has none,
+    so its title is directly above). When a surah starts on line 2, its title
+    is the last line of the previous page, as in the printed mus'haf.
+    """
+    lines: dict[tuple[int, int], tuple[str, int | None]] = {}
+    for (s, a, w), (p, ln) in layout.items():
+        check(1 <= ln <= MUSHAF_LINES, f"layout: {s}:{a}:{w} on line {ln}")
+        lines[(p, ln)] = ("ayat", None)
+
+    def put(page: int, line: int, kind: str, sid: int) -> None:
+        if line < 1:
+            page, line = page - 1, MUSHAF_LINES + line
+        check(page >= 1 and (page, line) not in lines,
+              f"surah {sid}: its {kind} line {page}:{line} is already taken")
+        lines[(page, line)] = (kind, sid)
+
+    for surah in surahs:
+        page, line = layout[(surah.id, 1, 1)]
+        if surah.id in (1, 9):
+            put(page, line - 1, "surah_name", surah.id)
+        else:
+            put(page, line - 1, "bismillah", surah.id)
+            put(page, line - 2, "surah_name", surah.id)
+
+    if strict:
+        pages = sorted({p for p, _ in lines})
+        check(pages == list(range(1, CANON["pages"] + 1)), "layout does not cover pages 1..604")
+        for p in pages:
+            used = sorted(ln for q, ln in lines if q == p)
+            # Pages 1 and 2 are the short, centred opening pages.
+            expected = list(range(1, used[-1] + 1)) if p <= 2 else list(range(1, MUSHAF_LINES + 1))
+            check(used == expected, f"page {p}: lines {sorted(set(expected) - set(used))} unaccounted for")
+    return lines
 
 
 def load_calendar(path: Path, ayah_id: dict, allow_unreviewed: bool) -> dict:

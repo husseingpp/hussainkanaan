@@ -2,27 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_app/app.dart';
-import 'package:quran_app/data/models.dart';
-import 'package:quran_app/data/providers.dart';
 
-const _surahs = [
-  Surah(
-    id: 1,
-    nameAr: 'الفاتحة',
-    nameEn: 'The Opening',
-    nameTranslit: 'Al-Faatiha',
-    isMeccan: true,
-    ayahCount: 7,
-    pageStart: 1,
-  ),
-];
+import 'support/fakes.dart';
 
 Future<void> _pumpAt(WidgetTester tester, double width) async {
   tester.view.physicalSize = Size(width, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(ProviderScope(
-    overrides: [surahsProvider.overrideWith((ref) async => _surahs)],
+    overrides: [...overridesForIndex()],
     child: const QuranApp(),
   ));
   await tester.pumpAndSettle();

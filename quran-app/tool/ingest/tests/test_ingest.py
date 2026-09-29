@@ -115,8 +115,31 @@ class IngestTest(unittest.TestCase):
 
     def test_word_layout_is_imported(self):
         self.build()
-        self.assertEqual(self.db().execute(
-            "SELECT page, line FROM words WHERE ayah_id = 6222 AND position = 1").fetchone(), (2, 2))
+        db = self.db()
+        self.assertEqual(db.execute("SELECT page, line FROM words WHERE ayah_id = 6222 AND position = 1").fetchone(),
+                         (2, 3))
+        self.assertEqual(db.execute("SELECT end_page, end_line FROM ayahs WHERE id = 6224").fetchone(), (3, 1))
+
+    def test_page_lines_place_titles_and_bismillah(self):
+        self.build()
+        rows = self.db().execute("SELECT page, line, kind, surah_id FROM page_lines WHERE kind != 'ayat'").fetchall()
+        # Al-Fatiha: title only (its bismillah is ayah 1). Al-Ikhlas: title, then bismillah.
+        self.assertEqual(rows, [(1, 1, "surah_name", 1), (2, 1, "surah_name", 112), (2, 2, "bismillah", 112)])
+
+    def test_title_colliding_with_ayat_fails(self):
+        # Move 112:1 up to line 2: its bismillah would land on line 1 and the title on page 1's line 15,
+        # but pushing it to line 1 leaves no room at all.
+        def move(d):
+            for k in [k for k in d if k.startswith("112:1:")]:
+                d[k]["line"] = 2
+            for k in [k for k in d if k.startswith("112:2:")]:
+                d[k]["line"] = 1
+        self.edit_json("qul/words-layout-v1.json", move)
+        self.assertBuildFails(contains="line 2:1 is already taken")
+
+    def test_layout_page_must_agree_with_tanzil(self):
+        self.edit_json("qul/words-layout-v1.json", lambda d: d["112:3:1"].update(page=2, line=5))
+        self.assertBuildFails(contains="disagree on the page")
 
     def test_calendar_multi_date_and_amaal_links(self):
         self.build()

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/breakpoints.dart';
 import '../common/phase_placeholder.dart';
-import '../reader/surah_list_screen.dart';
+import '../reader/quran_index_screen.dart';
 
 class _Destination {
   const _Destination(this.label, this.icon, this.selectedIcon, this.builder);
@@ -15,7 +15,7 @@ class _Destination {
 
 final _destinations = <_Destination>[
   _Destination('المصحف', Icons.menu_book_outlined, Icons.menu_book,
-      (_) => const SurahListScreen()),
+      (_) => const QuranIndexScreen()),
   _Destination('الاستماع', Icons.headphones_outlined, Icons.headphones,
       (_) => const PhasePlaceholder(title: 'الاستماع', phase: 'Phase 2 — Listen Mode')),
   _Destination('الصلاة', Icons.schedule_outlined, Icons.schedule,

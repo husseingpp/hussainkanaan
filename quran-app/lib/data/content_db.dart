@@ -67,6 +67,86 @@ class ContentDb {
     return rows.map(Surah.fromRow).toList(growable: false);
   }
 
+  static const pageCount = 604;
+
+  Future<List<Ayah>> ayahsOfSurah(int surah, {bool withTranslation = false}) async {
+    final rows = await _db.rawQuery(
+      'SELECT a.surah_id, a.ayah_no, a.text_uthmani, a.page, a.juz, a.sajda, '
+      '${withTranslation ? 't.text' : 'NULL'} AS translation FROM ayahs a '
+      '${withTranslation ? 'LEFT JOIN translation_ayahs t ON t.ayah_id = a.id AND t.translation_id = 1 ' : ''}'
+      'WHERE a.surah_id = ? ORDER BY a.ayah_no',
+      [surah],
+    );
+    return rows.map(Ayah.fromRow).toList(growable: false);
+  }
+
+  Future<List<JuzStart>> juzStarts() async {
+    final rows = await _db.rawQuery(
+      'SELECT a.juz, a.surah_id, a.ayah_no, a.page FROM ayahs a '
+      'JOIN (SELECT juz, min(id) AS id FROM ayahs GROUP BY juz) f ON f.id = a.id ORDER BY a.juz',
+    );
+    return [
+      for (final r in rows)
+        JuzStart(
+          juz: r['juz']! as int,
+          start: AyahRef(r['surah_id']! as int, r['ayah_no']! as int),
+          page: r['page']! as int,
+        ),
+    ];
+  }
+
+  Future<int> pageOf(AyahRef ref) async {
+    final rows = await _db.rawQuery(
+      'SELECT page FROM ayahs WHERE surah_id = ? AND ayah_no = ?',
+      [ref.surah, ref.ayah],
+    );
+    return rows.isEmpty ? 1 : rows.first['page']! as int;
+  }
+
+  /// Every line of a printed page, with its words and medallions in reading order.
+  Future<MushafPage> page(int number) async {
+    final lineRows = await _db.rawQuery(
+      'SELECT line, kind, surah_id FROM page_lines WHERE page = ? ORDER BY line',
+      [number],
+    );
+    final glyphRows = await _db.rawQuery(
+      'SELECT w.line, a.surah_id, a.ayah_no, w.position, w.text_uthmani AS text, w.text_qcf AS qcf, '
+      '0 AS is_end FROM words w JOIN ayahs a ON a.id = w.ayah_id WHERE w.page = ? '
+      'UNION ALL '
+      'SELECT a.end_line, a.surah_id, a.ayah_no, 1000, a.ayah_no, substr(a.text_qcf, -1), 1 '
+      'FROM ayahs a WHERE a.end_page = ? '
+      'ORDER BY 1, 2, 3, 4',
+      [number, number],
+    );
+    final byLine = <int, List<PageGlyph>>{};
+    for (final r in glyphRows) {
+      final isEnd = r['is_end'] == 1;
+      byLine.putIfAbsent(r['line']! as int, () => []).add(PageGlyph(
+            ayah: AyahRef(r['surah_id']! as int, r['ayah_no']! as int),
+            position: r['position']! as int,
+            text: '${r['text']}',
+            qcf: r['qcf'] as String?,
+            isAyahEnd: isEnd,
+          ));
+    }
+    return MushafPage(
+      number: number,
+      lines: [
+        for (final r in lineRows)
+          PageLine(
+            number: r['line']! as int,
+            kind: switch (r['kind']) {
+              'surah_name' => PageLineKind.surahName,
+              'bismillah' => PageLineKind.bismillah,
+              _ => PageLineKind.ayat,
+            },
+            surah: r['surah_id'] as int?,
+            glyphs: byLine[r['line']! as int] ?? const [],
+          ),
+      ],
+    );
+  }
+
   /// Full-text search over the undiacritized text. Every token is quoted so
   /// user input can never be parsed as FTS5 query syntax.
   Future<List<AyahRef>> search(String query, {int limit = 50}) async {

@@ -46,3 +46,99 @@ class AyahRef {
   @override
   String toString() => '$surah:$ayah';
 }
+
+class Ayah {
+  const Ayah({
+    required this.surah,
+    required this.number,
+    required this.text,
+    required this.page,
+    required this.juz,
+    this.sajda,
+    this.translation,
+  });
+
+  factory Ayah.fromRow(Map<String, Object?> r) => Ayah(
+        surah: r['surah_id']! as int,
+        number: r['ayah_no']! as int,
+        text: r['text_uthmani']! as String,
+        page: r['page']! as int,
+        juz: r['juz']! as int,
+        sajda: r['sajda'] as String?,
+        translation: r['translation'] as String?,
+      );
+
+  final int surah;
+  final int number;
+  final String text;
+  final int page;
+  final int juz;
+
+  /// 'obligatory' | 'recommended' | null.
+  final String? sajda;
+  final String? translation;
+
+  AyahRef get ref => AyahRef(surah, number);
+}
+
+class JuzStart {
+  const JuzStart({required this.juz, required this.start, required this.page});
+
+  final int juz;
+  final AyahRef start;
+  final int page;
+}
+
+enum PageLineKind { ayat, surahName, bismillah }
+
+/// One word, or an end-of-ayah medallion, placed on a mus'haf line.
+class PageGlyph {
+  const PageGlyph({
+    required this.ayah,
+    required this.position,
+    required this.text,
+    this.qcf,
+    this.isAyahEnd = false,
+  });
+
+  final AyahRef ayah;
+  final int position;
+
+  /// Uthmani word text, or the ayah number for a medallion.
+  final String text;
+
+  /// QCF v1 glyph code, drawn with that page's font when it's installed.
+  final String? qcf;
+  final bool isAyahEnd;
+}
+
+class PageLine {
+  const PageLine({required this.number, required this.kind, this.surah, this.glyphs = const []});
+
+  final int number;
+  final PageLineKind kind;
+
+  /// The surah a title or bismillah line belongs to.
+  final int? surah;
+  final List<PageGlyph> glyphs;
+}
+
+class MushafPage {
+  const MushafPage({required this.number, required this.lines});
+
+  final int number;
+  final List<PageLine> lines;
+
+  /// The first ayah that starts on this page (resume and headers use it).
+  AyahRef? get firstAyah {
+    for (final line in lines) {
+      for (final g in line.glyphs) {
+        if (g.position == 1 && !g.isAyahEnd) return g.ayah;
+      }
+    }
+    for (final line in lines) {
+      if (line.glyphs.isNotEmpty) return line.glyphs.first.ayah;
+    }
+    return null;
+  }
+}

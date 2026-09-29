@@ -38,6 +38,9 @@ CREATE TABLE ayahs (
   juz           INTEGER NOT NULL,
   hizb_quarter  INTEGER NOT NULL,                       -- 1..240
   sajda         TEXT    CHECK (sajda IN ('recommended', 'obligatory')),
+  -- Where the end-of-ayah medallion sits in the v1 mus'haf (Page View).
+  end_page      INTEGER,
+  end_line      INTEGER,
   UNIQUE (surah_id, ayah_no)
 );
 CREATE INDEX ayahs_page ON ayahs (page);
@@ -64,6 +67,17 @@ CREATE TABLE words (
   line            INTEGER,
   UNIQUE (ayah_id, position)
 );
+
+-- Every line of every page of the v1 (1405H Madani) mus'haf: which lines hold
+-- ayat and which hold a surah title or the bismillah. Derived and checked by
+-- the ingest, so Page View never has to guess at gaps.
+CREATE TABLE page_lines (
+  page      INTEGER NOT NULL,
+  line      INTEGER NOT NULL,
+  kind      TEXT    NOT NULL CHECK (kind IN ('ayat', 'surah_name', 'bismillah')),
+  surah_id  INTEGER REFERENCES surahs (id),              -- set for surah_name / bismillah
+  PRIMARY KEY (page, line)
+) WITHOUT ROWID;
 
 CREATE TABLE reciters (
   id         INTEGER PRIMARY KEY,

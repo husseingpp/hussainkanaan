@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'data/providers.dart';
 import 'features/shell/app_shell.dart';
 
-class QuranApp extends StatelessWidget {
-  const QuranApp({super.key});
+class QuranApp extends ConsumerWidget {
+  const QuranApp({super.key, this.home});
+
+  /// Replaces the shell as the first screen (screenshots, deep links).
+  final Widget? home;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Night mode: the reader's theme setting drives the whole app.
+    final themeMode = ref.watch(settingsProvider.select((s) => s.value?.themeMode)) ?? ThemeMode.system;
     return MaterialApp(
       title: 'القرآن الكريم',
       debugShowCheckedModeBanner: false,
@@ -17,7 +24,8 @@ class QuranApp extends StatelessWidget {
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: _theme(Brightness.light),
       darkTheme: _theme(Brightness.dark),
-      home: const AppShell(),
+      themeMode: themeMode,
+      home: home ?? const AppShell(),
     );
   }
 }

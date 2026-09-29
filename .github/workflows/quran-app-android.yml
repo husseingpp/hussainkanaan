@@ -52,6 +52,11 @@ jobs:
       - name: Build content DB
         run: python3 tool/ingest/ingest.py
 
+      - name: Render all 604 pages (Phase 1 gate)
+        run: |
+          flutter pub get
+          flutter test tool/screenshots/render_pages_test.dart --plain-name "all 604"
+
       - name: Build APK
         run: |
           flutter pub get
@@ -71,7 +76,7 @@ jobs:
           tag_name: quran-app-android-latest
           name: "Quran app — Android test build"
           body: |
-            Installable test build of the Quran app (Phase 0: surah index only).
+            Installable test build of the Quran app (Phase 1: reader, with page view, reading view, night mode and resume).
 
             - Content DB built from the pinned sources (Tanzil + Quran Foundation), checked against `sources.lock.json`.
             - Signed with a debug key: Android will warn it's from an unknown developer. Allow installs from your browser/files app.

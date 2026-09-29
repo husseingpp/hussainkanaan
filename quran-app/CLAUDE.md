@@ -60,4 +60,9 @@ lib/
 - **Location permission** is requested when prayer times or qibla are first opened, with a plain explanation, never at launch. Manual city entry is a first-class alternative.
 
 ## Phases
-One feature per session, with a hard QA gate between phases (BLUEPRINT §10). Current: **Phase 0, data pipeline**. The ingest builds the full mus'haf from the real sources (114 surahs, 6236 ayahs, 77,429 words, 604 pages, 10 Tier A reciters), reproducibly. Bundled translation: Qara'i (English). Upstream corrections live in `tool/ingest/overrides.json`. Word roots come from the committed QUL export in `tool/ingest/vendor/`. Still open: verifying the everyayah audio copies, and the calendar dataset. See `tool/ingest/README.md`.
+One feature per session, with a hard QA gate between phases (BLUEPRINT §10).
+
+- **Phase 0, data pipeline: done.** Full mus'haf from real sources, reproducible; see `tool/ingest/README.md`. Open: verifying the everyayah audio copies, and the calendar dataset.
+- **Phase 1, reader: in progress.** Index (resume, surahs, juz, jump to page), Page View (v1 lines from `page_lines`, drawn in Amiri Quran), Reading View (resizable, translation, sajda marks), night mode, position saved as you read. Gate: the ingest proves every line of all 604 pages is accounted for, and `tool/screenshots/render_pages_test.dart` renders every page at two widths with no overflow (also run in the Android workflow). Open: the per-page QCF v1 glyph fonts (exact printed shapes; hosted on static.qurancdn.com), and a Tanzil credit (CC BY 3.0) in an About screen.
+
+Eyeball screens with `flutter test tool/screenshots/render_pages_test.dart --dart-define=OUT=<dir>`; it writes PNGs from the real content DB.
