@@ -11,7 +11,7 @@ Future<void> _pumpAt(WidgetTester tester, double width) async {
   addTearDown(tester.view.reset);
   await tester.pumpWidget(ProviderScope(
     overrides: [...overridesForIndex()],
-    child: const QuranApp(),
+    child: const QuranApp(openReaderOnLaunch: false),
   ));
   await tester.pumpAndSettle();
 }

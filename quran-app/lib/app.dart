@@ -6,10 +6,13 @@ import 'data/providers.dart';
 import 'features/shell/app_shell.dart';
 
 class QuranApp extends ConsumerWidget {
-  const QuranApp({super.key, this.home});
+  const QuranApp({super.key, this.home, this.openReaderOnLaunch = true});
 
   /// Replaces the shell as the first screen (screenshots, deep links).
   final Widget? home;
+
+  /// Open the mus'haf at the last position on launch (tests turn it off).
+  final bool openReaderOnLaunch;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,7 +28,7 @@ class QuranApp extends ConsumerWidget {
       theme: _theme(Brightness.light),
       darkTheme: _theme(Brightness.dark),
       themeMode: themeMode,
-      home: home ?? const AppShell(),
+      home: home ?? AppShell(openReaderOnLaunch: openReaderOnLaunch),
     );
   }
 }

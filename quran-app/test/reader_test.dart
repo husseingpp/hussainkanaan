@@ -18,7 +18,7 @@ Future<void> _pumpIndex(WidgetTester tester, {ReadingPosition? position}) async 
   addTearDown(tester.view.reset);
   await tester.pumpWidget(ProviderScope(
     overrides: [...overridesForIndex(position: position)],
-    child: const QuranApp(),
+    child: const QuranApp(openReaderOnLaunch: false),
   ));
   await tester.pumpAndSettle();
 }

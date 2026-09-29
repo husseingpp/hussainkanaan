@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/breakpoints.dart';
 import '../common/phase_placeholder.dart';
+import '../../data/models.dart';
+import '../../data/providers.dart';
+import '../../data/user_repository.dart';
 import '../reader/quran_index_screen.dart';
+import '../reader/reader_screen.dart';
 
 class _Destination {
   const _Destination(this.label, this.icon, this.selectedIcon, this.builder);
@@ -27,15 +32,42 @@ final _destinations = <_Destination>[
 ];
 
 /// Bottom nav below 600, a side rail above it (extended past 1000).
-class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+///
+/// On launch it opens straight into the mus'haf, at the last position read
+/// (or Al-Fatiha on first run); going back from there shows the index.
+class AppShell extends ConsumerStatefulWidget {
+  const AppShell({super.key, this.openReaderOnLaunch = true});
+
+  final bool openReaderOnLaunch;
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   var _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.openReaderOnLaunch) WidgetsBinding.instance.addPostFrameCallback((_) => _openReader());
+  }
+
+  Future<void> _openReader() async {
+    ReadingPosition? last;
+    try {
+      last = await ref.read(lastPositionProvider.future);
+    } catch (_) {
+      // No user DB yet (or unreadable): start at the beginning.
+    }
+    if (!mounted) return;
+    await Navigator.of(context).push(PageRouteBuilder<void>(
+      // No slide-in: the app should simply open on the page.
+      transitionDuration: Duration.zero,
+      pageBuilder: (_, _, _) => ReaderScreen(ayah: last?.ayah ?? const AyahRef(1, 1), page: last?.page ?? 1),
+    ));
+    ref.invalidate(lastPositionProvider);
+  }
 
   void _select(int i) => setState(() => _index = i);
 
