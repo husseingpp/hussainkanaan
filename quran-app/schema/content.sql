@@ -79,6 +79,15 @@ CREATE TABLE page_lines (
   PRIMARY KEY (page, line)
 ) WITHOUT ROWID;
 
+-- The per-page QCF v1 fonts (King Fahd Complex) are not bundled (~92 MB);
+-- the app downloads them once, on request, and checks each against this.
+CREATE TABLE qcf_fonts (
+  page    INTEGER PRIMARY KEY,
+  url     TEXT    NOT NULL,
+  bytes   INTEGER NOT NULL,
+  sha256  TEXT    NOT NULL
+);
+
 CREATE TABLE reciters (
   id         INTEGER PRIMARY KEY,
   slug       TEXT    NOT NULL UNIQUE,

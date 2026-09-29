@@ -9,11 +9,11 @@ An offline-first Quran app for Android, iOS and desktop, built with Flutter. It 
 ## Status
 
 - **Phase 0 (data pipeline): done.** The full mus'haf from Tanzil and the Quran Foundation: 6,236 ayahs, 77,429 words with roots, v1 layout for all 604 pages, Qara'i's English translation, and word timing for 12 reciters (10 of them Tier A).
-- **Phase 1 (reader): in progress.**
+- **Phase 1 (reader): done.**
   - Resume where you left off, the surah index, the juz index, and jump to a page.
-  - The printed-page view, and a resizable reading view with translation.
-  - Night mode.
-  - Still to come: the exact printed glyph fonts.
+  - The printed-page view, drawn with the original King Fahd Complex fonts after a one-time optional download, or Amiri Quran until then.
+  - A resizable reading view with translation and sajda marks.
+  - Night mode, and an About screen with credits.
 
 Android test build: https://github.com/husseingpp/hussainkanaan/releases/tag/quran-app-android-latest
 

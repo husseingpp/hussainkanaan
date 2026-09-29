@@ -198,6 +198,23 @@ class IngestTest(unittest.TestCase):
             {"from": "112:4", "to": "112:3", "type": "obligatory", "reason": "test"}]}), encoding="utf-8")
         self.assertBuildFails("--overrides", str(ov), contains="no sajda at 112:4")
 
+    def test_qcf_fonts_are_recorded_for_download(self):
+        self.build()
+        rows = self.db().execute("SELECT page, url, bytes, length(sha256) FROM qcf_fonts").fetchall()
+        self.assertEqual([r[0] for r in rows], [1, 2, 3])
+        self.assertTrue(rows[0][1].endswith("/v1/ttf/p1.ttf"))
+        self.assertEqual(rows[0][2], (self.sources / "qcf-v1" / "p1.ttf").stat().st_size)
+        self.assertEqual(rows[0][3], 64)
+
+    def test_font_missing_a_glyph_on_its_page_fails(self):
+        # Page 2's font doesn't have page 1's glyphs.
+        shutil.copy(self.sources / "qcf-v1" / "p2.ttf", self.sources / "qcf-v1" / "p1.ttf")
+        self.assertBuildFails(contains="QCF font p1 lacks")
+
+    def test_non_font_file_fails(self):
+        (self.sources / "qcf-v1" / "p3.ttf").write_bytes(b"<html>not found</html>")
+        self.assertBuildFails(contains="QCF font p3: not a TrueType font")
+
     def test_half_timed_ayah_fails(self):
         self.edit_json("segments/alafasy.json", lambda d: d.__setitem__("1:7", d["1:7"][:-1]))
         self.assertBuildFails(contains="word timings cover 8/9 words")

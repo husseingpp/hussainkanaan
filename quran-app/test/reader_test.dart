@@ -116,6 +116,14 @@ void main() {
       expect(find.text('أدخل رقمًا من ١ إلى ٦٠٤'), findsOneWidget);
     });
 
+    testWidgets('credits Tanzil as its license requires', (tester) async {
+      await _pumpIndex(tester);
+      await tester.tap(find.byTooltip('حول التطبيق'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('tanzil.net'), findsOneWidget);
+      expect(find.textContaining('CC BY 3.0'), findsOneWidget);
+    });
+
     testWidgets('night mode toggle cycles the app theme', (tester) async {
       await _pumpIndex(tester);
       final app = find.byType(MaterialApp);

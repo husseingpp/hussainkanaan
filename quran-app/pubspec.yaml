@@ -42,6 +42,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   scrollable_positioned_list: ^0.3.8
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

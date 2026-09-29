@@ -12,6 +12,7 @@ sources.lock.json, so an upstream change can't slip into a build unnoticed.
 Writes:
   tanzil/quran-data.xml, quran-uthmani.xml, quran-simple-clean.xml,
   tanzil/translation.en.qarai.txt
+  qcf-v1/p<n>.ttf                 the 604 per-page QCF v1 fonts (not bundled; see ingest)
                                   XML, not .txt: the .txt export glues the
                                   bismillah onto ayah 1 of every surah
 Location-keyed (see sources.py):
@@ -63,7 +64,7 @@ HERE = Path(__file__).resolve().parent
 def download(url: str) -> bytes:
     for attempt in range(5):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "quran-app-ingest/1.0", "Accept": "application/json"})
+            req = urllib.request.Request(url, headers={"User-Agent": "quran-app-ingest/1.0"})
             with urllib.request.urlopen(req, timeout=60) as r:
                 return r.read()
         except Exception as e:  # noqa: BLE001 - retry anything transient
@@ -97,6 +98,22 @@ def paged(path: str, key: str, **params) -> list[dict]:
 def chapter_words(ch: int) -> list[dict]:
     return paged(f"verses/by_chapter/{ch}", "verses", words="true",
                  word_fields="text_uthmani,code_v1,line_number,v1_page", word_translation_language="en")
+
+
+QCF_FONT = "https://static.qurancdn.com/fonts/quran/hafs/v1/ttf/p{page}.ttf"
+
+
+def fetch_qcf_fonts(out: Path) -> None:
+    """The 604 per-page QCF v1 fonts. Not bundled in the app: the ingest records
+    each one's size and sha256 so the app can download and verify them."""
+    (out / "qcf-v1").mkdir(parents=True, exist_ok=True)
+
+    def one(page: int) -> None:
+        (out / "qcf-v1" / f"p{page}.ttf").write_bytes(download(QCF_FONT.format(page=page)))
+
+    with ThreadPoolExecutor(16) as pool:
+        list(pool.map(one, range(1, 605)))
+    print("qcf-v1: 604 fonts")
 
 
 def fetch_words(out: Path) -> None:
@@ -268,6 +285,7 @@ def main() -> int:
     if not args.offline:
         fetch_tanzil(args.out)
         fetch_words(args.out)
+        fetch_qcf_fonts(args.out)
         for r in reciters:
             if r.get("quran_com_recitation") is not None:
                 fetch_recitation(r["quran_com_recitation"], args.out)

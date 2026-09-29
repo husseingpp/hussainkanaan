@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Downloads only: the mus'haf font pack now, recitations in Phase 2.
+         Reading never touches the network (CLAUDE.md, offline-first rule 1). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="القرآن الكريم"
         android:name="${applicationName}"

@@ -9,6 +9,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/reader_settings.dart';
 import '../../data/user_repository.dart';
+import 'font_pack.dart';
 import 'mushaf_page.dart';
 import 'reading_view.dart';
 
@@ -130,7 +131,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       ),
       body: SafeArea(
         child: switch (view) {
-          ReaderView.page => _page == 0 ? const Center(child: CircularProgressIndicator()) : _pageView(),
+          ReaderView.page => _page == 0
+              ? const Center(child: CircularProgressIndicator())
+              : Column(children: [const FontPackBanner(), Expanded(child: _pageView())]),
           ReaderView.reading => surah == null
               ? const Center(child: CircularProgressIndicator())
               : ReadingView(

@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'content_db.dart';
 import 'models.dart';
+import 'mushaf_fonts.dart';
 import 'reader_settings.dart';
 import 'user_db.dart';
 import 'user_repository.dart';
@@ -73,3 +75,18 @@ class SettingsNotifier extends AsyncNotifier<ReaderSettings> {
 }
 
 final settingsProvider = AsyncNotifierProvider<SettingsNotifier, ReaderSettings>(SettingsNotifier.new);
+
+final mushafFontPackProvider = FutureProvider<MushafFontPack>((ref) async {
+  final db = await ref.watch(contentDbProvider.future);
+  return MushafFontPack(
+    directory: p.join(await ref.watch(appDirectoryProvider.future), 'qcf_v1'),
+    fonts: await db.qcfFonts(),
+  );
+});
+
+/// The QCF font family for a page, or null to fall back to the Uthmani font.
+/// Invalidate after a download so pages pick the new fonts up.
+final mushafFontProvider = FutureProvider.family<String?, int>((ref, page) async {
+  final pack = await ref.watch(mushafFontPackProvider.future);
+  return pack.family(page);
+});

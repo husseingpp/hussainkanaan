@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,9 +11,9 @@ import 'quran_text.dart';
 
 /// One page of the v1 Madani mus'haf, line for line.
 ///
-/// Words are drawn in the bundled Uthmani font with the printed line breaks.
-/// The per-page QCF glyph fonts (exact printed shapes) are a later swap-in:
-/// [PageGlyph.qcf] already carries their codes.
+/// Drawn with the page's own QCF v1 font (the exact printed shapes) once the
+/// font pack is downloaded; until then with the bundled Uthmani font, which
+/// keeps the printed line breaks but not the printed letterforms.
 class MushafPageView extends ConsumerWidget {
   const MushafPageView({super.key, required this.page});
 
@@ -22,6 +24,7 @@ class MushafPageView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(mushafPageProvider(page));
+    final qcfFamily = ref.watch(mushafFontProvider(page)).value;
     final surahs = ref.watch(surahsProvider).value ?? const <Surah>[];
     final theme = Theme.of(context);
     return data.when(
@@ -34,13 +37,29 @@ class MushafPageView extends ConsumerWidget {
             Expanded(
               child: LayoutBuilder(builder: (context, box) {
                 final lineHeight = box.maxHeight / lines;
-                final base = quranStyle(context, lineHeight * 0.52);
+                final scaler = MediaQuery.textScalerOf(context);
+                // Titles and the bismillah stand alone, so they keep full size.
+                final titles = quranStyle(context, lineHeight * 0.52);
+                var base = titles;
+                var glyphs = qcfFamily == null ? null : base.copyWith(fontFamily: qcfFamily, fontSize: lineHeight * 0.72);
+                // One letter size for the whole page: shrink everything by
+                // what the tightest line needs, so short lines don't balloon.
+                final ayatLines = p.lines.where((l) => l.kind == PageLineKind.ayat && l.glyphs.isNotEmpty);
+                var scale = 1.0;
+                for (final line in ayatLines) {
+                  final useQcf = glyphs != null && line.glyphs.every((g) => g.qcf != null);
+                  final words = [for (final g in line.glyphs) useQcf ? g.qcf! : (g.isAyahEnd ? ayahEndMark(g.ayah.ayah) : g.text)];
+                  final style = useQcf ? glyphs : base;
+                  scale = math.min(scale, JustifiedLine.fitScale(words, List.filled(words.length, style), box.maxWidth, scaler));
+                }
+                base = base.copyWith(fontSize: base.fontSize! * scale);
+                glyphs = glyphs?.copyWith(fontSize: glyphs.fontSize! * scale);
                 final accent = base.copyWith(color: theme.colorScheme.primary);
                 final rows = [
                   for (final line in p.lines)
                     SizedBox(
                       height: lineHeight,
-                      child: Center(child: _line(context, line, surahs, base, accent)),
+                      child: Center(child: _line(context, line, surahs, titles, base, accent, glyphs)),
                     ),
                 ];
                 // The two opening pages are short and centred on the page.
@@ -56,14 +75,29 @@ class MushafPageView extends ConsumerWidget {
     );
   }
 
-  Widget _line(BuildContext context, PageLine line, List<Surah> surahs, TextStyle base, TextStyle accent) {
+  Widget _line(
+    BuildContext context,
+    PageLine line,
+    List<Surah> surahs,
+    TextStyle titles,
+    TextStyle base,
+    TextStyle accent,
+    TextStyle? glyphs,
+  ) {
     switch (line.kind) {
       case PageLineKind.surahName:
         final name = surahs.where((s) => s.id == line.surah).map((s) => s.nameAr).firstOrNull ?? '';
-        return _SurahTitle(name: name, style: base);
+        return _SurahTitle(name: name, style: titles);
       case PageLineKind.bismillah:
-        return Text(bismillah, style: base, textDirection: TextDirection.rtl);
+        return Text(bismillah, style: titles, textDirection: TextDirection.rtl);
       case PageLineKind.ayat:
+        if (glyphs != null && line.glyphs.every((g) => g.qcf != null)) {
+          return JustifiedLine(
+            words: [for (final g in line.glyphs) g.qcf!],
+            style: glyphs,
+            styles: [for (final g in line.glyphs) g.isAyahEnd ? glyphs.copyWith(color: accent.color) : null],
+          );
+        }
         return JustifiedLine(
           words: [for (final g in line.glyphs) g.isAyahEnd ? ayahEndMark(g.ayah.ayah) : g.text],
           style: base,

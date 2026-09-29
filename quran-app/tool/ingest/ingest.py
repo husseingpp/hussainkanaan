@@ -29,6 +29,7 @@ APP_ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 
 from normalize import normalize  # noqa: E402
+from ttf_cmap import FontError, codepoints  # noqa: E402
 from sources import (  # noqa: E402
     SourceError,
     parse_ayah_text,
@@ -102,6 +103,7 @@ class SourceSet:
         self.words_layout = self._opt(qul / "words-layout-v1.json")
         self.segments = sorted((root / "segments").glob("*.json"))
         self.calendar = self._opt(root / "calendar" / "events.json")
+        self.qcf_fonts = sorted((root / "qcf-v1").glob("p*.ttf"), key=lambda p: int(p.stem[1:]))
 
     @staticmethod
     def _opt(p: Path) -> Path | None:
@@ -110,7 +112,7 @@ class SourceSet:
     def files(self) -> list[Path]:
         fs = [self.metadata, self.uthmani, self.simple_clean, self.translation, self.words_uthmani,
               self.words_qcf, self.words_translation, self.words_root, self.words_layout, self.calendar,
-              *self.segments]
+              *self.segments, *self.qcf_fonts]
         return sorted(f for f in fs if f is not None)
 
     def fingerprint(self) -> dict[str, str]:
@@ -276,6 +278,8 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
     for r in reciters:
         check(r.get("audio") in ("per_ayah", "per_surah"), f"reciter {r['slug']}: audio must be per_ayah|per_surah")
 
+    fonts = check_qcf_fonts(src.qcf_fonts, layout, qcf, strict) if src.qcf_fonts else []
+
     calendar = load_calendar(src.calendar, ayah_id, allow_unreviewed_calendar) if src.calendar else None
 
     # ---- write
@@ -351,6 +355,7 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
                 "INSERT INTO translation_ayahs VALUES (1, ?, ?)", [(ayah_id[k], translation[k]) for k in keys]
             )
 
+        db.executemany("INSERT INTO qcf_fonts VALUES (?,?,?,?)", fonts)
         if calendar:
             write_calendar(db, calendar)
 
@@ -421,6 +426,31 @@ def build_page_lines(layout: dict, surahs: list, word_count: dict, strict: bool)
             expected = list(range(1, used[-1] + 1)) if p <= 2 else list(range(1, MUSHAF_LINES + 1))
             check(used == expected, f"page {p}: lines {sorted(set(expected) - set(used))} unaccounted for")
     return lines
+
+
+QCF_FONT_URL = "https://static.qurancdn.com/fonts/quran/hafs/v1/ttf/p{page}.ttf"
+
+
+def check_qcf_fonts(paths: list[Path], layout: dict, qcf: dict, strict: bool) -> list[tuple]:
+    """Every glyph code drawn on a page must exist in that page's font."""
+    pages = [int(p.stem[1:]) for p in paths]
+    if strict:
+        check(pages == list(range(1, CANON["pages"] + 1)), f"QCF fonts: have {len(pages)} of 604 pages")
+    need: dict[int, set[int]] = {}
+    for loc, (page, _) in layout.items():
+        if loc in qcf:
+            need.setdefault(page, set()).update(ord(c) for c in qcf[loc])
+    rows = []
+    for page, path in zip(pages, paths):
+        data = path.read_bytes()
+        try:
+            have = codepoints(data)
+        except FontError as e:
+            raise BuildError(f"QCF font p{page}: {e}") from e
+        missing = sorted(need.get(page, set()) - have)
+        check(not missing, f"QCF font p{page} lacks {len(missing)} glyphs used on its page, e.g. {missing[:3]}")
+        rows.append((page, QCF_FONT_URL.format(page=page), len(data), hashlib.sha256(data).hexdigest()))
+    return rows
 
 
 def load_calendar(path: Path, ayah_id: dict, allow_unreviewed: bool) -> dict:

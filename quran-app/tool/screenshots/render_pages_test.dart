@@ -58,6 +58,7 @@ void main() {
       {ThemeMode theme = ThemeMode.light,
       ReaderView view = ReaderView.page,
       bool translation = false,
+      bool qcf = false,
       Size size = const Size(412, 870)}) async {
     tester.view.physicalSize = size * 2.5;
     tester.view.devicePixelRatio = 2.5;
@@ -69,6 +70,16 @@ void main() {
           contentDbProvider.overrideWith((ref) async => db),
           surahsProvider.overrideWith((ref) async => surahs),
           lastPositionProvider.overrideWith((ref) async => null),
+          // With qcf: the page fonts from tool/ingest/sources/qcf-v1 stand in
+          // for a completed download; without, Page View's Amiri fallback.
+          mushafFontProvider.overrideWith((ref, page) async {
+            final f = File('tool/ingest/sources/qcf-v1/p$page.ttf');
+            if (!qcf || !f.existsSync()) return null;
+            final family = 'QCF_P$page';
+            await _loadFont(family, f.path);
+            return family;
+          }),
+          mushafFontPackProvider.overrideWith((ref) async => throw StateError('no pack in screenshots')),
           databaseFactoryProvider.overrideWithValue(databaseFactoryFfi),
           appDirectoryProvider.overrideWith((ref) async => (await Directory.systemTemp.createTemp('user')).path),
           settingsProvider.overrideWith(() => _Settings(ReaderSettings(themeMode: theme, view: view, showTranslation: translation))),
@@ -89,15 +100,28 @@ void main() {
   // The Phase 1 gate, rendering half: every page lays out at phone and tablet
   // widths with no overflow or error. (Line breaks are proven by the ingest.)
   testWidgets('all 604 pages render cleanly', (tester) async {
-    for (final size in const [Size(360, 740), Size(800, 1200)]) {
+    final fontsDir = Directory('tool/ingest/sources/qcf-v1');
+    final modes = [
+      (const Size(360, 740), false),
+      (const Size(800, 1200), false),
+      if (fontsDir.existsSync()) (const Size(360, 740), true),
+      if (fontsDir.existsSync()) (const Size(800, 1200), true),
+    ];
+    for (final (size, qcf) in modes) {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       for (var page = 1; page <= ContentDb.pageCount; page++) {
         final data = await tester.runAsync(() => db.page(page));
+        String? family;
+        if (qcf) {
+          family = 'QCF_P$page';
+          await tester.runAsync(() => _loadFont(family!, '${fontsDir.path}/p$page.ttf'));
+        }
         await tester.pumpWidget(ProviderScope(
-          key: ValueKey('$size-$page'),
+          key: ValueKey('$size-$qcf-$page'),
           overrides: [
             mushafPageProvider(page).overrideWith((ref) async => data!),
+            mushafFontProvider(page).overrideWith((ref) async => family),
             surahsProvider.overrideWith((ref) async => surahs),
           ],
           child: MaterialApp(home: Directionality(textDirection: TextDirection.rtl, child: Scaffold(body: MushafPageView(page: page)))),
@@ -105,15 +129,18 @@ void main() {
         await tester.pump();
         await tester.pump();
         final error = tester.takeException();
-        expect(error, isNull, reason: 'page $page at $size: $error');
+        expect(error, isNull, reason: 'page $page at $size (qcf: $qcf): $error');
         expect(find.byType(JustifiedLine), findsWidgets, reason: 'page $page drew no ayat');
       }
     }
     tester.view.reset();
-  }, timeout: const Timeout(Duration(minutes: 10)));
+  }, timeout: const Timeout(Duration(minutes: 20)));
 
   for (final (page, ayah) in [(1, const AyahRef(1, 1)), (2, const AyahRef(2, 1)), (50, const AyahRef(2, 283)), (77, const AyahRef(4, 12)), (187, const AyahRef(9, 1)), (604, const AyahRef(112, 1))]) {
     testWidgets('page $page', (t) => shoot(t, 'page-$page', ReaderScreen(ayah: ayah, page: page, view: ReaderView.page)));
+  }
+  for (final page in [1, 50, 604]) {
+    testWidgets('page $page qcf', (t) => shoot(t, 'page-$page-qcf', ReaderScreen(ayah: const AyahRef(1, 1), page: page, view: ReaderView.page), qcf: true));
   }
   testWidgets('page 604 night', (t) => shoot(t, 'page-604-night', const ReaderScreen(ayah: AyahRef(112, 1), page: 604, view: ReaderView.page), theme: ThemeMode.dark));
   testWidgets('reading 2:255', (t) => shoot(t, 'reading-2-255', const ReaderScreen(ayah: AyahRef(2, 255), view: ReaderView.reading), view: ReaderView.reading));

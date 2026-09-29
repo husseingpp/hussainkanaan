@@ -19,6 +19,24 @@ class JustifiedLine extends StatelessWidget {
   static const _minGapEm = 0.2;
   static const _justifyThreshold = 0.75;
 
+  /// The font scale (≤ 1) at which [words] fit [width]. A page takes the
+  /// smallest over its lines so every line shares one letter size, as printed.
+  static double fitScale(List<String> words, List<TextStyle> styles, double width, TextScaler scaler) {
+    var total = 0.0;
+    for (var i = 0; i < words.length; i++) {
+      total += (TextPainter(
+        text: TextSpan(text: words[i], style: styles[i]),
+        textDirection: TextDirection.rtl,
+        textScaler: scaler,
+      )..layout())
+          .width;
+    }
+    if (total == 0) return 1;
+    final minGap = (styles.first.fontSize ?? 14) * _minGapEm * math.max(words.length - 1, 0);
+    final fit = (width - 1 - minGap) / total;
+    return fit >= 1 ? 1 : fit * 0.99;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, box) {

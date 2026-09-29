@@ -7,6 +7,7 @@ import '../../data/content_db.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
+import '../common/about.dart';
 import 'reader_screen.dart';
 
 /// Navigation into the reader: resume, surah, juz, or page number.
@@ -38,6 +39,7 @@ class QuranIndexScreen extends ConsumerWidget {
               },
             ),
             const ThemeToggleButton(),
+            IconButton(tooltip: 'حول التطبيق', icon: const Icon(Icons.info_outline), onPressed: () => showCredits(context)),
           ],
           bottom: const TabBar(tabs: [Tab(text: 'السور'), Tab(text: 'الأجزاء')]),
         ),

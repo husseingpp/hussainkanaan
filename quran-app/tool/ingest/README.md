@@ -23,6 +23,7 @@ python3 tool/ingest/ingest.py          # verifies against sources.lock.json, the
 | `tanzil/translation.en.qarai.txt` | The bundled translation: Ali Quli Qara'i (English). **Check redistribution rights with the translator/publisher before a store release;** Tanzil's copy doesn't state a license |
 | `qul/words-*.json` | Quran Foundation API (api.quran.com v4): word text, QCF v1 glyphs, word-by-word English, v1 page/line layout |
 | `qul/words-root.json` | Word roots, converted from `vendor/qul-word-root.db.zip` (QUL morphology; committed because QUL downloads need a sign-in). **Check its license before release:** QUL's morphology derives from the Quranic Arabic Corpus, whose data has its own terms |
+| `qcf-v1/p<n>.ttf` | The 604 per-page QCF v1 fonts from static.qurancdn.com. **Not bundled** (~95 MB): the ingest proves each page's glyphs exist in its font and records size + sha256 in `qcf_fonts`, and the app downloads them on request |
 | `segments/<slug>.json` | Word timing, cleaned from `quran-com/recitation-<id>.json` |
 | `calendar/events.json` | The calendar event pack (see below) |
 

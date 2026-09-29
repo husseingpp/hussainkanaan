@@ -6,6 +6,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../core/arabic_normalizer.dart';
 import 'models.dart';
+import 'mushaf_fonts.dart';
 
 /// The bundled, read-only content DB built by tool/ingest.
 ///
@@ -145,6 +146,19 @@ class ContentDb {
           ),
       ],
     );
+  }
+
+  Future<List<QcfFontInfo>> qcfFonts() async {
+    final rows = await _db.query('qcf_fonts', orderBy: 'page');
+    return [
+      for (final r in rows)
+        QcfFontInfo(
+          page: r['page']! as int,
+          url: r['url']! as String,
+          bytes: r['bytes']! as int,
+          sha256: r['sha256']! as String,
+        ),
+    ];
   }
 
   /// Full-text search over the undiacritized text. Every token is quoted so
