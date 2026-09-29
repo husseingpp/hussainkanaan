@@ -43,6 +43,11 @@ dependencies:
     sdk: flutter
   scrollable_positioned_list: ^0.3.8
   crypto: ^3.0.7
+  just_audio: ^0.10.6
+  audio_session: ^0.2.4
+  permission_handler: ^13.0.2
+  device_info_plus: ^13.2.0
+  audio_service: ^0.18.19
 
 dev_dependencies:
   flutter_test:

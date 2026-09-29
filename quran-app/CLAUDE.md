@@ -64,5 +64,15 @@ One feature per session, with a hard QA gate between phases (BLUEPRINT §10).
 
 - **Phase 0, data pipeline: done.** Full mus'haf from real sources, reproducible; see `tool/ingest/README.md`. Open: verifying the everyayah audio copies, and the calendar dataset.
 - **Phase 1, reader: done, pending your test on a phone.** Index (resume, surahs, juz, jump to page), Page View, Reading View (resizable, translation, sajda marks), night mode, position saved as you read, and an About screen with credits. Page View draws each page with its King Fahd QCF v1 font once the user downloads the font pack (~95 MB from static.qurancdn.com, verified per file against `qcf_fonts` sizes and sha256 in the content DB). Until then it uses Amiri Quran, with the same lines. One letter size per page. Gate: the ingest proves every line of all 604 pages is accounted for and that every glyph exists in its page's font; `tool/screenshots/render_pages_test.dart` renders all 604 pages in both fonts at two widths with no overflow (also run in the Android workflow).
+- **Phase 2, Listen Mode: built, awaiting the device gate.**
+  - Reciter picker (tier + size), and per-reciter downloads by surah or all. Downloads are resumable (HTTP Range), each file is checked to be MP3 before it's kept, and ≈ sizes come from `reciter_surahs`. Files live at `audio/<slug>/SSSAAA.mp3`; the filesystem is the record.
+  - Continuous playback from any ayah across surah boundaries, gapless, with the bismillah (the reciter's 1:1) before each surah except 1 and 9. It refuses to stream.
+  - Sleep timer: minutes (playing time), end of surah, or after N surahs, with a 30 s fade. A quiet-room gain goes below the system volume.
+  - Position is saved every 10 s, with a resume card.
+  - An audio_service foreground service with lock-screen and notification controls; audio_session handles interruptions.
+  - An OEM battery-exemption card.
+  - Logic lives in `lib/features/listen/listen_session.dart` behind `AudioPort` (tests use a fake); `listen_audio.dart` is the just_audio / audio_service layer.
+  - Not yet: desktop playback (tray, media keys: Phase 7), and downloads continuing while the app is closed.
+  - **Gate (needs a person):** 8 hours of continuous playback, screen off, on a physical Android phone (Xiaomi or Samsung) with battery optimization ON.
 
 Eyeball screens with `flutter test tool/screenshots/render_pages_test.dart --dart-define=OUT=<dir>`; it writes PNGs from the real content DB.

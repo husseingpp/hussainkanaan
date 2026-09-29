@@ -6,6 +6,7 @@ import '../common/phase_placeholder.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
+import '../listen/listen_screen.dart';
 import '../reader/quran_index_screen.dart';
 import '../reader/reader_screen.dart';
 
@@ -22,7 +23,7 @@ final _destinations = <_Destination>[
   _Destination('المصحف', Icons.menu_book_outlined, Icons.menu_book,
       (_) => const QuranIndexScreen()),
   _Destination('الاستماع', Icons.headphones_outlined, Icons.headphones,
-      (_) => const PhasePlaceholder(title: 'الاستماع', phase: 'Phase 2 — Listen Mode')),
+      (_) => const ListenScreen()),
   _Destination('الصلاة', Icons.schedule_outlined, Icons.schedule,
       (_) => const PhasePlaceholder(title: 'مواقيت الصلاة', phase: 'Phase 6a — Prayer times')),
   _Destination('القبلة', Icons.explore_outlined, Icons.explore,

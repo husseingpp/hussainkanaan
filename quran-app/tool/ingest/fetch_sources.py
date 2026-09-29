@@ -13,6 +13,7 @@ Writes:
   tanzil/quran-data.xml, quran-uthmani.xml, quran-simple-clean.xml,
   tanzil/translation.en.qarai.txt
   qcf-v1/p<n>.ttf                 the 604 per-page QCF v1 fonts (not bundled; see ingest)
+  audio/probe.json                each reciter's 2:255 file size (HEAD only), for size estimates
                                   XML, not .txt: the .txt export glues the
                                   bismillah onto ayah 1 of every surah
 Location-keyed (see sources.py):
@@ -114,6 +115,29 @@ def fetch_qcf_fonts(out: Path) -> None:
     with ThreadPoolExecutor(16) as pool:
         list(pool.map(one, range(1, 605)))
     print("qcf-v1: 604 fonts")
+
+
+def head_size(url: str) -> int:
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "quran-app-ingest/1.0"})
+    for attempt in range(5):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return int(r.headers["Content-Length"])
+        except Exception as e:  # noqa: BLE001 - retry anything transient
+            if attempt == 4:
+                raise RuntimeError(f"HEAD {url}: {e}") from e
+            time.sleep(2 ** attempt)
+    raise AssertionError
+
+
+def probe_audio(reciters: list[dict], out: Path) -> None:
+    """Size of each reciter's 2:255 file (a long ayah, so file overhead is noise).
+    With that ayah's duration from the timings it gives the real bitrate, for
+    the download manager's size estimates. HEAD requests only, no audio."""
+    (out / "audio").mkdir(parents=True, exist_ok=True)
+    sizes = {r["slug"]: head_size(f"{r['base_url']}/002255.mp3") for r in reciters}
+    (out / "audio" / "probe.json").write_text(json.dumps({"002255": sizes}, indent=1, sort_keys=True) + "\n")
+    print(f"audio: probed {len(sizes)} reciters")
 
 
 def fetch_words(out: Path) -> None:
@@ -286,6 +310,7 @@ def main() -> int:
         fetch_tanzil(args.out)
         fetch_words(args.out)
         fetch_qcf_fonts(args.out)
+        probe_audio(reciters, args.out)
         for r in reciters:
             if r.get("quran_com_recitation") is not None:
                 fetch_recitation(r["quran_com_recitation"], args.out)

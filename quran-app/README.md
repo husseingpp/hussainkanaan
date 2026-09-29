@@ -14,6 +14,11 @@ An offline-first Quran app for Android, iOS and desktop, built with Flutter. It 
   - The printed-page view, drawn with the original King Fahd Complex fonts after a one-time optional download, or Amiri Quran until then.
   - A resizable reading view with translation and sajda marks.
   - Night mode, and an About screen with credits.
+- **Phase 2 (Listen Mode): built, needs the overnight phone test.**
+  - 13 reciters, with downloads by surah and size estimates.
+  - Gapless playback to the end of the Quran.
+  - A sleep timer with fade-out, and a quiet-room volume.
+  - Lock-screen controls, crash-safe resume, and battery-saver guidance.
 
 Android test build: https://github.com/husseingpp/hussainkanaan/releases/tag/quran-app-android-latest
 

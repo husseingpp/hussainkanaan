@@ -1,5 +1,7 @@
 package net.hussainkanaan.quran_app
 
-import io.flutter.embedding.android.FlutterActivity
+import com.ryanheise.audioservice.AudioServiceActivity
 
-class MainActivity : FlutterActivity()
+// audio_service needs its activity so Listen Mode keeps one Flutter engine
+// shared with the background playback service.
+class MainActivity : AudioServiceActivity()

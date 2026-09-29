@@ -148,6 +148,33 @@ class ContentDb {
     );
   }
 
+  Future<List<Reciter>> reciters() async {
+    final rows = await _db.rawQuery(
+      'SELECT r.*, (SELECT sum(approx_bytes) FROM reciter_surahs s WHERE s.reciter_id = r.id) AS total '
+      'FROM reciters r ORDER BY r.sync_tier, r.name',
+    );
+    return [
+      for (final r in rows)
+        Reciter(
+          id: r['id']! as int,
+          slug: r['slug']! as String,
+          name: r['name']! as String,
+          nameAr: r['name_ar'] as String?,
+          style: r['style']! as String,
+          baseUrl: r['base_url']! as String,
+          syncTier: r['sync_tier']! as String,
+          approxBytes: (r['total'] as int?) ?? 0,
+          bitrate: r['bitrate'] as int?,
+        ),
+    ];
+  }
+
+  /// Estimated download size of each surah for one reciter.
+  Future<Map<int, int>> surahSizes(int reciterId) async {
+    final rows = await _db.query('reciter_surahs', where: 'reciter_id = ?', whereArgs: [reciterId]);
+    return {for (final r in rows) r['surah_id']! as int: r['approx_bytes']! as int};
+  }
+
   Future<List<QcfFontInfo>> qcfFonts() async {
     final rows = await _db.query('qcf_fonts', orderBy: 'page');
     return [

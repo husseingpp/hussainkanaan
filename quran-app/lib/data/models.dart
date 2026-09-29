@@ -142,3 +142,35 @@ class MushafPage {
     return null;
   }
 }
+
+class Reciter {
+  const Reciter({
+    required this.id,
+    required this.slug,
+    required this.name,
+    required this.nameAr,
+    required this.style,
+    required this.baseUrl,
+    required this.syncTier,
+    required this.approxBytes,
+    this.bitrate,
+  });
+
+  final int id;
+  final String slug;
+  final String name;
+  final String? nameAr;
+  final String style;
+  final String baseUrl;
+
+  /// 'A' word highlight, 'B' ayah highlight, 'C' none (derived by the ingest).
+  final String syncTier;
+  final int approxBytes;
+  final int? bitrate;
+
+  /// Per-ayah file: {baseUrl}/{SSS}{AAA}.mp3.
+  String urlFor(AyahRef ref) => '$baseUrl/${fileName(ref)}';
+
+  static String fileName(AyahRef ref) =>
+      '${ref.surah.toString().padLeft(3, '0')}${ref.ayah.toString().padLeft(3, '0')}.mp3';
+}

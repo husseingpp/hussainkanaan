@@ -103,6 +103,7 @@ class SourceSet:
         self.words_layout = self._opt(qul / "words-layout-v1.json")
         self.segments = sorted((root / "segments").glob("*.json"))
         self.calendar = self._opt(root / "calendar" / "events.json")
+        self.audio_probe = self._opt(root / "audio" / "probe.json")
         self.qcf_fonts = sorted((root / "qcf-v1").glob("p*.ttf"), key=lambda p: int(p.stem[1:]))
 
     @staticmethod
@@ -112,7 +113,7 @@ class SourceSet:
     def files(self) -> list[Path]:
         fs = [self.metadata, self.uthmani, self.simple_clean, self.translation, self.words_uthmani,
               self.words_qcf, self.words_translation, self.words_root, self.words_layout, self.calendar,
-              *self.segments, *self.qcf_fonts]
+              self.audio_probe, *self.segments, *self.qcf_fonts]
         return sorted(f for f in fs if f is not None)
 
     def fingerprint(self) -> dict[str, str]:
@@ -278,6 +279,10 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
     for r in reciters:
         check(r.get("audio") in ("per_ayah", "per_surah"), f"reciter {r['slug']}: audio must be per_ayah|per_surah")
 
+    probe = json.loads(src.audio_probe.read_text(encoding="utf-8")) if src.audio_probe else {}
+    estimates = {r["slug"]: estimate_audio(r, timings.get(r["slug"], {}).get("segments", {}), timings, word_count,
+                                           keys, probe) for r in reciters}
+
     fonts = check_qcf_fonts(src.qcf_fonts, layout, qcf, strict) if src.qcf_fonts else []
 
     calendar = load_calendar(src.calendar, ayah_id, allow_unreviewed_calendar) if src.calendar else None
@@ -335,10 +340,15 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
                        [(p, ln, kind, sid) for (p, ln), (kind, sid) in sorted(page_lines.items())])
 
         for rid, r in enumerate(sorted(reciters, key=lambda r: r["slug"]), 1):
+            est = estimates[r["slug"]]
             db.execute(
                 "INSERT INTO reciters VALUES (?,?,?,?,?,?,?,?,?,?)",
-                (rid, r["slug"], r["name"], r.get("name_ar"), r["style"], r.get("bitrate"), r["base_url"],
+                (rid, r["slug"], r["name"], r.get("name_ar"), r["style"], est["kbps"], r["base_url"],
                  r["audio"], tier(r), timings.get(r["slug"], {}).get("word_timed", 0)),
+            )
+            db.executemany(
+                "INSERT INTO reciter_surahs VALUES (?,?,?,?)",
+                [(rid, sid, ms, round(ms * est["kbps"] / 8)) for sid, ms in sorted(est["surah_ms"].items())],
             )
             segs = timings.get(r["slug"], {}).get("segments", {})
             for k in keys:
@@ -379,11 +389,51 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
         "surahs": len(surahs),
         "ayahs": len(keys),
         "words": word_id,
-        "reciters": {r["slug"]: f"{tier(r)} ({timings.get(r['slug'], {}).get('word_timed', 0)} word-timed ayahs)"
+        "reciters": {r["slug"]: f"{tier(r)} ({timings.get(r['slug'], {}).get('word_timed', 0)} word-timed ayahs), "
+                                f"{estimates[r['slug']]['kbps']} kbps, "
+                                f"≈{sum(estimates[r['slug']]['surah_ms'].values()) * estimates[r['slug']]['kbps'] / 8e9:.2f} GB"
                      for r in sorted(reciters, key=lambda r: r["slug"])},
         "translation": src.translation.name if src.translation else None,
         "calendar": calendar["version"] if calendar else None,
     }
+
+
+AYAH_TAIL_MS = 300   # silence after the last word in a per-ayah file
+PROBE_AYAH = (2, 255)
+
+
+def estimate_audio(r: dict, segs: dict, timings: dict, word_count: dict, keys: list, probe: dict) -> dict:
+    """Per-surah duration and a bitrate, for size estimates.
+
+    An ayah's duration is its last word's end (+ a short tail) where the
+    timing data has it; otherwise the reciter's own average pace per word;
+    and for a reciter with no timing at all, the average of the murattal
+    reciters that have it. Bitrate is measured from the probed 2:255 file.
+    """
+    def ayah_ms(sg: dict, k) -> float | None:
+        rows = [row for row in sg.get(k, []) if row[0] >= 1]
+        return max(row[2] for row in rows) + AYAH_TAIL_MS if rows else None
+
+    known = {k: ms for k in keys if (ms := ayah_ms(segs, k)) is not None}
+    if known:
+        pace = sum(ms - AYAH_TAIL_MS for ms in known.values()) / sum(word_count[k] for k in known)
+        per_ayah = {k: known.get(k, pace * word_count[k] + AYAH_TAIL_MS) for k in keys}
+    else:
+        others = [t["segments"] for slug, t in timings.items() if t.get("word_timed")]
+        per_ayah = {}
+        for k in keys:
+            vals = [v for sg in others if (v := ayah_ms(sg, k)) is not None]
+            per_ayah[k] = sum(vals) / len(vals) if vals else 0.0
+
+    kbps = r.get("bitrate")
+    size = probe.get("002255", {}).get(r["slug"])
+    # Measured duration if 2:255 is word-timed for this reciter, else estimated.
+    if size and per_ayah.get(PROBE_AYAH):
+        kbps = size * 8 / per_ayah[PROBE_AYAH]
+    surah_ms: dict[int, float] = {}
+    for (sid, _), ms in per_ayah.items():
+        surah_ms[sid] = surah_ms.get(sid, 0) + ms
+    return {"kbps": round(kbps or 64), "surah_ms": {s: round(ms) for s, ms in surah_ms.items()}}
 
 
 MUSHAF_LINES = 15

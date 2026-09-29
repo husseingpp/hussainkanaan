@@ -113,6 +113,21 @@ class IngestTest(unittest.TestCase):
         self.assertEqual(rows["no-data"], ("B", 0), "a per-ayah file is its own ayah timing")
         self.assertEqual(rows["surah-files"], ("C", 0))
 
+    def test_audio_size_estimates(self):
+        self.build()
+        rows = dict(self.db().execute(
+            "SELECT r.slug, s.approx_ms FROM reciter_surahs s JOIN reciters r ON r.id = s.reciter_id "
+            "WHERE s.surah_id = 112"))
+        # Fixture words are 700 ms apart and 650 ms long; each ayah adds a 300 ms tail:
+        # 112:1-4 have 4, 2, 4 and 5 words -> 3050 + 1650 + 3050 + 3750.
+        self.assertEqual(rows["alafasy"], 11500)
+        # No word timing of its own: borrows the average of reciters that have it.
+        self.assertEqual(rows["husary"], 11500)
+        size = self.db().execute(
+            "SELECT s.approx_bytes, r.bitrate FROM reciter_surahs s JOIN reciters r ON r.id = s.reciter_id "
+            "WHERE r.slug = 'husary' AND s.surah_id = 112").fetchone()
+        self.assertEqual(size, (round(11500 * 64 / 8), 64))
+
     def test_word_layout_is_imported(self):
         self.build()
         db = self.db()

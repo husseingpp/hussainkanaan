@@ -7,12 +7,19 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart' show databaseFactoryFfi, sq
 
 import 'app.dart';
 import 'data/providers.dart';
+import 'features/listen/listen_audio.dart';
+import 'features/listen/listen_providers.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Listen Mode's background service: phones only for now (desktop is Phase 7).
+  final audio = Platform.isAndroid || Platform.isIOS ? await initAudio() : null;
   runApp(
     ProviderScope(
-      overrides: [databaseFactoryProvider.overrideWithValue(_databaseFactory())],
+      overrides: [
+        databaseFactoryProvider.overrideWithValue(_databaseFactory()),
+        audioHandlerProvider.overrideWithValue(audio),
+      ],
       child: const QuranApp(),
     ),
   );

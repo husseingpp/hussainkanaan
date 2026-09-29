@@ -106,6 +106,17 @@ CREATE TABLE reciters (
   word_timed_ayahs INTEGER NOT NULL DEFAULT 0
 );
 
+-- Download-size and duration estimates per reciter and surah, for the
+-- download manager ("≈ 1.1 GB"). From real ayah durations where the timing
+-- data has them, and each reciter's measured bitrate; approximate by nature.
+CREATE TABLE reciter_surahs (
+  reciter_id    INTEGER NOT NULL REFERENCES reciters (id),
+  surah_id      INTEGER NOT NULL REFERENCES surahs (id),
+  approx_ms     INTEGER NOT NULL,
+  approx_bytes  INTEGER NOT NULL,
+  PRIMARY KEY (reciter_id, surah_id)
+) WITHOUT ROWID;
+
 -- Times are relative to the start of that ayah's own audio file.
 -- word_position 0 is the whole-ayah span; 1..n are words. An ayah is either
 -- fully word-timed or absent/span-only, never half-timed.
