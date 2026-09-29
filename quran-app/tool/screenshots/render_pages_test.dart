@@ -42,7 +42,10 @@ void main() {
 
   setUpAll(() async {
     await _loadFont('AmiriQuran', 'assets/fonts/AmiriQuran.ttf');
-    await _loadFont('Roboto', '${Platform.environment['FLUTTER_ROOT'] ?? '/opt/sdk/flutter'}/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf');
+    // Latin UI text in screenshots; cosmetic, so skipped where the SDK lacks it.
+    final roboto = File('${Platform.environment['FLUTTER_ROOT'] ?? '/opt/sdk/flutter'}'
+        '/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf');
+    if (roboto.existsSync()) await _loadFont('Roboto', roboto.path);
     final dir = await Directory.systemTemp.createTemp('shots');
     File('assets/db/content.db').copySync('${dir.path}/content.db');
     File('assets/db/content.db.sha256').copySync('${dir.path}/content.db.sha256');
