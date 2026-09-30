@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- audio_service looks the notification icon up by name at runtime, which
-     resource shrinking can't see; keep it. -->
+<!-- Resources looked up by name at runtime, which resource shrinking can't
+     see: the notification icon, and audio_service's transport icons (it
+     resolves "drawable/audio_service_pause" etc. from the Dart side). Without
+     these, the release build's media notification has no valid action icons
+     and the lock-screen / notification controls never appear. -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@drawable/ic_stat_quran" />
+    tools:keep="@drawable/ic_stat_quran,@drawable/audio_service_*" />

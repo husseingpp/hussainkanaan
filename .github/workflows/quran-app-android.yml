@@ -80,6 +80,18 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk quran-app.apk
           ls -lh quran-app.apk
 
+      # Resource shrinking can't see resources looked up by name at runtime.
+      # A missing one silently breaks the media notification (it did once).
+      - name: Runtime-looked-up resources survived shrinking
+        run: |
+          AAPT2=$(ls -d $ANDROID_HOME/build-tools/*/aapt2 | sort -V | tail -1)
+          $AAPT2 dump resources quran-app.apk > res.txt
+          for r in drawable/ic_stat_quran drawable/audio_service_play_arrow drawable/audio_service_pause \
+                   drawable/audio_service_skip_next drawable/audio_service_skip_previous drawable/audio_service_stop; do
+            grep -q "resource .* $r" res.txt || { echo "missing from the APK: $r"; exit 1; }
+          done
+          echo "all runtime resources present"
+
       - uses: actions/upload-artifact@v4
         with:
           name: quran-app-apk

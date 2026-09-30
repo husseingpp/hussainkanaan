@@ -84,15 +84,32 @@ class _Qibla extends ConsumerWidget {
   }
 }
 
-class _LiveCompass extends StatelessWidget {
+class _LiveCompass extends StatefulWidget {
   const _LiveCompass({required this.bearing, required this.declination});
 
   final double bearing;
   final double declination;
 
   @override
+  State<_LiveCompass> createState() => _LiveCompassState();
+}
+
+class _LiveCompassState extends State<_LiveCompass> {
+  // Smoothed on the unit circle, so 359° and 1° average to 0°, not 180°.
+  double? _sin, _cos;
+
+  double _smooth(double deg) {
+    const k = 0.25;
+    final r = deg * math.pi / 180;
+    _sin = _sin == null ? math.sin(r) : _sin! + k * (math.sin(r) - _sin!);
+    _cos = _cos == null ? math.cos(r) : _cos! + k * (math.cos(r) - _cos!);
+    return normalize(math.atan2(_sin!, _cos!) * 180 / math.pi);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
     return StreamBuilder<CompassEvent>(
       stream: FlutterCompass.events,
       builder: (context, snap) {
@@ -103,18 +120,24 @@ class _LiveCompass extends StatelessWidget {
         }
         final quality = compassQuality(e?.accuracy);
         if (quality == CompassQuality.unreliable) return const _Calibrate();
-        final heading = normalize(magnetic + declination);
-        var off = normalize(bearing - heading);
+        // The sensor reads magnetic north; the qibla bearing is from true north.
+        final heading = _smooth(normalize(magnetic + widget.declination));
+        var off = normalize(widget.bearing - heading);
         if (off > 180) off -= 360;
         final aligned = off.abs() <= 3;
         return Column(children: [
-          SizedBox(height: 280, child: CustomPaint(painter: DialPainter(heading: heading, bearing: bearing, scheme: scheme))),
+          SizedBox(height: 280, child: CustomPaint(painter: DialPainter(heading: heading, bearing: widget.bearing, scheme: scheme))),
           const SizedBox(height: 8),
           Text(
-            aligned
-                ? 'أنت باتجاه القبلة'
-                : 'استدر ${degLabel(off.abs())} ${off > 0 ? 'إلى اليمين' : 'إلى اليسار'}',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: aligned ? scheme.primary : null),
+            aligned ? 'أنت باتجاه القبلة' : 'استدر ${degLabel(off.abs())} ${off > 0 ? 'إلى اليمين' : 'إلى اليسار'}',
+            style: text.titleMedium?.copyWith(color: aligned ? scheme.primary : null),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'أعلى الهاتف يتجه إلى ${degLabel(heading)} من الشمال الحقيقي '
+            '(${degLabel(normalize(magnetic))} مغناطيسيًا). ضع الهاتف مسطّحًا بعيدًا عن المعادن والمغناطيس (أغطية الهاتف المغناطيسية أيضًا).',
+            style: text.bodySmall,
+            textAlign: TextAlign.center,
           ),
           if (quality == CompassQuality.fair || quality == CompassQuality.unknown)
             Padding(
@@ -122,8 +145,8 @@ class _LiveCompass extends StatelessWidget {
               child: Text(
                 quality == CompassQuality.fair
                     ? 'دقة البوصلة متوسطة: حرّك الهاتف على شكل ٨ لتحسينها.'
-                    : 'تعذّر معرفة دقة البوصلة؛ ابتعد عن المعادن والأجهزة وقارن بالرقم أعلاه.',
-                style: Theme.of(context).textTheme.bodySmall,
+                    : 'تعذّر معرفة دقة البوصلة؛ حرّك الهاتف على شكل ٨ ثم قارن بالرقم أعلاه.',
+                style: text.bodySmall,
                 textAlign: TextAlign.center,
               ),
             ),
