@@ -88,3 +88,31 @@ jobs:
             Commit: ${{ github.sha }}
           files: quran-app/quran-app.apk
           make_latest: "false"
+
+  # Phase 6 gates against an independent reference. Separate from the APK
+  # job so a network hiccup at the reference service never blocks a build.
+  reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: quran-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Fetch reference times and dates (AlAdhan)
+        run: python3 tool/reference/fetch_reference.py build/reference.json
+
+      - name: Prayer times within a minute; Hijri dates exact (Phase 6 gates)
+        run: |
+          flutter pub get
+          flutter test tool/reference/reference_test.dart --reporter expanded
