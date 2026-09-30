@@ -34,7 +34,7 @@ List<ReminderSpec> planPrayerAlerts({
           id: id,
           at: at,
           title: 'حان وقت صلاة ${p.nameAr}',
-          body: '${loc.label} · ${clockLabel(at, loc.timezone)}',
+          body: '${loc.label} · ${clockLabel(at, loc.timezone, roundUp: true)}',
           kind: alerts.silent ? ReminderKind.prayerSilent : ReminderKind.prayer,
         ));
       }
@@ -44,7 +44,7 @@ List<ReminderSpec> planPrayerAlerts({
           id: id + 1,
           at: pre,
           title: 'صلاة ${p.nameAr} بعد ${arabicDigits(alerts.preAlertMinutes)} دقيقة',
-          body: '${loc.label} · ${clockLabel(at, loc.timezone)}',
+          body: '${loc.label} · ${clockLabel(at, loc.timezone, roundUp: true)}',
           kind: ReminderKind.prayerSilent,
         ));
       }

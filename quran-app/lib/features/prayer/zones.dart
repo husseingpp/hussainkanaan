@@ -31,8 +31,13 @@ DateTime dateIn(String zoneName, DateTime instant) {
 
 String two(int n) => n.toString().padLeft(2, '0');
 
-/// "٠٤:٣٠" on the place's clock.
-String clockLabel(DateTime instant, String zoneName) {
-  final t = inZone(instant, zoneName);
+/// "٠٤:٣٠" on the place's clock. Times carry seconds; [roundUp] shows the
+/// next minute (for when a prayer's time begins), otherwise the minute is
+/// truncated (for when a window ends), so the screen never shows a start
+/// earlier, or an end later, than the computed instant.
+String clockLabel(DateTime instant, String zoneName, {bool roundUp = false}) {
+  final exact = instant.second == 0 && instant.millisecond == 0 && instant.microsecond == 0;
+  final shown = roundUp && !exact ? instant.add(const Duration(minutes: 1)) : instant;
+  final t = inZone(shown, zoneName);
   return arabicNumerals('${two(t.hour)}:${two(t.minute)}');
 }

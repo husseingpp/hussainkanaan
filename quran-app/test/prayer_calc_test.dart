@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_app/features/calendar/calendar_model.dart';
 import 'package:quran_app/features/calendar/calendar_providers.dart';
@@ -33,6 +35,19 @@ void main() {
       // Shar'i midnight is halfway from sunset to Fajr, the last third before Fajr.
       expect(d[Prayer.midnight].isAfter(d[Prayer.isha]), isTrue);
       expect(d.lastThird.isAfter(d[Prayer.midnight]), isTrue);
+    });
+
+    test('Asr is when the shadow equals its noon length plus the object (brute force)', () {
+      for (final (lat, lng, date) in [(59.9139, 10.7522, DateTime(2026, 9, 23)), (33.8938, 35.5018, DateTime(2026, 9, 23))]) {
+        final d = _day(date, lat, lng);
+        double cot(double deg) => 1 / math.tan(deg * math.pi / 180);
+        final target = 1 + cot(sunPosition(d[Prayer.dhuhr], lat, lng).altitude);
+        var t = d[Prayer.dhuhr];
+        while (cot(sunPosition(t, lat, lng).altitude) < target) {
+          t = t.add(const Duration(seconds: 5));
+        }
+        expect(t.difference(d[Prayer.asr]).inSeconds.abs(), lessThan(40));
+      }
     });
 
     test('a Sunni method puts Maghrib at sunset; Hanafi Asr is later', () {

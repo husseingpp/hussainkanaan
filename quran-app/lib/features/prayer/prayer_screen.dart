@@ -120,18 +120,19 @@ class _Times extends ConsumerWidget {
     final hijriOffset = ref.watch(hijriOffsetProvider);
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    String t(DateTime x) => clockLabel(x, location.timezone);
+    // Starts round up, ends round down (see clockLabel).
+    String t(DateTime x, {bool start = true}) => clockLabel(x, location.timezone, roundUp: start);
 
-    Widget row(String name, DateTime at, {DateTime? until, Prayer? alert, String? note, bool strong = true}) {
+    Widget row(String name, DateTime at, {DateTime? until, Prayer? alert, String? note, bool strong = true, bool start = true}) {
       final isNext = dayOffset == 0 && alert == next.prayer && at == next.at;
       return ListTile(
         tileColor: isNext ? scheme.primaryContainer : null,
         title: Text(name, style: strong ? text.titleMedium : text.bodyMedium),
         subtitle: until == null && note == null
             ? null
-            : Text([if (until != null) 'حتى ${t(until)}', ?note].join(' · ')),
+            : Text([if (until != null) 'حتى ${t(until, start: false)}', ?note].join(' · ')),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(t(at), style: (strong ? text.titleLarge : text.titleMedium)?.copyWith(fontFeatures: const [])),
+          Text(t(at, start: start), style: (strong ? text.titleLarge : text.titleMedium)?.copyWith(fontFeatures: const [])),
           if (alert != null)
             IconButton(
               tooltip: alerts.enabled.contains(alert) ? 'إيقاف التنبيه' : 'تنبيه عند دخول الوقت',
@@ -198,11 +199,11 @@ class _Times extends ConsumerWidget {
       ]),
       const Divider(height: 1),
       row('الفجر', day[Prayer.fajr], until: day[Prayer.sunrise], alert: Prayer.fajr),
-      row('الشروق', day[Prayer.sunrise], strong: false),
+      row('الشروق', day[Prayer.sunrise], strong: false, start: false),
       if (shia) ...[
         row('الظهر', day[Prayer.dhuhr], until: day[Prayer.sunset], alert: Prayer.dhuhr, note: 'يُجمع مع العصر'),
         row('العصر', day[Prayer.asr], until: day[Prayer.sunset], alert: Prayer.asr),
-        row('الغروب', day[Prayer.sunset], strong: false),
+        row('الغروب', day[Prayer.sunset], strong: false, start: false),
         row('المغرب', day[Prayer.maghrib], until: day[Prayer.midnight], alert: Prayer.maghrib, note: 'يُجمع مع العشاء'),
         row('العشاء', day[Prayer.isha], until: day[Prayer.midnight], alert: Prayer.isha),
       ] else ...[
@@ -213,7 +214,7 @@ class _Times extends ConsumerWidget {
       ],
       const Divider(),
       row('منتصف الليل الشرعي', day[Prayer.midnight],
-          strong: false, note: shia ? 'آخر وقت المغرب والعشاء' : 'آخر وقت العشاء المختار'),
+          strong: false, start: false, note: shia ? 'آخر وقت المغرب والعشاء' : 'آخر وقت العشاء المختار'),
       row('الثلث الأخير من الليل', day.lastThird, strong: false, note: 'صلاة الليل'),
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
