@@ -32,11 +32,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("test") {
+            storeFile = file("../test-signing/quran-test.jks")
+            storePassword = "quran-test-builds"
+            keyAlias = "quran-test"
+            keyPassword = "quran-test-builds"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Test builds: one fixed key so each APK updates over the last
+            // (see android/test-signing/README.md). Not for store releases.
+            signingConfig = signingConfigs.getByName("test")
         }
     }
 }
