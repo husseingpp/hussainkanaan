@@ -65,7 +65,7 @@ class _Unavailable extends StatelessWidget {
       );
 }
 
-String _tierLabel(String tier) => switch (tier) {
+String tierLabel(String tier) => switch (tier) {
       'A' => 'تمييز كلمة بكلمة',
       'B' => 'تمييز الآية',
       _ => 'صوت فقط',
@@ -146,12 +146,12 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
           child: ListTile(
             leading: const Icon(Icons.record_voice_over_outlined),
             title: Text(reciter.nameAr ?? reciter.name),
-            subtitle: Text('${_tierLabel(reciter.syncTier)} · كاملة ≈ ${formatBytes(reciter.approxBytes)}'),
+            subtitle: Text('${tierLabel(reciter.syncTier)} · كاملة ≈ ${formatBytes(reciter.approxBytes)}'),
             trailing: const Icon(Icons.expand_more),
             onTap: () async {
               final picked = await showModalBottomSheet<Reciter>(
                 context: context,
-                builder: (_) => _ReciterSheet(reciters: reciters, selected: reciter.slug),
+                builder: (_) => ReciterSheet(reciters: reciters, selected: reciter.slug),
               );
               if (picked != null) {
                 await ref.read(listenSettingsProvider.notifier).change((s) => s.copyWith(reciterSlug: picked.slug));
@@ -214,8 +214,8 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
   }
 }
 
-class _ReciterSheet extends ConsumerWidget {
-  const _ReciterSheet({required this.reciters, required this.selected});
+class ReciterSheet extends ConsumerWidget {
+  const ReciterSheet({super.key, required this.reciters, required this.selected});
 
   final List<Reciter> reciters;
   final String selected;
@@ -228,7 +228,7 @@ class _ReciterSheet extends ConsumerWidget {
           ListTile(
             selected: r.slug == selected,
             title: Text(r.nameAr ?? r.name),
-            subtitle: Text('${_tierLabel(r.syncTier)} · ≈ ${formatBytes(r.approxBytes)}'),
+            subtitle: Text('${tierLabel(r.syncTier)} · ≈ ${formatBytes(r.approxBytes)}'),
             trailing: r.slug == selected ? const Icon(Icons.check) : null,
             onTap: () => Navigator.of(context).pop(r),
           ),

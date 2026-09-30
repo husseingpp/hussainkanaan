@@ -65,12 +65,15 @@ final listenReadyProvider = FutureProvider<QuranAudioHandler?>((ref) async {
     art: await _coverArt(dir),
     library: await ref.watch(audioLibraryProvider.future),
     surahs: await ref.watch(surahsProvider.future),
-    save: (s) => repo.savePlayback(SavedPlayback(
-      reciterId: s.reciter.id,
-      // A bismillah belongs to the surah it opens.
-      ayah: s.item.ref,
-      position: s.position,
-    )),
+    save: (s) => repo.savePlayback(
+      SavedPlayback(
+        reciterId: s.reciter.id,
+        // A bismillah belongs to the surah it opens.
+        ayah: s.item.ref,
+        position: s.position,
+      ),
+      mode: s.mode.name,
+    ),
   );
   return handler;
 });

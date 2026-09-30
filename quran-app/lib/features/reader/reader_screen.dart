@@ -9,6 +9,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/reader_settings.dart';
 import '../../data/user_repository.dart';
+import '../follow/follow_screen.dart';
 import '../listen/listen_screen.dart';
 import 'font_pack.dart';
 import 'mushaf_page.dart';
@@ -122,6 +123,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   : () => ref.read(settingsProvider.notifier).change((s) => s.copyWith(fontScale: s.fontScale + 0.1)),
             ),
           ],
+          IconButton(
+            tooltip: 'متابعة مع التلاوة',
+            icon: const Icon(Icons.chrome_reader_mode_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => FollowScreen(start: _ayah)),
+            ),
+          ),
           IconButton(
             tooltip: 'استمع من هنا',
             icon: const Icon(Icons.headphones_outlined),

@@ -299,6 +299,8 @@ class _FakePort implements AudioPort {
   @override
   Stream<void> get completedStream => _completed.stream;
   @override
+  Stream<Duration> get positionStream => const Stream.empty();
+  @override
   int? get index => _i;
   @override
   bool get playing => isPlaying;

@@ -94,10 +94,10 @@ class UserRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-  Future<void> savePlayback(SavedPlayback p) => _db.insert(
+  Future<void> savePlayback(SavedPlayback p, {String mode = 'listen'}) => _db.insert(
         'playback_state',
         {
-          'mode': 'listen',
+          'mode': mode,
           'reciter_id': p.reciterId,
           'surah_id': p.ayah.surah,
           'ayah_no': p.ayah.ayah,
@@ -107,8 +107,8 @@ class UserRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-  Future<SavedPlayback?> loadPlayback() async {
-    final rows = await _db.query('playback_state', where: 'mode = ?', whereArgs: ['listen']);
+  Future<SavedPlayback?> loadPlayback({String mode = 'listen'}) async {
+    final rows = await _db.query('playback_state', where: 'mode = ?', whereArgs: [mode]);
     if (rows.isEmpty) return null;
     final r = rows.first;
     return SavedPlayback(

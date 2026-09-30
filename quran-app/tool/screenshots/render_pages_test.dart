@@ -16,6 +16,8 @@ import 'package:quran_app/data/content_db.dart';
 import 'package:quran_app/data/models.dart';
 import 'package:quran_app/data/providers.dart';
 import 'package:quran_app/data/reader_settings.dart';
+import 'package:quran_app/features/follow/follow_text.dart';
+import 'package:quran_app/features/follow/follow_tracker.dart';
 import 'package:quran_app/features/reader/justified_line.dart';
 import 'package:quran_app/features/reader/mushaf_page.dart';
 import 'package:quran_app/features/reader/reader_screen.dart';
@@ -142,6 +144,42 @@ void main() {
   for (final page in [1, 50, 604]) {
     testWidgets('page $page qcf', (t) => shoot(t, 'page-$page-qcf', ReaderScreen(ayah: const AyahRef(1, 1), page: page, view: ReaderView.page), qcf: true));
   }
+  testWidgets('follow highlight on real timing', (tester) async {
+    tester.view.physicalSize = const Size(412, 700) * 2.5;
+    tester.view.devicePixelRatio = 2.5;
+    addTearDown(tester.view.reset);
+    final reciters = await tester.runAsync(() => db.reciters());
+    final alafasy = reciters!.firstWhere((r) => r.slug == 'alafasy');
+    final words = await tester.runAsync(() => db.wordsOfSurah(1));
+    final timings = await tester.runAsync(() => db.timingsForSurah(alafasy.id, 1));
+    final tracker = FollowTracker(timings!);
+    final pos = ValueNotifier<FollowPosition?>(tracker.locate(2, const Duration(milliseconds: 1900)));
+    final key = GlobalKey();
+    await tester.pumpWidget(RepaintBoundary(
+      key: key,
+      child: MaterialApp(
+        theme: ThemeData(colorSchemeSeed: const Color(0xFF1B5E4A)),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            body: ListView(padding: const EdgeInsets.all(12), children: [
+              for (var a = 1; a <= 7; a++)
+                FollowAyahText(ayah: a, words: words![a]!, position: a == 5 ? ValueNotifier(const FollowPosition(5, null)) : pos, fontSize: 26),
+            ]),
+          ),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      final image = await boundary.toImage();
+      File('$out/follow-1.png').writeAsBytesSync((await image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List());
+    });
+    // 1:2 at 1.9 s is the third word in Alafasy's timing.
+    expect(pos.value, const FollowPosition(2, 3));
+  });
+
   testWidgets('page 604 night', (t) => shoot(t, 'page-604-night', const ReaderScreen(ayah: AyahRef(112, 1), page: 604, view: ReaderView.page), theme: ThemeMode.dark));
   testWidgets('reading 2:255', (t) => shoot(t, 'reading-2-255', const ReaderScreen(ayah: AyahRef(2, 255), view: ReaderView.reading), view: ReaderView.reading));
   testWidgets('reading 32 translation', (t) => shoot(t, 'reading-32',

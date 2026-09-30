@@ -90,3 +90,11 @@ final mushafFontProvider = FutureProvider.family<String?, int>((ref, page) async
   final pack = await ref.watch(mushafFontPackProvider.future);
   return pack.family(page);
 });
+
+final surahWordsProvider = FutureProvider.family<Map<int, List<Word>>, int>(
+  (ref, surah) async => (await ref.watch(contentDbProvider.future)).wordsOfSurah(surah),
+);
+
+final surahTimingsProvider = FutureProvider.family<Map<int, List<Segment>>, ({int reciter, int surah})>(
+  (ref, q) async => (await ref.watch(contentDbProvider.future)).timingsForSurah(q.reciter, q.surah),
+);

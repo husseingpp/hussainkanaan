@@ -10,6 +10,10 @@ import 'sleep_timer.dart';
 abstract class AudioPort {
   Stream<int?> get indexStream;
 
+  /// Position within the current file, frequently enough to follow words
+  /// (Follow Mode throttles it to about 60 ms).
+  Stream<Duration> get positionStream;
+
   /// Fires when the last queued file finishes.
   Stream<void> get completedStream;
 
@@ -38,6 +42,10 @@ class SurahNotDownloaded implements Exception {
 
 enum StopReason { user, sleepTimer, endOfQuran, notDownloaded }
 
+/// Listen Mode (screen off, hours) or Follow Mode (screen on, words lit).
+/// Same engine; each keeps its own resume point.
+enum SessionMode { listen, follow }
+
 /// Where playback is, for the lock screen, the UI and crash recovery.
 class ListenSnapshot {
   const ListenSnapshot({
@@ -46,10 +54,15 @@ class ListenSnapshot {
     required this.position,
     required this.playing,
     required this.sleep,
+    this.mode = SessionMode.listen,
+    this.plan = RepeatPlan.none,
     this.sleepRemaining,
     this.stopAfterSurah,
     this.stopped,
   });
+
+  final SessionMode mode;
+  final RepeatPlan plan;
 
   final Reciter reciter;
   final PlaybackItem item;
@@ -91,6 +104,8 @@ class ListenSession {
   final _changes = StreamController<ListenSnapshot>.broadcast();
   final _items = <PlaybackItem>[];
   Reciter? _reciter;
+  SessionMode _mode = SessionMode.listen;
+  RepeatPlan _plan = RepeatPlan.none;
   double _gain = 1;
   Duration _sinceSave = Duration.zero;
   StopReason? _stopped;
@@ -100,6 +115,8 @@ class ListenSession {
 
   Stream<ListenSnapshot> get changes => _changes.stream;
   List<PlaybackItem> get queue => List.unmodifiable(_items);
+  Stream<Duration> get positionStream => _port.positionStream;
+  Duration get position => _port.position;
   SleepController get sleep => _sleep;
 
   PlaybackItem? get current {
@@ -116,6 +133,8 @@ class ListenSession {
       position: _port.position,
       playing: _port.playing,
       sleep: _sleep.mode,
+      mode: _mode,
+      plan: _plan,
       sleepRemaining: _sleep.remaining,
       stopAfterSurah: _sleep.stopAfterSurah,
       stopped: _stopped,
@@ -125,15 +144,23 @@ class ListenSession {
   String _path(PlaybackItem item) => _library.pathFor(_reciter!, item.file);
 
   /// Starts at [from]. Refuses (throws [SurahNotDownloaded]) rather than stream.
-  Future<void> start(Reciter reciter, AyahRef from, {SleepTimer sleep = const SleepOff()}) async {
+  Future<void> start(
+    Reciter reciter,
+    AyahRef from, {
+    SleepTimer sleep = const SleepOff(),
+    SessionMode mode = SessionMode.listen,
+    RepeatPlan plan = RepeatPlan.none,
+  }) async {
     final surah = _surahs[from.surah]!;
     if (!_library.hasSurah(reciter, surah)) throw SurahNotDownloaded(from.surah);
     _reciter = reciter;
     _stopped = null;
+    _mode = mode;
+    _plan = plan;
     _sleep.set(sleep, currentSurah: from.surah);
     _items
       ..clear()
-      ..addAll(surahItems(from.surah, surah.ayahCount, fromAyah: from.ayah));
+      ..addAll(plan.apply(from.surah, surah.ayahCount, fromAyah: from.ayah));
     _items.addAll(_nextSurahs(from.surah));
     await _port.load([for (final i in _items) _path(i)]);
     await _applyVolume();
@@ -147,7 +174,7 @@ class ListenSession {
     final out = <PlaybackItem>[];
     for (var s = surah + 1; s <= surah + _lookahead; s++) {
       if (!_mayQueue(s)) break;
-      out.addAll(surahItems(s, _surahs[s]!.ayahCount));
+      out.addAll(_plan.apply(s, _surahs[s]!.ayahCount));
     }
     return out;
   }
@@ -250,6 +277,18 @@ class ListenSession {
     if (_reciter == null || _stopped != null) return;
     await _port.play();
     _emit();
+  }
+
+  /// Jumps to the first queued item of [ayah] in the current surah (e.g. a
+  /// tap on it in Follow Mode). Returns false if it isn't queued.
+  Future<bool> jumpToAyah(int ayah) async {
+    final item = current;
+    if (item == null) return false;
+    final i = _items.indexWhere((x) => x.surah == item.surah && x.ayah == ayah && !x.isBismillah);
+    if (i < 0) return false;
+    await _port.seekToIndex(i);
+    if (!_port.playing) await _port.play();
+    return true;
   }
 
   Future<void> next() => _skip(1);

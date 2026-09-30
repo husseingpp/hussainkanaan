@@ -174,3 +174,21 @@ class Reciter {
   static String fileName(AyahRef ref) =>
       '${ref.surah.toString().padLeft(3, '0')}${ref.ayah.toString().padLeft(3, '0')}.mp3';
 }
+
+/// One word of an ayah as Follow Mode renders it (from the `words` table).
+class Word {
+  const Word(this.position, this.text);
+
+  final int position;
+  final String text;
+}
+
+/// When a word (position ≥ 1), or the whole ayah (position 0), is recited,
+/// relative to the start of that ayah's own audio file.
+class Segment {
+  const Segment(this.position, this.startMs, this.endMs);
+
+  final int position;
+  final int startMs;
+  final int endMs;
+}

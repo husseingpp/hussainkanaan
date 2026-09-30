@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import '../../data/models.dart';
 import 'audio_library.dart';
 import 'listen_media.dart';
+import 'listen_queue.dart';
 import 'listen_session.dart';
 import 'sleep_timer.dart';
 
@@ -18,6 +19,12 @@ class JustAudioPort implements AudioPort {
 
   @override
   Stream<int?> get indexStream => player.currentIndexStream.distinct();
+
+  @override
+  Stream<Duration> get positionStream => player.createPositionStream(
+        minPeriod: const Duration(milliseconds: 40),
+        maxPeriod: const Duration(milliseconds: 60),
+      );
 
   @override
   Stream<void> get completedStream =>
@@ -100,13 +107,19 @@ class QuranAudioHandler extends BaseAudioHandler with SeekHandler {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => session.tick(const Duration(seconds: 1)));
   }
 
-  Future<void> startListening(Reciter reciter, AyahRef from, {SleepTimer sleep = const SleepOff()}) async {
+  Future<void> startListening(
+    Reciter reciter,
+    AyahRef from, {
+    SleepTimer sleep = const SleepOff(),
+    SessionMode mode = SessionMode.listen,
+    RepeatPlan plan = RepeatPlan.none,
+  }) async {
     final session = _session;
     if (session == null) throw StateError('audio not configured');
     // Calls and alarms interrupt, then playback resumes; unplugging headphones pauses.
     final audioSession = await AudioSession.instance;
     await audioSession.configure(const AudioSessionConfiguration.music());
-    await session.start(reciter, from, sleep: sleep);
+    await session.start(reciter, from, sleep: sleep, mode: mode, plan: plan);
   }
 
   void _publish(ListenSnapshot s) {

@@ -175,6 +175,38 @@ class ContentDb {
     return {for (final r in rows) r['surah_id']! as int: r['approx_bytes']! as int};
   }
 
+  /// A surah's words by ayah, in reading order (Follow Mode draws these).
+  Future<Map<int, List<Word>>> wordsOfSurah(int surah) async {
+    final rows = await _db.rawQuery(
+      'SELECT a.ayah_no, w.position, w.text_uthmani FROM words w JOIN ayahs a ON a.id = w.ayah_id '
+      'WHERE a.surah_id = ? ORDER BY a.ayah_no, w.position',
+      [surah],
+    );
+    final out = <int, List<Word>>{};
+    for (final r in rows) {
+      out.putIfAbsent(r['ayah_no']! as int, () => []).add(Word(r['position']! as int, r['text_uthmani']! as String));
+    }
+    return out;
+  }
+
+  /// One reciter's timing for one surah, loaded per surah (BLUEPRINT §4).
+  /// Ayahs without word timing are simply absent.
+  Future<Map<int, List<Segment>>> timingsForSurah(int reciterId, int surah) async {
+    final rows = await _db.rawQuery(
+      'SELECT a.ayah_no, t.word_position, t.start_ms, t.end_ms FROM ayah_timings t '
+      'JOIN ayahs a ON a.id = t.ayah_id WHERE t.reciter_id = ? AND a.surah_id = ? '
+      'ORDER BY a.ayah_no, t.start_ms',
+      [reciterId, surah],
+    );
+    final out = <int, List<Segment>>{};
+    for (final r in rows) {
+      out.putIfAbsent(r['ayah_no']! as int, () => []).add(
+            Segment(r['word_position']! as int, r['start_ms']! as int, r['end_ms']! as int),
+          );
+    }
+    return out;
+  }
+
   Future<List<QcfFontInfo>> qcfFonts() async {
     final rows = await _db.query('qcf_fonts', orderBy: 'page');
     return [
