@@ -359,9 +359,9 @@ Map<Prayer, double> _computeRaw(DateTime date, double lat, double lng, CalcParam
 
   double adjust(double time, double base, double angle, {required bool before}) {
     final limit = portion(angle);
+    if (time.isNaN) return before ? base - limit : base + limit;
     final diff = before ? _fix(base - time, 24) : _fix(time - base, 24);
-    if (time.isNaN || diff > limit) return before ? base - limit : base + limit;
-    return time;
+    return diff > limit ? (before ? base - limit : base + limit) : time;
   }
 
   times[Prayer.fajr] = adjust(times[Prayer.fajr]!, sunrise, params.fajrAngle, before: true);

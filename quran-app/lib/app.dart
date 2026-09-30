@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/providers.dart';
+import 'features/calendar/calendar_providers.dart';
 import 'features/shell/app_shell.dart';
 
 class QuranApp extends ConsumerWidget {
@@ -18,6 +19,8 @@ class QuranApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Night mode: the reader's theme setting drives the whole app.
     final themeMode = ref.watch(settingsProvider.select((s) => s.value?.themeMode)) ?? ThemeMode.system;
+    // Opt-in: a muted palette in the mourning seasons (BLUEPRINT §9).
+    final mourning = ref.watch(mourningThemeProvider);
     return MaterialApp(
       title: 'القرآن الكريم',
       debugShowCheckedModeBanner: false,
@@ -25,16 +28,16 @@ class QuranApp extends ConsumerWidget {
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar'), Locale('en')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: _theme(Brightness.light),
-      darkTheme: _theme(Brightness.dark),
+      theme: _theme(Brightness.light, mourning: mourning),
+      darkTheme: _theme(Brightness.dark, mourning: mourning),
       themeMode: themeMode,
       home: home ?? AppShell(openReaderOnLaunch: openReaderOnLaunch),
     );
   }
 }
 
-ThemeData _theme(Brightness brightness) => ThemeData(
+ThemeData _theme(Brightness brightness, {bool mourning = false}) => ThemeData(
       brightness: brightness,
-      colorSchemeSeed: const Color(0xFF1B5E4A),
+      colorSchemeSeed: mourning ? const Color(0xFF3C3C3C) : const Color(0xFF1B5E4A),
       useMaterial3: true,
     );

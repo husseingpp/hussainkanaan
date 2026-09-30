@@ -62,10 +62,14 @@ const _surahs = [
   Surah(id: 2, nameAr: 'البقرة', nameEn: 'The Cow', nameTranslit: 'Al-Baqara', isMeccan: false, ayahCount: 286, pageStart: 2),
 ];
 
+late String _markers;
+
+/// Marks a phase with a file the CI script polls for (test output only
+/// reaches the host when the test ends), then holds it for the dump.
 Future<void> _phase(String name) async {
-  // ignore: avoid_print
-  print('MEDIA_PHASE_$name');
-  await Future<void>.delayed(const Duration(seconds: 25));
+  await Future<void>.delayed(const Duration(seconds: 4));
+  File(p.join(_markers, 'MEDIA_PHASE_$name')).writeAsStringSync(name);
+  await Future<void>.delayed(const Duration(seconds: 20));
 }
 
 void main() {
@@ -75,7 +79,12 @@ void main() {
     final handler = await initAudio();
     expect(handler, isNotNull, reason: 'AudioService.init failed');
 
-    final dir = p.join((await getApplicationSupportDirectory()).path, 'audio');
+    final support = (await getApplicationSupportDirectory()).path;
+    _markers = support;
+    for (final f in Directory(support).listSync().whereType<File>().where((f) => p.basename(f.path).startsWith('MEDIA_PHASE_'))) {
+      f.deleteSync();
+    }
+    final dir = p.join(support, 'audio');
     final tone = _tone(const Duration(seconds: 20));
     Directory(p.join(dir, _reciter.slug)).createSync(recursive: true);
     for (var a = 1; a <= 7; a++) {

@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 
 import '../../data/khatmah_repository.dart';
 import '../../data/providers.dart';
+import '../calendar/calendar_providers.dart';
+import '../prayer/prayer_alerts.dart';
+import '../prayer/prayer_providers.dart';
 import 'khatmah_plan.dart';
 import 'reminders.dart';
 
@@ -78,10 +81,28 @@ Future<void> syncReminders(T Function<T>(ProviderListenable<T>) read) async {
         return DailyAyah(surahName: surahs[a.surah] ?? '', ayahNo: a.number, text: a.text, translation: a.translation);
       },
     );
+    specs.addAll(await _companionReminders(read));
     await read(reminderSchedulerProvider).sync(specs);
   } catch (_) {
     // Reminders are best effort; never let them break the app.
   }
+}
+
+/// Prayer and calendar alerts; each part failing alone leaves the others.
+Future<List<ReminderSpec>> _companionReminders(T Function<T>(ProviderListenable<T>) read) async {
+  final out = <ReminderSpec>[];
+  try {
+    out.addAll(planPrayerAlerts(
+      alerts: await read(prayerAlertsProvider.future),
+      location: await read(selectedLocationProvider.future),
+      settings: await read(prayerSettingsProvider.future),
+      now: DateTime.now(),
+    ));
+  } catch (_) {}
+  try {
+    out.addAll(await planEventAlerts(read));
+  } catch (_) {}
+  return out;
 }
 
 /// Runs [syncReminders] once per app start.

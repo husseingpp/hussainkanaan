@@ -40,7 +40,7 @@ class SurahNotDownloaded implements Exception {
   final int surah;
 }
 
-enum StopReason { user, sleepTimer, endOfQuran, notDownloaded }
+enum StopReason { user, sleepTimer, endOfQuran, notDownloaded, endOfRange }
 
 /// Listen Mode (screen off, hours) or Follow Mode (screen on, words lit).
 /// Same engine; each keeps its own resume point.
@@ -175,6 +175,7 @@ class ListenSession {
   /// within the Quran and not past a sleep timer's last surah.
   List<PlaybackItem> _nextSurahs(int surah) {
     final out = <PlaybackItem>[];
+    if (_plan.stopAtEnd) return out;
     for (var s = surah + 1; s <= surah + _lookahead; s++) {
       if (!_mayQueue(s)) break;
       out.addAll(_plan.apply(s, _surahs[s]!.ayahCount));
@@ -208,6 +209,7 @@ class ListenSession {
   Future<void> _onCompleted() async {
     final last = _items.isEmpty ? null : _items.last;
     final reason = switch (last) {
+      _ when _plan.stopAtEnd => StopReason.endOfRange,
       _ when _sleep.stopAfterSurah != null && last != null && last.surah >= _sleep.stopAfterSurah! =>
         StopReason.sleepTimer,
       PlaybackItem(surah: 114) => StopReason.endOfQuran,

@@ -44,6 +44,7 @@ void main() {
     await _pumpAt(tester, 400);
     await tester.tap(find.text('القبلة'));
     await tester.pumpAndSettle();
-    expect(find.text('Phase 6b — Qibla'), findsOneWidget);
+    // No place saved yet: it asks, rather than guessing.
+    expect(find.text('استخدم موقعي الحالي'), findsOneWidget);
   });
 }

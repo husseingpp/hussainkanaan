@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/breakpoints.dart';
-import '../common/phase_placeholder.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
+import '../calendar/calendar_screen.dart';
 import '../khatmah/khatmah_providers.dart';
 import '../listen/listen_screen.dart';
+import '../prayer/prayer_screen.dart';
+import '../qibla/qibla_screen.dart';
 import '../reader/quran_index_screen.dart';
 import '../reader/reader_screen.dart';
 
@@ -26,11 +28,11 @@ final _destinations = <_Destination>[
   _Destination('الاستماع', Icons.headphones_outlined, Icons.headphones,
       (_) => const ListenScreen()),
   _Destination('الصلاة', Icons.schedule_outlined, Icons.schedule,
-      (_) => const PhasePlaceholder(title: 'مواقيت الصلاة', phase: 'Phase 6a — Prayer times')),
+      (_) => const PrayerScreen()),
   _Destination('القبلة', Icons.explore_outlined, Icons.explore,
-      (_) => const PhasePlaceholder(title: 'القبلة', phase: 'Phase 6b — Qibla')),
+      (_) => const QiblaScreen()),
   _Destination('التقويم', Icons.calendar_month_outlined, Icons.calendar_month,
-      (_) => const PhasePlaceholder(title: 'التقويم', phase: 'Phase 6c — Calendar')),
+      (_) => const CalendarScreen()),
 ];
 
 /// Bottom nav below 600, a side rail above it (extended past 1000).

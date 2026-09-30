@@ -15,6 +15,10 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Prayer-time alerts on the minute; the user grants it in system settings. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Prayer times and qibla: an approximate position is enough. Asked when
+         those screens are first used, never at launch; a city list is the
+         alternative. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="القرآن الكريم"
         android:name="${applicationName}"

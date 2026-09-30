@@ -44,7 +44,11 @@ Set<AyahRef> filesForSurah(int surah, int ayahCount) =>
 /// Expressed as the queue itself, so the state is just "which item is
 /// playing": no counters to drift, and repeats stay gapless.
 class RepeatPlan {
-  const RepeatPlan({this.ayahTimes = 1, this.range, this.rangeTimes = 1});
+  const RepeatPlan({this.ayahTimes = 1, this.range, this.rangeTimes = 1, this.stopAtEnd = false});
+
+  /// Exactly [range], once, then stop: an a'maal from the calendar.
+  factory RepeatPlan.only(int surah, int from, int to) =>
+      RepeatPlan(range: (surah: surah, from: from, to: to), stopAtEnd: true);
 
   static const none = RepeatPlan();
 
@@ -53,6 +57,9 @@ class RepeatPlan {
   /// First and last ayah of the range, within one surah.
   final ({int surah, int from, int to})? range;
   final int rangeTimes;
+
+  /// Stop after the range instead of continuing the recitation.
+  final bool stopAtEnd;
 
   bool get isNone => ayahTimes <= 1 && range == null;
 
@@ -72,6 +79,7 @@ class RepeatPlan {
         if (!item.isBismillah && item.ayah >= r.from && item.ayah <= r.to) ...repeated(item),
     ];
     final after = plain.where((i) => !i.isBismillah && i.ayah > r.to).toList();
+    if (stopAtEnd) return [...before.where((i) => r.from == 1 && i.isBismillah), for (var i = 0; i < rangeTimes; i++) ...block];
     return [...before, for (var i = 0; i < rangeTimes; i++) ...block, ...after];
   }
 }

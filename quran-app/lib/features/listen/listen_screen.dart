@@ -9,16 +9,20 @@ import '../../data/user_repository.dart';
 import 'battery.dart';
 import 'downloads_screen.dart';
 import 'listen_providers.dart';
+import 'listen_queue.dart';
 import 'listen_session.dart';
 import 'sleep_timer.dart';
 
 /// Listen Mode: long, untouched, screen-off recitation (BLUEPRINT §3).
 /// A dark, low-information screen with big thumb-reachable controls.
 class ListenScreen extends ConsumerWidget {
-  const ListenScreen({super.key, this.startAt});
+  const ListenScreen({super.key, this.startAt, this.plan = RepeatPlan.none});
 
   /// Pre-selects where to start (e.g. from the reader).
   final AyahRef? startAt;
+
+  /// E.g. exactly the ayat an a'maal recommends.
+  final RepeatPlan plan;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,7 +48,7 @@ class ListenScreen extends ConsumerWidget {
                   children: [
                     const NotificationCard(),
                     const BatteryCard(),
-                    if (active) _NowPlaying(snapshot: snapshot) else _StartPanel(startAt: startAt, last: snapshot),
+                    if (active) _NowPlaying(snapshot: snapshot) else _StartPanel(startAt: startAt, plan: plan, last: snapshot),
                   ],
                 ),
         ),
@@ -73,9 +77,10 @@ String tierLabel(String tier) => switch (tier) {
     };
 
 class _StartPanel extends ConsumerStatefulWidget {
-  const _StartPanel({this.startAt, this.last});
+  const _StartPanel({this.startAt, this.plan = RepeatPlan.none, this.last});
 
   final AyahRef? startAt;
+  final RepeatPlan plan;
   final ListenSnapshot? last;
 
   @override
@@ -99,7 +104,7 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
     ref.invalidate(notificationPermissionProvider);
     try {
       await handler!.session!.setLevel(settings.level);
-      await handler.startListening(r, from);
+      await handler.startListening(r, from, plan: widget.plan);
     } on SurahNotDownloaded catch (e) {
       final name = ref.read(surahsProvider).value?.where((s) => s.id == e.surah).firstOrNull?.nameAr ?? '';
       setState(() => _error = 'سورة $name غير مُنزّلة بصوت هذا القارئ. نزّلها أولًا، فالتلاوة لا تُبث من الإنترنت.');
@@ -131,6 +136,7 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
               StopReason.endOfQuran => 'خُتمت التلاوة.',
               StopReason.notDownloaded => 'توقفت التلاوة عند آخر سورة مُنزّلة.',
               StopReason.user => 'أُوقفت التلاوة.',
+              StopReason.endOfRange => 'انتهت الآيات المختارة.',
             }, style: text.bodyMedium),
           ),
         if (saved != null && savedReciter != null && downloaded.contains(saved.ayah.surah))
