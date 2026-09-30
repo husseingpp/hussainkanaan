@@ -8,13 +8,16 @@ import 'package:flutter/material.dart';
 /// they do; then puts the spare width between words. Lines much shorter than
 /// the page (the centred opening pages) are centred instead of stretched.
 class JustifiedLine extends StatelessWidget {
-  const JustifiedLine({super.key, required this.words, required this.style, this.styles});
+  const JustifiedLine({super.key, required this.words, required this.style, this.styles, this.onTaps});
 
   final List<String> words;
   final TextStyle style;
 
   /// Optional per-word style overrides (e.g. medallions in the accent colour).
   final List<TextStyle?>? styles;
+
+  /// Optional per-word tap handlers (word study).
+  final List<VoidCallback?>? onTaps;
 
   static const _minGapEm = 0.2;
   static const _justifyThreshold = 0.75;
@@ -67,12 +70,16 @@ class JustifiedLine extends StatelessWidget {
         children: [
           for (var i = 0; i < words.length; i++) ...[
             if (i > 0) SizedBox(width: gap),
-            Text(
-              words[i],
-              textDirection: TextDirection.rtl,
-              maxLines: 1,
-              softWrap: false,
-              style: styleAt(i).copyWith(fontSize: (styleAt(i).fontSize ?? 14) * scale),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTaps?[i],
+              child: Text(
+                words[i],
+                textDirection: TextDirection.rtl,
+                maxLines: 1,
+                softWrap: false,
+                style: styleAt(i).copyWith(fontSize: (styleAt(i).fontSize ?? 14) * scale),
+              ),
             ),
           ],
         ],

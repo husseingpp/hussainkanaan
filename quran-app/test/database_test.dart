@@ -118,6 +118,27 @@ void main() {
       expect(page.firstAyah, const AyahRef(112, 1));
     });
 
+    test('search: Arabic folded and undiacritized, English as a prefix while typing', () async {
+      final ar = await db.searchText('إِيَّاكَ نَعْبُدُ');
+      expect(ar.map((h) => h.ref), [const AyahRef(1, 5)]);
+      expect(ar.single.text, contains(SearchHit.open));
+      expect(ar.single.isTranslation, isFalse);
+      final en = await db.searchText('fixt');
+      expect(en, hasLength(11));
+      expect(en.first.isTranslation, isTrue);
+      expect(await db.searchText('") OR ('), isEmpty);
+    });
+
+    test('word study: meanings, roots, and every occurrence of a root', () async {
+      final words = await db.wordsOf(const AyahRef(1, 1));
+      expect(words.map((w) => w.position), [1, 2, 3, 4]);
+      expect(words[1].root, 'أ ل ه');
+      expect(words[0].translation, 'In (the) name');
+      final occ = await db.rootOccurrences('أ ل ه');
+      expect(occ.map((w) => (w.ref, w.position)), [(const AyahRef(1, 1), 2), (const AyahRef(112, 1), 3)]);
+      expect((await db.ayah(const AyahRef(112, 2)))!.translation, '[fixture translation 112:2]');
+    });
+
     test('juz starts and page lookup', () async {
       final juzs = await db.juzStarts();
       expect(juzs.map((j) => (j.juz, j.start, j.page)), [(1, const AyahRef(1, 1), 1), (2, const AyahRef(112, 1), 2)]);

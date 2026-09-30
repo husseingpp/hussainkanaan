@@ -19,6 +19,7 @@ import 'package:quran_app/data/reader_settings.dart';
 import 'package:quran_app/features/follow/follow_text.dart';
 import 'package:quran_app/features/follow/follow_tracker.dart';
 import 'package:quran_app/features/reader/justified_line.dart';
+import 'package:quran_app/features/study/study_sheets.dart';
 import 'package:quran_app/features/reader/mushaf_page.dart';
 import 'package:quran_app/features/reader/reader_screen.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -98,6 +99,31 @@ void main() {
       File('$out/$name.png').writeAsBytesSync(png!.buffer.asUint8List());
     });
   }
+
+  // The Phase 4 gate: undiacritized queries return the right ayahs in under
+  // 100 ms on a cold DB (a fresh copy, opened for this test).
+  test('search gate', () async {
+    final dir = await Directory.systemTemp.createTemp('cold');
+    final cold = await ContentDb.open(factory: databaseFactoryFfi, directory: dir.path, bundle: _Bundle());
+    final cases = {
+      'الله لا اله الا هو الحي القيوم': const AyahRef(2, 255),
+      'قل هو الله احد': const AyahRef(112, 1),
+      'انا اعطيناك الكوثر': const AyahRef(108, 1),
+      'والقران الحكيم': const AyahRef(36, 2),
+      'ان مع العسر يسرا': const AyahRef(94, 6),
+      'فإن مع العسر يسرا': const AyahRef(94, 5),
+      'throne': null,
+    };
+    for (final e in cases.entries) {
+      final sw = Stopwatch()..start();
+      final hits = await cold.searchText(e.key);
+      sw.stop();
+      expect(sw.elapsedMilliseconds, lessThan(100), reason: '"${e.key}" took ${sw.elapsedMilliseconds} ms');
+      if (e.value != null) expect(hits.map((h) => h.ref), contains(e.value), reason: e.key);
+      expect(hits, isNotEmpty, reason: e.key);
+    }
+    await cold.close();
+  });
 
   // The Phase 1 gate, rendering half: every page lays out at phone and tablet
   // widths with no overflow or error. (Line breaks are proven by the ingest.)
@@ -179,6 +205,10 @@ void main() {
     // 1:2 at 1.9 s is the third word in Alafasy's timing.
     expect(pos.value, const FollowPosition(2, 3));
   });
+
+  testWidgets('word study', (t) => shoot(t, 'study-word',
+      const Scaffold(body: WordStudySheet(ayah: AyahRef(1, 2), position: 1))));
+  testWidgets('ayah study', (t) => shoot(t, 'study-ayah', const Scaffold(body: AyahStudySheet(ayah: AyahRef(2, 255)))));
 
   testWidgets('page 604 night', (t) => shoot(t, 'page-604-night', const ReaderScreen(ayah: AyahRef(112, 1), page: 604, view: ReaderView.page), theme: ThemeMode.dark));
   testWidgets('reading 2:255', (t) => shoot(t, 'reading-2-255', const ReaderScreen(ayah: AyahRef(2, 255), view: ReaderView.reading), view: ReaderView.reading));

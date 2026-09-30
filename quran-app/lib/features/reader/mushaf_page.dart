@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/arabic_digits.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../study/study_sheets.dart';
 import 'justified_line.dart';
 import 'quran_text.dart';
 
@@ -96,16 +97,24 @@ class MushafPageView extends ConsumerWidget {
             words: [for (final g in line.glyphs) g.qcf!],
             style: glyphs,
             styles: [for (final g in line.glyphs) g.isAyahEnd ? glyphs.copyWith(color: accent.color) : null],
+            onTaps: _taps(context, line),
           );
         }
         return JustifiedLine(
           words: [for (final g in line.glyphs) g.isAyahEnd ? ayahEndMark(g.ayah.ayah) : g.text],
           style: base,
           styles: [for (final g in line.glyphs) g.isAyahEnd ? accent : null],
+          onTaps: _taps(context, line),
         );
     }
   }
 }
+
+/// Tap a word to study it; tap an ayah's medallion for the whole ayah.
+List<VoidCallback?> _taps(BuildContext context, PageLine line) => [
+      for (final g in line.glyphs)
+        g.isAyahEnd ? () => showAyahStudy(context, g.ayah) : () => showWordStudy(context, g.ayah, g.position),
+    ];
 
 class _SurahTitle extends StatelessWidget {
   const _SurahTitle({required this.name, required this.style});

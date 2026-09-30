@@ -220,6 +220,91 @@ class ContentDb {
     ];
   }
 
+  /// Search for the study screen: Arabic (folded, undiacritized) against the
+  /// Quran text, anything else against the bundled translation. Matches come
+  /// back marked with [SearchHit.open] / [SearchHit.close].
+  Future<List<SearchHit>> searchText(String query, {int limit = 100}) async {
+    final arabic = RegExp('[\u0600-\u06FF]').hasMatch(query);
+    final folded = arabic ? normalizeArabic(query) : query.trim();
+    final tokens = folded.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
+    if (tokens.isEmpty) return const [];
+    // Quoted tokens: user input is never FTS syntax. A trailing * lets the
+    // last word match as a prefix while typing.
+    final match = [
+      for (var i = 0; i < tokens.length; i++)
+        '"${tokens[i].replaceAll('"', '""')}"${i == tokens.length - 1 ? '*' : ''}',
+    ].join(' ');
+    final o = SearchHit.open, c = SearchHit.close;
+    final rows = arabic
+        ? await _db.rawQuery(
+            "SELECT a.surah_id, a.ayah_no, highlight(ayahs_fts, 0, '$o', '$c') AS hit "
+            'FROM ayahs_fts JOIN ayahs a ON a.id = ayahs_fts.rowid WHERE ayahs_fts MATCH ? ORDER BY a.id LIMIT ?',
+            [match, limit],
+          )
+        : await _db.rawQuery(
+            "SELECT a.surah_id, a.ayah_no, highlight(translation_fts, 0, '$o', '$c') AS hit "
+            'FROM translation_fts JOIN ayahs a ON a.id = translation_fts.rowid '
+            'WHERE translation_fts MATCH ? ORDER BY rank LIMIT ?',
+            [match, limit],
+          );
+    return [
+      for (final r in rows)
+        SearchHit(
+          ref: AyahRef(r['surah_id']! as int, r['ayah_no']! as int),
+          text: r['hit']! as String,
+          isTranslation: !arabic,
+        ),
+    ];
+  }
+
+  Future<Ayah?> ayah(AyahRef ref) async {
+    final rows = await _db.rawQuery(
+      'SELECT a.surah_id, a.ayah_no, a.text_uthmani, a.page, a.juz, a.sajda, t.text AS translation FROM ayahs a '
+      'LEFT JOIN translation_ayahs t ON t.ayah_id = a.id AND t.translation_id = 1 '
+      'WHERE a.surah_id = ? AND a.ayah_no = ?',
+      [ref.surah, ref.ayah],
+    );
+    return rows.isEmpty ? null : Ayah.fromRow(rows.first);
+  }
+
+  /// The ayah's words with their word-by-word meaning and root.
+  Future<List<WordInfo>> wordsOf(AyahRef ref) async {
+    final rows = await _db.rawQuery(
+      'SELECT w.position, w.text_uthmani, w.translation_en, w.root FROM words w JOIN ayahs a ON a.id = w.ayah_id '
+      'WHERE a.surah_id = ? AND a.ayah_no = ? ORDER BY w.position',
+      [ref.surah, ref.ayah],
+    );
+    return [
+      for (final r in rows)
+        WordInfo(
+          ref: ref,
+          position: r['position']! as int,
+          text: r['text_uthmani']! as String,
+          translation: r['translation_en'] as String?,
+          root: r['root'] as String?,
+        ),
+    ];
+  }
+
+  /// Every word from [root], in Quran order.
+  Future<List<WordInfo>> rootOccurrences(String root) async {
+    final rows = await _db.rawQuery(
+      'SELECT a.surah_id, a.ayah_no, w.position, w.text_uthmani, w.translation_en FROM words w '
+      'JOIN ayahs a ON a.id = w.ayah_id WHERE w.root = ? ORDER BY w.id',
+      [root],
+    );
+    return [
+      for (final r in rows)
+        WordInfo(
+          ref: AyahRef(r['surah_id']! as int, r['ayah_no']! as int),
+          position: r['position']! as int,
+          text: r['text_uthmani']! as String,
+          translation: r['translation_en'] as String?,
+          root: root,
+        ),
+    ];
+  }
+
   /// Full-text search over the undiacritized text. Every token is quoted so
   /// user input can never be parsed as FTS5 query syntax.
   Future<List<AyahRef>> search(String query, {int limit = 50}) async {

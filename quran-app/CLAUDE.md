@@ -83,6 +83,14 @@ One feature per session, with a hard QA gate between phases (BLUEPRINT §10).
   - Repeat engine: `RepeatPlan` (ayah ×N, range ×M, then continue) is expressed as the queue itself, so there are no counters.
   - Follow and Listen share the one audio engine (`SessionMode`), with separate resume points.
   - **Gate (needs a phone):** highlight within 150 ms of the audio across a full 20-minute surah, including after seeking, pausing and backgrounding.
+- **Phase 4, Study: in progress.**
+  - Search (`SearchScreen`, from the index): Arabic is folded and undiacritized against `ayahs_fts`, anything else goes against the translation's `translation_fts`, with prefix matching on the last word and marked matches. «٢:٢٥٥»-style references jump.
+  - Word study: tap a word in Page View, or the ayah's medallion. It shows the meaning, the root, and every occurrence (`words_root` index).
+  - Ayah study: tap an ayah in Reading View, or long-press in Follow Mode. It shows the ayah, the Qara'i translation, and word-by-word meanings.
+  - Gate: "search gate" in `tool/screenshots/render_pages_test.dart` checks correct results in under 100 ms on a cold DB (also run in CI).
+  - Open: which tafsir(s) to offer. Quran Foundation's are all Sunni works, and Shia tafsirs need a sourced, licensed pack: the owner's decision. Also more translations as verified downloads.
+  - Token search doesn't match a word with an attached clitic (ف، و، ب، ل), e.g. «ان» vs «فان». Known and deliberate for now.
+
 
 
 Eyeball screens with `flutter test tool/screenshots/render_pages_test.dart --dart-define=OUT=<dir>`; it writes PNGs from the real content DB.

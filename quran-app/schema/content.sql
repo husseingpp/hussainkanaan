@@ -67,6 +67,9 @@ CREATE TABLE words (
   line            INTEGER,
   UNIQUE (ayah_id, position)
 );
+CREATE INDEX words_page ON words (page);
+-- Word study: "every other word from this root".
+CREATE INDEX words_root ON words (root) WHERE root IS NOT NULL;
 
 -- Every line of every page of the v1 (1405H Madani) mus'haf: which lines hold
 -- ayat and which hold a surah title or the bismillah. Derived and checked by
@@ -145,6 +148,12 @@ CREATE TABLE translation_ayahs (
   text            TEXT    NOT NULL,
   PRIMARY KEY (translation_id, ayah_id)
 ) WITHOUT ROWID;
+
+-- Search in the bundled translation (rowid = ayah id).
+CREATE VIRTUAL TABLE translation_fts USING fts5 (
+  text,
+  tokenize = 'unicode61 remove_diacritics 2'
+);
 
 -- ---------------------------------------------------------------- Calendar
 -- Also a versioned pack (BLUEPRINT §9): the dataset must be compiled from a

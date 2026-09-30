@@ -192,3 +192,29 @@ class Segment {
   final int startMs;
   final int endMs;
 }
+
+/// One search result: the ayah, and the matching text with the matches
+/// wrapped in [SearchHit.open] / [SearchHit.close] markers.
+class SearchHit {
+  const SearchHit({required this.ref, required this.text, required this.isTranslation});
+
+  static const open = '\u0001';
+  static const close = '\u0002';
+
+  final AyahRef ref;
+  final String text;
+  final bool isTranslation;
+}
+
+/// A word with what the study sheet shows about it.
+class WordInfo {
+  const WordInfo({required this.ref, required this.position, required this.text, this.translation, this.root});
+
+  final AyahRef ref;
+  final int position;
+  final String text;
+  final String? translation;
+
+  /// Letters separated by spaces, e.g. "ر ح م"; null for particles.
+  final String? root;
+}

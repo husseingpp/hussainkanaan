@@ -364,6 +364,9 @@ def build(src: SourceSet, out: Path, *, strict: bool, allow_unreviewed_calendar:
             db.executemany(
                 "INSERT INTO translation_ayahs VALUES (1, ?, ?)", [(ayah_id[k], translation[k]) for k in keys]
             )
+            db.executemany(
+                "INSERT INTO translation_fts (rowid, text) VALUES (?, ?)", [(ayah_id[k], translation[k]) for k in keys]
+            )
 
         db.executemany("INSERT INTO qcf_fonts VALUES (?,?,?,?)", fonts)
         if calendar:

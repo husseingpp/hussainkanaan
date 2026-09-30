@@ -18,6 +18,7 @@ class FollowAyahText extends StatelessWidget {
     required this.position,
     required this.fontSize,
     this.onTap,
+    this.onLongPress,
   });
 
   final int ayah;
@@ -25,6 +26,7 @@ class FollowAyahText extends StatelessWidget {
   final ValueListenable<FollowPosition?> position;
   final double fontSize;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +45,7 @@ class FollowAyahText extends StatelessWidget {
         final wholeAyah = here != null && here.word == null;
         return InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),

@@ -57,6 +57,9 @@ jobs:
           flutter pub get
           flutter test tool/screenshots/render_pages_test.dart --plain-name "all 604"
 
+      - name: Search on a cold DB (Phase 4 gate)
+        run: flutter test tool/screenshots/render_pages_test.dart --plain-name "search gate"
+
       - name: Build APK
         run: |
           flutter pub get

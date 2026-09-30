@@ -8,6 +8,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
 import '../common/about.dart';
+import '../study/search_screen.dart';
 import 'reader_screen.dart';
 
 /// Navigation into the reader: resume, surah, juz, or page number.
@@ -28,6 +29,11 @@ class QuranIndexScreen extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('المصحف'),
           actions: [
+            IconButton(
+              tooltip: 'بحث',
+              icon: const Icon(Icons.search),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SearchScreen())),
+            ),
             IconButton(
               tooltip: 'الانتقال إلى صفحة',
               icon: const Icon(Icons.pin_outlined),

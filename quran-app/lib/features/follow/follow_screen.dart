@@ -18,6 +18,7 @@ import '../listen/listen_queue.dart';
 import '../listen/listen_screen.dart';
 import '../listen/listen_session.dart';
 import '../reader/quran_text.dart';
+import '../study/study_sheets.dart';
 import 'follow_text.dart';
 import 'follow_tracker.dart';
 
@@ -250,6 +251,7 @@ class _FollowScreenState extends ConsumerState<FollowScreen> {
                               position: _position,
                               fontSize: size,
                               onTap: () => _session?.jumpToAyah(i),
+                              onLongPress: () => showAyahStudy(context, AyahRef(_surah, i)),
                             ),
                     ),
                   ),

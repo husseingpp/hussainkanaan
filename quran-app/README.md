@@ -24,6 +24,11 @@ An offline-first Quran app for Android, iOS and desktop, built with Flutter. It 
   - Auto-scroll with a "return to recitation" button.
   - Tap an ayah to jump to it, and the screen stays on only in this mode.
   - A repeat engine for memorization.
+- **Phase 4 (Study): in progress.**
+  - Search in Arabic without diacritics, or in English, with reference jumps like 2:255.
+  - Tap a word for its meaning, root and every occurrence of the root.
+  - Tap an ayah for its translation and word-by-word meanings.
+  - Still to choose: the tafsir.
 
 Android test build: https://github.com/husseingpp/hussainkanaan/releases/tag/quran-app-android-latest
 
