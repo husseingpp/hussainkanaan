@@ -58,6 +58,10 @@ dependencies:
   share_plus: ^13.3.0
   file_selector: ^1.1.0
   timezone: ^0.11.0
+  geolocator: ^14.1.1
+  flutter_compass: ^0.8.1
+  geomag: ^0.3.0
+  hijri: ^3.0.1
 
 dev_dependencies:
   flutter_test:

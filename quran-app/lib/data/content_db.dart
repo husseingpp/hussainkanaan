@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 import '../core/arabic_normalizer.dart';
+import '../features/calendar/calendar_model.dart';
 import 'models.dart';
 import 'mushaf_fonts.dart';
 
@@ -229,6 +230,55 @@ class ContentDb {
   Future<List<int>> shortAyahIds({int maxLength = 110}) async {
     final rows = await _db.rawQuery('SELECT id FROM ayahs WHERE length(text_uthmani) <= ? ORDER BY id', [maxLength]);
     return [for (final r in rows) r['id']! as int];
+  }
+
+  /// The calendar pack (events, date variants, a'maal and their ayat).
+  Future<CalendarPack> calendar() async {
+    final meta = {
+      for (final r in await _db.query('meta', where: "key IN ('calendar_version', 'calendar_reviewed')"))
+        r['key']! as String: r['value']! as String,
+    };
+    final dates = <int, List<EventDate>>{};
+    for (final r in await _db.query('event_dates', orderBy: 'is_primary DESC, id')) {
+      (dates[r['event_id']! as int] ??= []).add(EventDate(
+        month: r['hijri_month']! as int,
+        day: r['hijri_day']! as int,
+        spanDays: r['span_days']! as int,
+        variant: r['variant_label'] as String?,
+        primary: r['is_primary'] == 1,
+      ));
+    }
+    final ranges = <int, List<AmaalAyahs>>{};
+    for (final r in await _db.query('event_amaal_ayahs', orderBy: 'amaal_id, surah_id, ayah_from')) {
+      (ranges[r['amaal_id']! as int] ??= []).add(
+        AmaalAyahs(surah: r['surah_id']! as int, from: r['ayah_from']! as int, to: r['ayah_to']! as int),
+      );
+    }
+    final amaal = <int, List<Amaal>>{};
+    for (final r in await _db.query('event_amaal', orderBy: 'id')) {
+      (amaal[r['event_id']! as int] ??= []).add(Amaal(
+        kind: r['kind']! as String,
+        titleAr: r['title_ar']! as String,
+        bodyAr: r['body_ar'] as String?,
+        sourceNote: r['source_note']! as String,
+        ayahs: ranges[r['id']! as int] ?? const [],
+      ));
+    }
+    final events = [
+      for (final r in await _db.query('calendar_events', orderBy: 'id'))
+        CalendarEvent(
+          slug: r['slug']! as String,
+          nameAr: r['name_ar']! as String,
+          nameEn: r['name_en']! as String,
+          category: EventCategory.parse(r['category']! as String),
+          importance: r['importance']! as int,
+          significance: r['significance_text'] as String?,
+          sightingDependent: r['sighting_dependent'] == 1,
+          dates: dates[r['id']! as int] ?? const [],
+          amaal: amaal[r['id']! as int] ?? const [],
+        ),
+    ];
+    return CalendarPack(version: meta['calendar_version'], reviewed: meta['calendar_reviewed'] == '1', events: events);
   }
 
   Future<List<QcfFontInfo>> qcfFonts() async {

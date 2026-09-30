@@ -300,6 +300,15 @@ def convert_roots(out: Path) -> None:
     print(f"roots: {len(aligned)} words")
 
 
+def copy_calendar(out: Path) -> None:
+    """The calendar pack is committed (tool/ingest/calendar/), not downloaded:
+    it is compiled by hand and must be reviewed (BLUEPRINT §9)."""
+    src = HERE / "calendar" / "events.draft.json"
+    dst = out / "calendar" / "events.json"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_bytes(src.read_bytes())
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--out", type=Path, default=HERE / "sources")
@@ -316,6 +325,7 @@ def main() -> int:
                 fetch_recitation(r["quran_com_recitation"], args.out)
     prepare(reciters, args.out)
     convert_roots(args.out)
+    copy_calendar(args.out)
     return 0
 
 

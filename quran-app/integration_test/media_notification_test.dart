@@ -58,6 +58,8 @@ const _reciter = Reciter(
 
 const _surahs = [
   Surah(id: 1, nameAr: 'الفاتحة', nameEn: 'The Opening', nameTranslit: 'Al-Faatiha', isMeccan: true, ayahCount: 7, pageStart: 1),
+  // Not downloaded: the queue looks ahead and stops here.
+  Surah(id: 2, nameAr: 'البقرة', nameEn: 'The Cow', nameTranslit: 'Al-Baqara', isMeccan: false, ayahCount: 286, pageStart: 2),
 ];
 
 Future<void> _phase(String name) async {

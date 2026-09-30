@@ -31,9 +31,20 @@ class ReminderSettings {
   String toJson() => jsonEncode({'dailyAyah': dailyAyah, 'dailyAyahMinutes': dailyAyahMinutes});
 }
 
+/// Which channel a notification goes to. Prayer times need exact timing
+/// and their own sound choice; reminders can be a few minutes late.
+enum ReminderKind { reminder, prayer, prayerSilent, event }
+
 /// One notification to schedule.
 class ReminderSpec {
-  const ReminderSpec({required this.id, required this.at, required this.title, required this.body, this.daily = false});
+  const ReminderSpec({
+    required this.id,
+    required this.at,
+    required this.title,
+    required this.body,
+    this.daily = false,
+    this.kind = ReminderKind.reminder,
+  });
 
   final int id;
 
@@ -42,6 +53,7 @@ class ReminderSpec {
   final String title;
   final String body;
   final bool daily;
+  final ReminderKind kind;
 }
 
 /// What the daily-ayah notification shows for one day.
@@ -160,11 +172,60 @@ class ReminderScheduler {
         false;
   }
 
+  static const _prayerChannel = AndroidNotificationDetails(
+    'net.hussainkanaan.quran_app.prayer',
+    'مواقيت الصلاة',
+    channelDescription: 'تنبيه عند دخول وقت الصلاة',
+    importance: Importance.high,
+    priority: Priority.high,
+    category: AndroidNotificationCategory.reminder,
+    icon: 'ic_stat_quran',
+  );
+
+  static const _prayerSilentChannel = AndroidNotificationDetails(
+    'net.hussainkanaan.quran_app.prayer_silent',
+    'مواقيت الصلاة (صامت)',
+    channelDescription: 'تنبيه صامت قبل الصلاة أو عند دخول وقتها',
+    importance: Importance.defaultImportance,
+    playSound: false,
+    enableVibration: false,
+    icon: 'ic_stat_quran',
+  );
+
+  static const _eventChannel = AndroidNotificationDetails(
+    'net.hussainkanaan.quran_app.calendar',
+    'المناسبات',
+    channelDescription: 'تذكير قبل المناسبات الدينية',
+    importance: Importance.defaultImportance,
+    styleInformation: BigTextStyleInformation(''),
+    icon: 'ic_stat_quran',
+  );
+
+  /// Asks for exact alarms (Android 12+), so a prayer alert isn't late.
+  Future<bool> requestExactAlarms() async {
+    if (!await _init() || !Platform.isAndroid) return true;
+    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (await android?.canScheduleExactNotifications() ?? true) return true;
+    return await android?.requestExactAlarmsPermission() ?? false;
+  }
+
   /// Replaces every scheduled reminder with [specs].
   Future<void> sync(List<ReminderSpec> specs) async {
     if (!await _init()) return;
     await _plugin.cancelAll();
+    final exact = !Platform.isAndroid ||
+        (await _plugin
+                .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+                ?.canScheduleExactNotifications() ??
+            false);
     for (final s in specs) {
+      final android = switch (s.kind) {
+        ReminderKind.reminder => _channel,
+        ReminderKind.prayer => _prayerChannel,
+        ReminderKind.prayerSilent => _prayerSilentChannel,
+        ReminderKind.event => _eventChannel,
+      };
+      final timely = s.kind == ReminderKind.prayer || s.kind == ReminderKind.prayerSilent;
       var when = tz.TZDateTime.from(s.at, tz.local);
       if (s.daily && !when.isAfter(tz.TZDateTime.now(tz.local))) when = when.add(const Duration(days: 1));
       await _plugin.zonedSchedule(
@@ -172,9 +233,13 @@ class ReminderScheduler {
         scheduledDate: when,
         title: s.title,
         body: s.body,
-        notificationDetails: const NotificationDetails(android: _channel, iOS: DarwinNotificationDetails()),
-        // Inexact is fine for a reminder, and needs no exact-alarm permission.
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        notificationDetails: NotificationDetails(
+          android: android,
+          iOS: DarwinNotificationDetails(presentSound: s.kind != ReminderKind.prayerSilent),
+        ),
+        // Inexact is fine for a reminder and needs no exact-alarm permission;
+        // prayer times are exact when the user allowed it.
+        androidScheduleMode: timely && exact ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle,
         matchDateTimeComponents: s.daily ? DateTimeComponents.time : null,
       );
     }

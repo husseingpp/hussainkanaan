@@ -1,0 +1,934 @@
+{
+ "version": "draft-2026.09.30",
+ "reviewed": false,
+ "source": "Draft compiled for development from commonly observed Shia dates. NOT reviewed: dates, variants and a'maal must be checked by a qualified reviewer (BLUEPRINT §9) before release.",
+ "events": [
+  {
+   "slug": "muharram-mourning",
+   "name_ar": "أيام عاشوراء",
+   "name_en": "The first ten days of Muharram",
+   "category": "mourning",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 1,
+     "day": 1,
+     "span_days": 10,
+     "primary": true
+    }
+   ],
+   "significance": "موسم العزاء على الإمام الحسين عليه السلام وأهل بيته وأصحابه."
+  },
+  {
+   "slug": "ashura",
+   "name_ar": "عاشوراء: شهادة الإمام الحسين عليه السلام",
+   "name_en": "Ashura: martyrdom of Imam Husayn",
+   "category": "martyrdom",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 1,
+     "day": 10,
+     "primary": true
+    }
+   ],
+   "significance": "يوم حزن ومصيبة، لا يوم صيام.",
+   "amaal": [
+    {
+     "kind": "ziyara",
+     "title_ar": "زيارة عاشوراء",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار"
+    }
+   ]
+  },
+  {
+   "slug": "sajjad-martyrdom",
+   "name_ar": "شهادة الإمام زين العابدين عليه السلام",
+   "name_en": "Martyrdom of Imam Zayn al-Abidin",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 1,
+     "day": 25,
+     "variant": "٢٥ محرّم",
+     "primary": true
+    },
+    {
+     "month": 1,
+     "day": 12,
+     "variant": "١٢ محرّم",
+     "primary": false
+    }
+   ]
+  },
+  {
+   "slug": "kadhim-birth",
+   "name_ar": "ولادة الإمام موسى الكاظم عليه السلام",
+   "name_en": "Birth of Imam al-Kadhim",
+   "category": "birth",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 2,
+     "day": 7,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "arbaeen",
+   "name_ar": "الأربعين",
+   "name_en": "Arbaeen",
+   "category": "mourning",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 2,
+     "day": 20,
+     "primary": true
+    }
+   ],
+   "amaal": [
+    {
+     "kind": "ziyara",
+     "title_ar": "زيارة الأربعين",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار"
+    }
+   ]
+  },
+  {
+   "slug": "prophet-demise",
+   "name_ar": "وفاة النبي الأكرم صلى الله عليه وآله",
+   "name_en": "Demise of the Prophet",
+   "category": "martyrdom",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 2,
+     "day": 28,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "hasan-martyrdom",
+   "name_ar": "شهادة الإمام الحسن المجتبى عليه السلام",
+   "name_en": "Martyrdom of Imam al-Hasan",
+   "category": "martyrdom",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 2,
+     "day": 28,
+     "variant": "٢٨ صفر",
+     "primary": true
+    },
+    {
+     "month": 2,
+     "day": 7,
+     "variant": "٧ صفر",
+     "primary": false
+    }
+   ]
+  },
+  {
+   "slug": "rida-martyrdom",
+   "name_ar": "شهادة الإمام علي الرضا عليه السلام",
+   "name_en": "Martyrdom of Imam al-Rida",
+   "category": "martyrdom",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 2,
+     "day": 30,
+     "primary": true
+    }
+   ],
+   "significance": "آخر يوم من صفر؛ إذا كان الشهر تسعة وعشرين يومًا فيوم التاسع والعشرين."
+  },
+  {
+   "slug": "askari-martyrdom",
+   "name_ar": "شهادة الإمام الحسن العسكري عليه السلام",
+   "name_en": "Martyrdom of Imam al-Askari",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 3,
+     "day": 8,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "mahdi-imamate",
+   "name_ar": "بداية إمامة الإمام المهدي عجّل الله فرجه",
+   "name_en": "Start of Imam al-Mahdi's imamate",
+   "category": "other",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 3,
+     "day": 9,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "prophet-birth",
+   "name_ar": "المولد النبوي الشريف وولادة الإمام الصادق عليه السلام",
+   "name_en": "Birth of the Prophet and Imam al-Sadiq",
+   "category": "birth",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 3,
+     "day": 17,
+     "variant": "١٧ ربيع الأول (رواية الإمامية)",
+     "primary": true
+    },
+    {
+     "month": 3,
+     "day": 12,
+     "variant": "١٢ ربيع الأول (رواية أخرى)",
+     "primary": false
+    }
+   ],
+   "significance": "أسبوع الوحدة الإسلامية بين الروايتين."
+  },
+  {
+   "slug": "askari-birth",
+   "name_ar": "ولادة الإمام الحسن العسكري عليه السلام",
+   "name_en": "Birth of Imam al-Askari",
+   "category": "birth",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 4,
+     "day": 8,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "masuma-demise",
+   "name_ar": "وفاة السيدة فاطمة المعصومة عليها السلام",
+   "name_en": "Demise of Sayyida Fatima al-Ma'suma",
+   "category": "martyrdom",
+   "importance": 1,
+   "dates": [
+    {
+     "month": 4,
+     "day": 10,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "zaynab-birth",
+   "name_ar": "ولادة السيدة زينب عليها السلام",
+   "name_en": "Birth of Sayyida Zaynab",
+   "category": "birth",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 5,
+     "day": 5,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "fatima-martyrdom",
+   "name_ar": "شهادة السيدة فاطمة الزهراء عليها السلام",
+   "name_en": "Martyrdom of Sayyida Fatima al-Zahra",
+   "category": "martyrdom",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 6,
+     "day": 3,
+     "variant": "رواية الخمسة والتسعين يومًا",
+     "primary": true
+    },
+    {
+     "month": 5,
+     "day": 13,
+     "variant": "رواية الخمسة والسبعين يومًا",
+     "primary": false
+    }
+   ],
+   "significance": "الأيام الفاطمية بين التاريخين."
+  },
+  {
+   "slug": "fatima-birth",
+   "name_ar": "ولادة السيدة فاطمة الزهراء عليها السلام",
+   "name_en": "Birth of Sayyida Fatima al-Zahra",
+   "category": "birth",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 6,
+     "day": 20,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "rajab",
+   "name_ar": "شهر رجب",
+   "name_en": "The month of Rajab",
+   "category": "fast",
+   "importance": 1,
+   "dates": [
+    {
+     "month": 7,
+     "day": 1,
+     "span_days": 29,
+     "primary": true
+    }
+   ],
+   "significance": "يُستحب فيه الصيام والاستغفار."
+  },
+  {
+   "slug": "baqir-birth",
+   "name_ar": "ولادة الإمام محمد الباقر عليه السلام",
+   "name_en": "Birth of Imam al-Baqir",
+   "category": "birth",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 7,
+     "day": 1,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "hadi-martyrdom",
+   "name_ar": "شهادة الإمام علي الهادي عليه السلام",
+   "name_en": "Martyrdom of Imam al-Hadi",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 7,
+     "day": 3,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "jawad-birth",
+   "name_ar": "ولادة الإمام محمد الجواد عليه السلام",
+   "name_en": "Birth of Imam al-Jawad",
+   "category": "birth",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 7,
+     "day": 10,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "ali-birth",
+   "name_ar": "ولادة الإمام علي بن أبي طالب عليه السلام",
+   "name_en": "Birth of Imam Ali",
+   "category": "birth",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 7,
+     "day": 13,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "zaynab-demise",
+   "name_ar": "وفاة السيدة زينب عليها السلام",
+   "name_en": "Demise of Sayyida Zaynab",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 7,
+     "day": 15,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "kadhim-martyrdom",
+   "name_ar": "شهادة الإمام موسى الكاظم عليه السلام",
+   "name_en": "Martyrdom of Imam al-Kadhim",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 7,
+     "day": 25,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "mabath",
+   "name_ar": "المبعث النبوي الشريف",
+   "name_en": "Al-Mab'ath",
+   "category": "eid",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 7,
+     "day": 27,
+     "primary": true
+    }
+   ],
+   "amaal": [
+    {
+     "kind": "fast",
+     "title_ar": "صيام يوم المبعث",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار"
+    },
+    {
+     "kind": "recitation",
+     "title_ar": "أول ما نزل من القرآن",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 96,
+       "from": 1,
+       "to": 5
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slug": "shaban",
+   "name_ar": "شهر شعبان",
+   "name_en": "The month of Sha'ban",
+   "category": "fast",
+   "importance": 1,
+   "dates": [
+    {
+     "month": 8,
+     "day": 1,
+     "span_days": 29,
+     "primary": true
+    }
+   ],
+   "significance": "يُستحب فيه الصيام والصلاة على النبي وآله."
+  },
+  {
+   "slug": "husayn-birth",
+   "name_ar": "ولادة الإمام الحسين عليه السلام",
+   "name_en": "Birth of Imam Husayn",
+   "category": "birth",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 8,
+     "day": 3,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "abbas-birth",
+   "name_ar": "ولادة أبي الفضل العباس عليه السلام",
+   "name_en": "Birth of al-Abbas",
+   "category": "birth",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 8,
+     "day": 4,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "sajjad-birth",
+   "name_ar": "ولادة الإمام زين العابدين عليه السلام",
+   "name_en": "Birth of Imam Zayn al-Abidin",
+   "category": "birth",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 8,
+     "day": 5,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "akbar-birth",
+   "name_ar": "ولادة علي الأكبر عليه السلام",
+   "name_en": "Birth of Ali al-Akbar",
+   "category": "birth",
+   "importance": 1,
+   "dates": [
+    {
+     "month": 8,
+     "day": 11,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "nisf-shaban-night",
+   "name_ar": "ليلة النصف من شعبان",
+   "name_en": "The night of mid-Sha'ban",
+   "category": "blessed_night",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 8,
+     "day": 14,
+     "primary": true
+    }
+   ],
+   "significance": "تبدأ بغروب شمس الرابع عشر من شعبان.",
+   "amaal": [
+    {
+     "kind": "dua",
+     "title_ar": "دعاء كميل",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار"
+    },
+    {
+     "kind": "ziyara",
+     "title_ar": "زيارة الإمام الحسين عليه السلام",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار"
+    }
+   ]
+  },
+  {
+   "slug": "mahdi-birth",
+   "name_ar": "ولادة الإمام المهدي عجّل الله فرجه",
+   "name_en": "Birth of Imam al-Mahdi",
+   "category": "birth",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 8,
+     "day": 15,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "ramadan",
+   "name_ar": "شهر رمضان المبارك",
+   "name_en": "The month of Ramadan",
+   "category": "fast",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 9,
+     "day": 1,
+     "span_days": 29,
+     "primary": true
+    }
+   ],
+   "significance": "بدايته تابعة لرؤية الهلال ورأي مرجع التقليد.",
+   "sighting_dependent": true
+  },
+  {
+   "slug": "khadija-demise",
+   "name_ar": "وفاة السيدة خديجة الكبرى عليها السلام",
+   "name_en": "Demise of Sayyida Khadija",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 9,
+     "day": 10,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "hasan-birth",
+   "name_ar": "ولادة الإمام الحسن المجتبى عليه السلام",
+   "name_en": "Birth of Imam al-Hasan",
+   "category": "birth",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 9,
+     "day": 15,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "qadr-19",
+   "name_ar": "ليلة التاسع عشر من شهر رمضان (ليالي القدر)",
+   "name_en": "Night of the 19th of Ramadan (Qadr nights)",
+   "category": "blessed_night",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 9,
+     "day": 18,
+     "primary": true
+    }
+   ],
+   "significance": "تبدأ بغروب شمس الثامن عشر. وفيها ضُرب أمير المؤمنين عليه السلام.",
+   "amaal": [
+    {
+     "kind": "recitation",
+     "title_ar": "سورة القدر",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 97,
+       "from": 1,
+       "to": 5
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slug": "qadr-21",
+   "name_ar": "ليلة الحادي والعشرين من شهر رمضان (ليالي القدر)",
+   "name_en": "Night of the 21st of Ramadan (Qadr nights)",
+   "category": "blessed_night",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 9,
+     "day": 20,
+     "primary": true
+    }
+   ],
+   "significance": "تبدأ بغروب شمس العشرين.",
+   "amaal": [
+    {
+     "kind": "recitation",
+     "title_ar": "سورة القدر",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 97,
+       "from": 1,
+       "to": 5
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slug": "ali-martyrdom",
+   "name_ar": "شهادة الإمام علي بن أبي طالب عليه السلام",
+   "name_en": "Martyrdom of Imam Ali",
+   "category": "martyrdom",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 9,
+     "day": 21,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "qadr-23",
+   "name_ar": "ليلة الثالث والعشرين من شهر رمضان (ليلة القدر)",
+   "name_en": "Night of the 23rd of Ramadan (Night of Qadr)",
+   "category": "blessed_night",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 9,
+     "day": 22,
+     "primary": true
+    }
+   ],
+   "significance": "تبدأ بغروب شمس الثاني والعشرين.",
+   "amaal": [
+    {
+     "kind": "recitation",
+     "title_ar": "سورة العنكبوت",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 29,
+       "from": 1,
+       "to": 69
+      }
+     ]
+    },
+    {
+     "kind": "recitation",
+     "title_ar": "سورة الروم",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 30,
+       "from": 1,
+       "to": 60
+      }
+     ]
+    },
+    {
+     "kind": "recitation",
+     "title_ar": "سورة الدخان",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 44,
+       "from": 1,
+       "to": 59
+      }
+     ]
+    },
+    {
+     "kind": "recitation",
+     "title_ar": "سورة القدر",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 97,
+       "from": 1,
+       "to": 5
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slug": "eid-fitr",
+   "name_ar": "عيد الفطر",
+   "name_en": "Eid al-Fitr",
+   "category": "eid",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 10,
+     "day": 1,
+     "primary": true
+    }
+   ],
+   "significance": "يحرم صومه. تابع لرؤية الهلال.",
+   "sighting_dependent": true
+  },
+  {
+   "slug": "sadiq-martyrdom",
+   "name_ar": "شهادة الإمام جعفر الصادق عليه السلام",
+   "name_en": "Martyrdom of Imam al-Sadiq",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 10,
+     "day": 25,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "masuma-birth",
+   "name_ar": "ولادة السيدة فاطمة المعصومة عليها السلام",
+   "name_en": "Birth of Sayyida Fatima al-Ma'suma",
+   "category": "birth",
+   "importance": 1,
+   "dates": [
+    {
+     "month": 11,
+     "day": 1,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "rida-birth",
+   "name_ar": "ولادة الإمام علي الرضا عليه السلام",
+   "name_en": "Birth of Imam al-Rida",
+   "category": "birth",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 11,
+     "day": 11,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "jawad-martyrdom",
+   "name_ar": "شهادة الإمام محمد الجواد عليه السلام",
+   "name_en": "Martyrdom of Imam al-Jawad",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 11,
+     "day": 30,
+     "primary": true
+    }
+   ],
+   "significance": "آخر يوم من ذي القعدة."
+  },
+  {
+   "slug": "ali-fatima-marriage",
+   "name_ar": "زواج الإمام علي والسيدة فاطمة عليهما السلام",
+   "name_en": "Marriage of Imam Ali and Sayyida Fatima",
+   "category": "other",
+   "importance": 1,
+   "dates": [
+    {
+     "month": 12,
+     "day": 1,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "baqir-martyrdom",
+   "name_ar": "شهادة الإمام محمد الباقر عليه السلام",
+   "name_en": "Martyrdom of Imam al-Baqir",
+   "category": "martyrdom",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 12,
+     "day": 7,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "arafah",
+   "name_ar": "يوم عرفة",
+   "name_en": "The Day of Arafah",
+   "category": "blessed_night",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 12,
+     "day": 9,
+     "primary": true
+    }
+   ],
+   "significance": "وفيه شهادة مسلم بن عقيل عليه السلام.",
+   "sighting_dependent": true,
+   "amaal": [
+    {
+     "kind": "dua",
+     "title_ar": "دعاء الإمام الحسين عليه السلام يوم عرفة",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار"
+    }
+   ]
+  },
+  {
+   "slug": "eid-adha",
+   "name_ar": "عيد الأضحى",
+   "name_en": "Eid al-Adha",
+   "category": "eid",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 12,
+     "day": 10,
+     "primary": true
+    }
+   ],
+   "significance": "يحرم صومه. تابع لرؤية الهلال.",
+   "sighting_dependent": true
+  },
+  {
+   "slug": "hadi-birth",
+   "name_ar": "ولادة الإمام علي الهادي عليه السلام",
+   "name_en": "Birth of Imam al-Hadi",
+   "category": "birth",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 12,
+     "day": 15,
+     "primary": true
+    }
+   ]
+  },
+  {
+   "slug": "ghadir",
+   "name_ar": "عيد الغدير الأغر",
+   "name_en": "Eid al-Ghadir",
+   "category": "eid",
+   "importance": 3,
+   "dates": [
+    {
+     "month": 12,
+     "day": 18,
+     "primary": true
+    }
+   ],
+   "amaal": [
+    {
+     "kind": "fast",
+     "title_ar": "صيام يوم الغدير",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار"
+    },
+    {
+     "kind": "recitation",
+     "title_ar": "آية التبليغ",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 5,
+       "from": 67,
+       "to": 67
+      }
+     ]
+    },
+    {
+     "kind": "recitation",
+     "title_ar": "آية إكمال الدين",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 5,
+       "from": 3,
+       "to": 3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slug": "mubahala",
+   "name_ar": "يوم المباهلة",
+   "name_en": "The Day of Mubahala",
+   "category": "eid",
+   "importance": 2,
+   "dates": [
+    {
+     "month": 12,
+     "day": 24,
+     "primary": true
+    }
+   ],
+   "amaal": [
+    {
+     "kind": "recitation",
+     "title_ar": "آية المباهلة",
+     "source_note": "مسودة للمراجعة: تُطابَق مع مفاتيح الجنان ومرجع التقليد قبل الإصدار",
+     "ayahs": [
+      {
+       "surah": 3,
+       "from": 61,
+       "to": 61
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
