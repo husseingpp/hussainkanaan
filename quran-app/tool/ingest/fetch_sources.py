@@ -37,12 +37,15 @@ whole-ayah highlight for it, which is honest, where a guessed repair isn't.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
+import ssl
 import sqlite3
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -75,6 +78,32 @@ def download(url: str) -> bytes:
     raise AssertionError
 
 
+def download_pinned(url: str, lock_key: str) -> bytes:
+    """A locked file. If the host's TLS certificate fails (tanzil.net's
+    expired on 2026-09-30), fetch it without certificate checks and keep it
+    only if its sha256 matches sources.lock.json. The pin, not the
+    transport, is what guarantees the bytes, so nothing unverified gets in."""
+    try:
+        return download(url)
+    except RuntimeError as e:
+        if not isinstance(e.__cause__, (ssl.SSLError, urllib.error.URLError)) or "CERTIFICATE" not in str(e):
+            raise
+        expected = json.loads((HERE / "sources.lock.json").read_text(encoding="utf-8")).get(lock_key)
+        if expected is None:
+            raise
+        print(f"warning: {url}: {e}; retrying against the pinned sha256", file=sys.stderr)
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        req = urllib.request.Request(url, headers={"User-Agent": "quran-app-ingest/1.0"})
+        with urllib.request.urlopen(req, timeout=60, context=ctx) as r:
+            data = r.read()
+        got = hashlib.sha256(data).hexdigest()
+        if got != expected:
+            raise RuntimeError(f"{url}: certificate failed and content {got[:12]} doesn't match the lock {expected[:12]}") from e
+        return data
+
+
 def get(path: str, **params) -> dict:
     return json.loads(download(f"{API}/{path}?{urllib.parse.urlencode(params)}"))
 
@@ -82,8 +111,8 @@ def get(path: str, **params) -> dict:
 def fetch_tanzil(out: Path) -> None:
     (out / "tanzil").mkdir(parents=True, exist_ok=True)
     for name, url in TANZIL.items():
-        (out / "tanzil" / name).write_bytes(download(url))
-    (out / "tanzil" / TRANSLATION[0]).write_bytes(download(TRANSLATION[1]))
+        (out / "tanzil" / name).write_bytes(download_pinned(url, f"tanzil/{name}"))
+    (out / "tanzil" / TRANSLATION[0]).write_bytes(download_pinned(TRANSLATION[1], f"tanzil/{TRANSLATION[0]}"))
     print("tanzil: " + ", ".join([*TANZIL, TRANSLATION[0]]))
 
 

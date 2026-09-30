@@ -46,7 +46,18 @@ jobs:
           channel: stable
           cache: true
 
+      # Sources are pinned by sources.lock.json, so a cached copy is exactly
+      # as good as a fresh download, and builds don't depend on every
+      # upstream host being up.
+      - name: Restore sources
+        id: sources
+        uses: actions/cache@v4
+        with:
+          path: quran-app/tool/ingest/sources
+          key: ingest-sources-${{ hashFiles('quran-app/tool/ingest/sources.lock.json', 'quran-app/tool/ingest/fetch_sources.py', 'quran-app/tool/ingest/reciters.json', 'quran-app/tool/ingest/calendar/**', 'quran-app/tool/ingest/vendor/**') }}
+
       - name: Download sources
+        if: steps.sources.outputs.cache-hit != 'true'
         run: python3 tool/ingest/fetch_sources.py
 
       - name: Build content DB
