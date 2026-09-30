@@ -75,8 +75,9 @@ jobs:
       - name: Build APK
         run: |
           flutter pub get
-          # A rising build number, so each APK is a newer version of the last.
-          flutter build apk --release --build-number=$((100 + ${{ github.run_number }}))
+          # A rising version, so each APK is a newer version of the last and
+          # update trackers (Obtainium) can tell builds apart.
+          flutter build apk --release --build-name=1.0.${{ github.run_number }} --build-number=$((100 + ${{ github.run_number }}))
           cp build/app/outputs/flutter-apk/app-release.apk quran-app.apk
           ls -lh quran-app.apk
 
@@ -112,6 +113,26 @@ jobs:
             Commit: ${{ github.sha }}
           files: quran-app/quran-app.apk
           make_latest: "false"
+
+      # One release per build as well, named "Quran app 1.0.N", for Obtainium
+      # (it installs updates from these; filter release titles by "^Quran app").
+      - name: Publish versioned release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: quran-app-v1.0.${{ github.run_number }}
+          name: "Quran app 1.0.${{ github.run_number }}"
+          body: |
+            Test build 1.0.${{ github.run_number }} of the Quran app. Commit: ${{ github.sha }}
+          files: quran-app/quran-app.apk
+          make_latest: "false"
+
+      - name: Keep only the newest 5 versioned releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | startswith("quran-app-v"))] | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' |
+          while read -r tag; do gh release delete "$tag" --repo "${{ github.repository }}" --cleanup-tag --yes; done
 
   # Phase 6 gates against an independent reference. Separate from the APK
   # job so a network hiccup at the reference service never blocks a build.
