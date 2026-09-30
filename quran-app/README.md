@@ -34,6 +34,10 @@ An offline-first Quran app for Android, iOS and desktop, built with Flutter. It 
   - Turning a page forward in the wird (or «تمّت الصفحة») records progress.
   - Bookmarks, a daily ayah notification, and per-plan wird reminders.
   - Backup and restore of all user data as one JSON file (merges, never deletes).
+- **Phase 6 (Prayer times, Qibla, Calendar): built, needs the phone test and a calendar review.**
+  - Prayer times computed on the phone (Jafari by default, other methods available), with combined windows, shar'i midnight, the last third of the night, adjustable everything, and per-prayer alerts.
+  - Qibla bearing in degrees, a compass corrected for magnetic declination that asks for calibration instead of pointing wrong, and a sun-based fallback.
+  - Hijri, Gregorian and Solar Hijri dates, Shia occasions with their differing dates, a'maal that open or play the recommended surahs, advance alerts, and an optional mourning palette. The occasions list is an unreviewed draft.
 
 Android test build: https://github.com/husseingpp/hussainkanaan/releases/tag/quran-app-android-latest
 
