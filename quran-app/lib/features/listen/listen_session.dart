@@ -164,6 +164,9 @@ class ListenSession {
     _items.addAll(_nextSurahs(from.surah));
     await _port.load([for (final i in _items) _path(i)]);
     await _applyVolume();
+    // Publish what's playing before it plays, so the system notification is
+    // built with its title and cover rather than empty.
+    _emit();
     await _port.play();
     _emit();
   }

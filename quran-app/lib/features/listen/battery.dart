@@ -93,3 +93,59 @@ class BatteryCard extends ConsumerWidget {
     );
   }
 }
+
+/// Android 13+ asks before an app may post notifications. The playback
+/// notification (and, on several phones, the lock-screen controls) only
+/// appear once it's granted. Null off Android.
+final notificationPermissionProvider = FutureProvider<bool?>((ref) async {
+  if (!Platform.isAndroid) return null;
+  return Permission.notification.isGranted;
+});
+
+/// Asks once, just before playback starts, when the reason is obvious.
+Future<void> requestNotificationPermission() async {
+  if (!Platform.isAndroid) return;
+  try {
+    final status = await Permission.notification.status;
+    if (!status.isGranted && !status.isPermanentlyDenied) await Permission.notification.request();
+  } catch (_) {
+    // No plugin (tests): nothing to ask.
+  }
+}
+
+/// Shown while notifications are off: without them there are no controls
+/// outside the app.
+class NotificationCard extends ConsumerWidget {
+  const NotificationCard({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final granted = ref.watch(notificationPermissionProvider).value;
+    if (granted == null || granted) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      color: scheme.secondaryContainer,
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: ListTile(
+        leading: Icon(Icons.notifications_off_outlined, color: scheme.onSecondaryContainer),
+        title: Text('الإشعارات متوقفة', style: TextStyle(color: scheme.onSecondaryContainer)),
+        subtitle: Text(
+          'اسمح بالإشعارات للتحكم في التلاوة من شاشة القفل والإشعارات وسماعات الرأس.',
+          style: TextStyle(color: scheme.onSecondaryContainer),
+        ),
+        trailing: TextButton(
+          onPressed: () async {
+            final status = await Permission.notification.status;
+            if (status.isPermanentlyDenied) {
+              await openAppSettings();
+            } else {
+              await Permission.notification.request();
+            }
+            ref.invalidate(notificationPermissionProvider);
+          },
+          child: const Text('السماح'),
+        ),
+      ),
+    );
+  }
+}

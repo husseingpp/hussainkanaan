@@ -133,7 +133,10 @@ class QuranAudioHandler extends BaseAudioHandler with SeekHandler {
     playbackState.add(playbackStateFor(
       playing: _player.playing && !hasEnded(s),
       processing: switch (_player.processingState) {
-        ProcessingState.idle => AudioProcessingState.idle,
+        // The player passes through idle while a new queue loads. audio_service
+        // treats idle as "playback over" and shuts the service (and its
+        // notification) down, so only an ended session may report idle.
+        ProcessingState.idle => AudioProcessingState.loading,
         ProcessingState.loading => AudioProcessingState.loading,
         ProcessingState.buffering => AudioProcessingState.buffering,
         ProcessingState.ready => AudioProcessingState.ready,
@@ -180,6 +183,7 @@ Future<QuranAudioHandler?> initAudio() async {
         androidNotificationChannelName: 'التلاوة',
         androidNotificationOngoing: true,
         androidStopForegroundOnPause: true,
+        androidNotificationIcon: 'drawable/ic_stat_quran',
       ),
     );
   } catch (_) {

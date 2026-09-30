@@ -205,6 +205,16 @@ void main() {
       expect(port.loaded.length, session.queue.length);
     });
 
+    test('announces what is playing before it starts, for the system notification', () async {
+      have([112]);
+      final seen = <bool>[];
+      final sub = session.changes.listen((s) => seen.add(s.playing));
+      await session.start(r, const AyahRef(112, 1));
+      await Future<void>.delayed(Duration.zero);
+      expect(seen.take(2), [false, true]);
+      await sub.cancel();
+    });
+
     test('ends cleanly where downloads end', () async {
       have([112]);
       final done = session.changes.firstWhere((s) => s.stopped != null);

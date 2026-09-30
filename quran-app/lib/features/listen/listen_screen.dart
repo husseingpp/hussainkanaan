@@ -42,6 +42,7 @@ class ListenScreen extends ConsumerWidget {
               : ListView(
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
+                    const NotificationCard(),
                     const BatteryCard(),
                     if (active) _NowPlaying(snapshot: snapshot) else _StartPanel(startAt: startAt, last: snapshot),
                   ],
@@ -94,6 +95,8 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
     setState(() => _error = null);
     final handler = await ref.read(listenReadyProvider.future);
     final settings = ref.read(listenSettingsProvider).value ?? const ListenSettings();
+    await requestNotificationPermission();
+    ref.invalidate(notificationPermissionProvider);
     try {
       await handler!.session!.setLevel(settings.level);
       await handler.startListening(r, from);

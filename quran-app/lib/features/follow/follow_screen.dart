@@ -11,6 +11,7 @@ import '../../core/format.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/reader_settings.dart';
+import '../listen/battery.dart';
 import '../listen/downloads_screen.dart';
 import '../listen/listen_providers.dart';
 import '../listen/listen_queue.dart';
@@ -89,6 +90,7 @@ class _FollowScreenState extends ConsumerState<FollowScreen> {
     await _changes?.cancel();
     _changes = session.changes.listen(_onSnapshot);
     _positions = session.positionStream.listen((_) => _update());
+    await requestNotificationPermission();
     try {
       final level = ref.read(listenSettingsProvider).value?.level ?? 1.0;
       await session.setLevel(level);
