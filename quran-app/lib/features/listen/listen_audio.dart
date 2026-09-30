@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../data/models.dart';
@@ -173,13 +176,44 @@ class QuranAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 }
 
+const playbackChannelId = 'net.hussainkanaan.quran_app.playback';
+
+/// audio_service creates its channel at LOW importance when none exists.
+/// Stock Android shows that, but several OEM skins (MIUI/HyperOS, One UI)
+/// treat low-importance notifications as "silent" and keep them off the
+/// status bar and the lock screen, which is where the controls are needed.
+/// So the app creates the channel itself first, at default importance with
+/// no sound or vibration, and drops the old low one.
+@visibleForTesting
+Future<void> ensurePlaybackChannel() async {
+  if (!Platform.isAndroid) return;
+  final android = FlutterLocalNotificationsPlugin()
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+  if (android == null) return;
+  try {
+    await android.deleteNotificationChannel(channelId: 'net.hussainkanaan.quran_app.recitation');
+    await android.createNotificationChannel(const AndroidNotificationChannel(
+      playbackChannelId,
+      'التلاوة',
+      description: 'عناصر التحكم في التلاوة على شاشة القفل وفي الإشعارات',
+      importance: Importance.defaultImportance,
+      playSound: false,
+      enableVibration: false,
+      showBadge: false,
+    ));
+  } catch (_) {
+    // audio_service falls back to creating its own channel.
+  }
+}
+
 /// Starts the audio service; null where it isn't available (desktop, for now).
 Future<QuranAudioHandler?> initAudio() async {
+  await ensurePlaybackChannel();
   try {
     return await AudioService.init(
       builder: QuranAudioHandler.new,
       config: const AudioServiceConfig(
-        androidNotificationChannelId: 'net.hussainkanaan.quran_app.recitation',
+        androidNotificationChannelId: playbackChannelId,
         androidNotificationChannelName: 'التلاوة',
         androidNotificationOngoing: true,
         androidStopForegroundOnPause: true,

@@ -113,6 +113,34 @@ Future<void> requestNotificationPermission() async {
   }
 }
 
+/// Where to look when the controls don't show outside the app: the
+/// per-app lock-screen and notification switches that OEM skins default off.
+Future<void> showControlsHelp(BuildContext context) => showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('لا تظهر عناصر التحكم؟'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'تظهر التلاوة في الإشعارات وعلى شاشة القفل ما دامت تعمل. إن لم تظهر:\n\n'
+            '١. افتح إعدادات التطبيق ← الإشعارات، وتأكد أنها مسموحة، وأن فئة «التلاوة» مفعّلة.\n'
+            '٢. في هواتف شاومي وريدمي: فعّل «شاشة القفل» و«إظهار على شاشة القفل» للتطبيق.\n'
+            '٣. في هواتف سامسونج: الإعدادات ← شاشة القفل ← الإشعارات، واختر إظهار المحتوى.\n'
+            '٤. في أندرويد ١٣ وما بعده يظهر مشغّل التلاوة أعلى لوحة الإعدادات السريعة، فوق الإشعارات.',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('حسنًا')),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await openAppSettings();
+            },
+            child: const Text('فتح الإعدادات'),
+          ),
+        ],
+      ),
+    );
+
 /// Shown while notifications are off: without them there are no controls
 /// outside the app.
 class NotificationCard extends ConsumerWidget {

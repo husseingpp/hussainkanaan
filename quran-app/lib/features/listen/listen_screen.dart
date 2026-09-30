@@ -49,6 +49,14 @@ class ListenScreen extends ConsumerWidget {
                     const NotificationCard(),
                     const BatteryCard(),
                     if (active) _NowPlaying(snapshot: snapshot) else _StartPanel(startAt: startAt, plan: plan, last: snapshot),
+                    if (active)
+                      Center(
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.help_outline),
+                          label: const Text('لا تظهر عناصر التحكم على شاشة القفل؟'),
+                          onPressed: () => showControlsHelp(context),
+                        ),
+                      ),
                   ],
                 ),
         ),
