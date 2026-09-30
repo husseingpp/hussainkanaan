@@ -4,9 +4,9 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
 
-import '../../core/arabic_digits.dart';
 import '../../data/models.dart';
 import 'audio_library.dart';
+import 'listen_media.dart';
 import 'listen_session.dart';
 import 'sleep_timer.dart';
 
@@ -73,6 +73,8 @@ class QuranAudioHandler extends BaseAudioHandler with SeekHandler {
   Timer? _ticker;
   Map<int, Surah> _surahs = const {};
   StreamSubscription<ListenSnapshot>? _changes;
+  ListenSnapshot? _last;
+  Uri? _art;
 
   ListenSession? get session => _session;
 
@@ -81,13 +83,20 @@ class QuranAudioHandler extends BaseAudioHandler with SeekHandler {
     required AudioLibrary library,
     required List<Surah> surahs,
     required Future<void> Function(ListenSnapshot) save,
+    Uri? art,
   }) {
     if (_session != null) return;
+    _art = art;
     _surahs = {for (final s in surahs) s.id: s};
     final session = ListenSession(port: _port, library: library, surahs: surahs, save: save);
     _session = session;
     _changes = session.changes.listen(_publish);
     _player.playbackEventStream.listen((_) => _publishFromPlayer());
+    // The seek bar needs each ayah's length, known once its file loads.
+    _player.durationStream.listen((d) {
+      final s = _last;
+      if (s != null && d != null) mediaItem.add(mediaItemFor(s, _surahs, duration: d, art: _art));
+    });
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => session.tick(const Duration(seconds: 1)));
   }
 
@@ -101,43 +110,25 @@ class QuranAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void _publish(ListenSnapshot s) {
-    final surah = _surahs[s.item.surah];
-    mediaItem.add(MediaItem(
-      id: '${s.reciter.slug}/${s.item.file.surah}:${s.item.file.ayah}',
-      title: surah == null
-          ? ''
-          : s.item.isBismillah
-              ? 'سورة ${surah.nameAr} — البسملة'
-              : 'سورة ${surah.nameAr} — الآية ${arabicDigits(s.item.ayah)}',
-      album: 'القرآن الكريم',
-      artist: s.reciter.nameAr ?? s.reciter.name,
-    ));
-    _publishFromPlayer(stopped: s.stopped != null);
+    _last = s;
+    mediaItem.add(mediaItemFor(s, _surahs, duration: _player.duration, art: _art));
+    _publishFromPlayer();
   }
 
-  void _publishFromPlayer({bool stopped = false}) {
-    final playing = _player.playing && !stopped;
-    playbackState.add(PlaybackState(
-      controls: [
-        MediaControl.skipToPrevious,
-        if (playing) MediaControl.pause else MediaControl.play,
-        MediaControl.skipToNext,
-        MediaControl.stop,
-      ],
-      androidCompactActionIndices: const [0, 1, 2],
-      systemActions: const {MediaAction.seek},
-      processingState: stopped
-          ? AudioProcessingState.completed
-          : switch (_player.processingState) {
-              ProcessingState.idle => AudioProcessingState.idle,
-              ProcessingState.loading => AudioProcessingState.loading,
-              ProcessingState.buffering => AudioProcessingState.buffering,
-              ProcessingState.ready => AudioProcessingState.ready,
-              ProcessingState.completed => AudioProcessingState.completed,
-            },
-      playing: playing,
-      updatePosition: _player.position,
-      queueIndex: _player.currentIndex,
+  void _publishFromPlayer() {
+    final s = _last;
+    playbackState.add(playbackStateFor(
+      playing: _player.playing && !hasEnded(s),
+      processing: switch (_player.processingState) {
+        ProcessingState.idle => AudioProcessingState.idle,
+        ProcessingState.loading => AudioProcessingState.loading,
+        ProcessingState.buffering => AudioProcessingState.buffering,
+        ProcessingState.ready => AudioProcessingState.ready,
+        ProcessingState.completed => AudioProcessingState.completed,
+      },
+      position: _player.position,
+      ended: hasEnded(s),
+      index: _player.currentIndex,
     ));
   }
 

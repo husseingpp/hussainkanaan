@@ -69,6 +69,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/db/
+    - assets/images/
     - schema/user.sql
 
   fonts:

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -57,7 +60,9 @@ final listenReadyProvider = FutureProvider<QuranAudioHandler?>((ref) async {
   final handler = ref.watch(audioHandlerProvider);
   if (handler == null) return null;
   final repo = await ref.watch(userRepositoryProvider.future);
+  final dir = await ref.watch(appDirectoryProvider.future);
   handler.configure(
+    art: await _coverArt(dir),
     library: await ref.watch(audioLibraryProvider.future),
     surahs: await ref.watch(surahsProvider.future),
     save: (s) => repo.savePlayback(SavedPlayback(
@@ -69,6 +74,21 @@ final listenReadyProvider = FutureProvider<QuranAudioHandler?>((ref) async {
   );
   return handler;
 });
+
+/// The cover shown by the system media controls. They take a file URI, not
+/// an asset, so the bundled image is copied out once.
+Future<Uri?> _coverArt(String dir) async {
+  try {
+    final file = File(p.join(dir, 'listen_cover.png'));
+    if (!file.existsSync()) {
+      final data = await rootBundle.load('assets/images/listen_cover.png');
+      await file.writeAsBytes(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    }
+    return file.uri;
+  } catch (_) {
+    return null;
+  }
+}
 
 final listenSnapshotProvider = StreamProvider<ListenSnapshot?>((ref) async* {
   final handler = await ref.watch(listenReadyProvider.future);
