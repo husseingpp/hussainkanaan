@@ -8,6 +8,10 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
 import '../common/about.dart';
+import '../khatmah/khatmah_plan.dart';
+import '../khatmah/khatmah_providers.dart';
+import '../khatmah/khatmah_screen.dart';
+import '../settings/settings_screen.dart';
 import '../study/search_screen.dart';
 import 'reader_screen.dart';
 
@@ -24,7 +28,7 @@ class QuranIndexScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final surahs = ref.watch(surahsProvider);
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('المصحف'),
@@ -45,9 +49,14 @@ class QuranIndexScreen extends ConsumerWidget {
               },
             ),
             const ThemeToggleButton(),
+            IconButton(
+              tooltip: 'الإعدادات والنسخ الاحتياطي',
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen())),
+            ),
             IconButton(tooltip: 'حول التطبيق', icon: const Icon(Icons.info_outline), onPressed: () => showCredits(context)),
           ],
-          bottom: const TabBar(tabs: [Tab(text: 'السور'), Tab(text: 'الأجزاء')]),
+          bottom: const TabBar(tabs: [Tab(text: 'السور'), Tab(text: 'الأجزاء'), Tab(text: 'العلامات')]),
         ),
         body: surahs.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -55,6 +64,7 @@ class QuranIndexScreen extends ConsumerWidget {
           data: (list) => Column(
             children: [
               _ContinueCard(surahs: list, onOpen: (s) => _open(context, ref, s)),
+              const _KhatmahTile(),
               Expanded(
                 child: TabBarView(children: [
                   ListView.builder(
@@ -65,6 +75,7 @@ class QuranIndexScreen extends ConsumerWidget {
                     ),
                   ),
                   _JuzList(surahs: list, onOpen: (s) => _open(context, ref, s)),
+                  _BookmarkList(surahs: list, onOpen: (s) => _open(context, ref, s)),
                 ]),
               ),
             ],
@@ -96,6 +107,98 @@ class _ContinueCard extends ConsumerWidget {
         onTap: () => onOpen(ReaderScreen(ayah: pos.ayah, page: pos.page, view: pos.view)),
       ),
     );
+  }
+}
+
+/// The active khatmah at a glance, or an invitation to start one.
+class _KhatmahTile extends ConsumerWidget {
+  const _KhatmahTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final all = ref.watch(khatmahsProvider).value;
+    if (all == null) return const SizedBox.shrink();
+    final k = all.where((k) => !k.isComplete).firstOrNull;
+    void manage() => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const KhatmahScreen()));
+    if (k == null) {
+      return Card(
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        child: ListTile(
+          leading: const Icon(Icons.track_changes),
+          title: const Text('ابدأ ختمة'),
+          subtitle: const Text('وِرد يومي بعدد صفحات أو بتاريخ تختم فيه'),
+          trailing: const Icon(Icons.chevron_left),
+          onTap: manage,
+        ),
+      );
+    }
+    final m = ref.watch(khatmahMathProvider).value;
+    final today = ref.watch(khatmahTodayProvider(k.uuid)).value;
+    final wird = (m == null || today == null) ? null : m.wird(k, DateTime.now(), readBeforeToday: today.startOfDay);
+    final doneToday = wird != null && k.progress >= wird.toAyah;
+    final days = today == null ? 0 : streak(today.days, DateTime.now());
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: ListTile(
+        leading: ProgressRing(value: m?.fraction(k) ?? 0, size: 44),
+        title: Text(k.name),
+        subtitle: Text([
+          if (doneToday) 'أتممت وِرد اليوم ✓'
+          else if (wird != null) 'وِرد اليوم: ص ${arabicDigits(wird.fromPage)}–${arabicDigits(wird.toPage)}',
+          if (days > 0) '🔥 ${arabicDigits(days)}',
+        ].join(' · ')),
+        trailing: IconButton(
+          tooltip: 'اقرأ وِرد اليوم',
+          icon: const Icon(Icons.menu_book),
+          onPressed: () => openWird(context, ref, k),
+        ),
+        onTap: manage,
+      ),
+    );
+  }
+}
+
+class _BookmarkList extends ConsumerWidget {
+  const _BookmarkList({required this.surahs, required this.onOpen});
+
+  final List<Surah> surahs;
+  final ValueChanged<ReaderScreen> onOpen;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref.watch(bookmarksProvider).when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => _ContentError(error: e),
+          data: (marks) => marks.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text('لا علامات بعد. اضغط رمز العلامة في أعلى القارئ لحفظ موضع.', textAlign: TextAlign.center),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: marks.length,
+                  itemBuilder: (context, i) {
+                    final b = marks[i];
+                    final name = surahs.where((s) => s.id == b.ayah.surah).map((s) => s.nameAr).firstOrNull ?? '';
+                    return Dismissible(
+                      key: ValueKey(b.uuid),
+                      onDismissed: (_) async {
+                        await (await ref.read(khatmahRepositoryProvider.future)).toggleBookmark(b.ayah);
+                        ref.invalidate(bookmarksProvider);
+                      },
+                      background: Container(color: Theme.of(context).colorScheme.errorContainer),
+                      child: ListTile(
+                        leading: const Icon(Icons.bookmark),
+                        title: Text('سورة $name، الآية ${arabicDigits(b.ayah.ayah)}'),
+                        subtitle: Text(
+                            '${arabicDigits(b.createdAt.day)}/${arabicDigits(b.createdAt.month)}/${arabicDigits(b.createdAt.year)}'),
+                        onTap: () => onOpen(ReaderScreen(ayah: b.ayah)),
+                      ),
+                    );
+                  },
+                ),
+        );
   }
 }
 

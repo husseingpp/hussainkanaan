@@ -207,6 +207,30 @@ class ContentDb {
     return out;
   }
 
+  /// The page of every ayah by global id (index 0 unused), for khatmah math.
+  Future<List<int>> pageOfEveryAyah() async {
+    final rows = await _db.rawQuery('SELECT id, page FROM ayahs ORDER BY id');
+    return [0, for (final r in rows) r['page']! as int];
+  }
+
+  /// Global ayah id of a reference.
+  Future<int?> ayahId(AyahRef ref) async {
+    final rows = await _db.query('ayahs', columns: ['id'], where: 'surah_id = ? AND ayah_no = ?', whereArgs: [ref.surah, ref.ayah]);
+    return rows.isEmpty ? null : rows.first['id']! as int;
+  }
+
+  /// The reference of a global ayah id.
+  Future<AyahRef?> refOf(int ayahId) async {
+    final rows = await _db.query('ayahs', columns: ['surah_id', 'ayah_no'], where: 'id = ?', whereArgs: [ayahId]);
+    return rows.isEmpty ? null : AyahRef(rows.first['surah_id']! as int, rows.first['ayah_no']! as int);
+  }
+
+  /// Ayahs short enough for a notification, in Quran order (for the daily ayah).
+  Future<List<int>> shortAyahIds({int maxLength = 110}) async {
+    final rows = await _db.rawQuery('SELECT id FROM ayahs WHERE length(text_uthmani) <= ? ORDER BY id', [maxLength]);
+    return [for (final r in rows) r['id']! as int];
+  }
+
   Future<List<QcfFontInfo>> qcfFonts() async {
     final rows = await _db.query('qcf_fonts', orderBy: 'page');
     return [

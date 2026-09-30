@@ -76,6 +76,18 @@ class UserRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
+  /// A raw preference (JSON text), for features that keep their own format.
+  Future<String?> preference(String key) async {
+    final rows = await _db.query('preferences', where: 'key = ?', whereArgs: [key]);
+    return rows.isEmpty ? null : rows.first['value']! as String;
+  }
+
+  Future<void> setPreference(String key, String value) => _db.insert(
+        'preferences',
+        {'key': key, 'value': value, 'updated_at': _now},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
   static const _listenKey = 'listen_settings';
 
   Future<ListenSettings> loadListenSettings() async {

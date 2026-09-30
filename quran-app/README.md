@@ -28,7 +28,12 @@ An offline-first Quran app for Android, iOS and desktop, built with Flutter. It 
   - Search in Arabic without diacritics, or in English, with reference jumps like 2:255.
   - Tap a word for its meaning, root and every occurrence of the root.
   - Tap an ayah for its translation and word-by-word meanings.
-  - Still to choose: the tafsir.
+  - Tafsir: deferred by the owner for now.
+- **Phase 5 (Habit): built, needs the phone test.**
+  - Khatmah plans by daily pages or by finish date, with today's wird, a progress ring and a streak.
+  - Turning a page forward in the wird (or «تمّت الصفحة») records progress.
+  - Bookmarks, a daily ayah notification, and per-plan wird reminders.
+  - Backup and restore of all user data as one JSON file (merges, never deletes).
 
 Android test build: https://github.com/husseingpp/hussainkanaan/releases/tag/quran-app-android-latest
 

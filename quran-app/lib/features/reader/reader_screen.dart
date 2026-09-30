@@ -10,6 +10,8 @@ import '../../data/providers.dart';
 import '../../data/reader_settings.dart';
 import '../../data/user_repository.dart';
 import '../follow/follow_screen.dart';
+import '../khatmah/khatmah_plan.dart';
+import '../khatmah/khatmah_providers.dart';
 import '../listen/listen_screen.dart';
 import 'font_pack.dart';
 import 'mushaf_page.dart';
@@ -20,13 +22,17 @@ import 'reading_view.dart';
 /// Opens at [ayah], and in Page View at [page] if given (else the ayah's page).
 /// The position is saved as you read, so the index can offer to resume it.
 class ReaderScreen extends ConsumerStatefulWidget {
-  const ReaderScreen({super.key, required this.ayah, this.page, this.view});
+  const ReaderScreen({super.key, required this.ayah, this.page, this.view, this.khatmah});
 
   final AyahRef ayah;
   final int? page;
 
   /// Overrides the saved view preference (e.g. resuming in the view you left).
   final ReaderView? view;
+
+  /// Reading today's wird of this plan: turning a page forward, or «تمّت
+  /// الصفحة», moves the plan's progress on.
+  final Khatmah? khatmah;
 
   @override
   ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
@@ -39,6 +45,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   PageController? _pages;
   Timer? _saveTimer;
   UserRepository? _repo;
+  late Khatmah? _khatmah = widget.khatmah;
 
   @override
   void initState() {
@@ -58,6 +65,47 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _save();
     _pages?.dispose();
     super.dispose();
+  }
+
+  /// Moves the plan's progress to the end of [page] (never backwards).
+  Future<void> _completePage(int page) async {
+    final k = _khatmah;
+    if (k == null) return;
+    final math = await ref.read(khatmahMathProvider.future);
+    final repo = await ref.read(khatmahRepositoryProvider.future);
+    final next = await repo.advance(k, math.pages.lastAyahOf(page), ayahCount: math.pages.ayahCount);
+    if (!mounted) return;
+    setState(() => _khatmah = next);
+    ref.invalidate(khatmahsProvider);
+  }
+
+  Future<void> _finishPageButton() async {
+    await _completePage(_page);
+    if (!mounted) return;
+    final k = _khatmah!;
+    final math = await ref.read(khatmahMathProvider.future);
+    final today = await ref.read(khatmahTodayProvider(k.uuid).future);
+    if (!mounted) return;
+    final w = math.wird(k, DateTime.now(), readBeforeToday: today.startOfDay);
+    final done = k.isComplete || w == null || k.progress >= w.toAyah;
+    if (done) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(k.isComplete ? 'تمّت الختمة، تقبّل الله' : 'تمّ وِرد اليوم، أحسنت'),
+      ));
+    } else if (_pages != null && _page < ContentDb.pageCount) {
+      await _pages!.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    }
+  }
+
+  Future<void> _toggleBookmark() async {
+    final repo = await ref.read(khatmahRepositoryProvider.future);
+    final on = await repo.toggleBookmark(_ayah);
+    ref.invalidate(bookmarksProvider);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      duration: const Duration(seconds: 2),
+      content: Text(on ? 'أُضيفت علامة عند الآية ${arabicDigits(_ayah.ayah)}' : 'أُزيلت العلامة'),
+    ));
   }
 
   ReaderView get _currentView => _view ?? ref.read(settingsProvider).value?.view ?? ReaderView.page;
@@ -94,6 +142,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final view = _view ?? settings.view;
     final surah = surahs.where((s) => s.id == _ayah.surah).firstOrNull;
     final title = surah == null ? '' : 'سورة ${surah.nameAr}';
+    final bookmarked = (ref.watch(bookmarksProvider).value ?? const []).any((b) => b.ayah == _ayah);
 
     return Scaffold(
       appBar: AppBar(
@@ -124,6 +173,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             ),
           ],
           IconButton(
+            tooltip: bookmarked ? 'إزالة العلامة' : 'علامة عند هذه الآية',
+            icon: Icon(bookmarked ? Icons.bookmark : Icons.bookmark_border),
+            onPressed: _toggleBookmark,
+          ),
+          IconButton(
             tooltip: 'متابعة مع التلاوة',
             icon: const Icon(Icons.chrome_reader_mode_outlined),
             onPressed: () => Navigator.of(context).push(
@@ -149,7 +203,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         child: switch (view) {
           ReaderView.page => _page == 0
               ? const Center(child: CircularProgressIndicator())
-              : Column(children: [const FontPackBanner(), Expanded(child: _pageView())]),
+              : Column(children: [
+                  const FontPackBanner(),
+                  Expanded(child: _pageView()),
+                  if (_khatmah != null) _wirdBar(),
+                ]),
           ReaderView.reading => surah == null
               ? const Center(child: CircularProgressIndicator())
               : ReadingView(
@@ -172,6 +230,32 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
+  Widget _wirdBar() {
+    final k = _khatmah!;
+    final math = ref.watch(khatmahMathProvider).value;
+    final done = math == null ? 0 : math.pages.pagesDone(k.progress);
+    final total = math?.pages.pageCount ?? ContentDb.pageCount;
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Row(children: [
+          Expanded(
+            child: Text(
+              '${k.name} · ${arabicDigits(done)} من ${arabicDigits(total)} صفحة',
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          FilledButton.tonalIcon(
+            onPressed: k.isComplete ? null : _finishPageButton,
+            icon: const Icon(Icons.check),
+            label: const Text('تمّت الصفحة'),
+          ),
+        ]),
+      ),
+    );
+  }
+
   Widget _pageView() {
     final controller = _pages ??= PageController(initialPage: _page - 1);
     // In the RTL app root, PageView advances leftwards, like a printed mus'haf.
@@ -179,6 +263,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       controller: controller,
       itemCount: ContentDb.pageCount,
       onPageChanged: (i) async {
+        // Turning one page forward finishes the page just left.
+        if (i + 1 == _page + 1) unawaited(_completePage(_page));
         _page = i + 1;
         final p = await ref.read(mushafPageProvider(i + 1).future);
         if (!mounted || _page != i + 1) return;

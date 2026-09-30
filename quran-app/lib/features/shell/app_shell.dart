@@ -6,6 +6,7 @@ import '../common/phase_placeholder.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
+import '../khatmah/khatmah_providers.dart';
 import '../listen/listen_screen.dart';
 import '../reader/quran_index_screen.dart';
 import '../reader/reader_screen.dart';
@@ -74,6 +75,8 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    // Reschedules reminders once per launch (the daily-ayah window slides).
+    ref.watch(remindersBootProvider);
     return LayoutBuilder(builder: (context, constraints) {
       final size = LayoutSize.of(constraints.maxWidth);
       final body = _destinations[_index].builder(context);

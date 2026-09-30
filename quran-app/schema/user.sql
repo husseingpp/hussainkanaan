@@ -51,14 +51,25 @@ CREATE TABLE khatmah (
   uuid              TEXT    PRIMARY KEY,
   name              TEXT    NOT NULL,
   plan_kind         TEXT    NOT NULL CHECK (plan_kind IN ('daily_amount', 'date_range')),
-  daily_ayahs       INTEGER,
+  daily_ayahs       INTEGER,                            -- unused (v1); plans count pages
   start_date        TEXT    NOT NULL,                   -- ISO yyyy-mm-dd
   end_date          TEXT,
   progress_ayah_id  INTEGER NOT NULL DEFAULT 0,         -- global ayah id, 0..6236
   completed_at      INTEGER,
   created_at        INTEGER NOT NULL,
   updated_at        INTEGER NOT NULL,
-  deleted           INTEGER NOT NULL DEFAULT 0
+  deleted           INTEGER NOT NULL DEFAULT 0,
+  daily_pages       INTEGER,                            -- daily_amount plans (v2)
+  reminder_minutes  INTEGER                             -- minutes after midnight; null = off (v2)
+);
+
+-- One row per day a khatmah was read on: the streak, and "read today".
+-- Merged by max on restore/sync, like the progress itself.
+CREATE TABLE khatmah_days (
+  khatmah_uuid      TEXT    NOT NULL,
+  day               TEXT    NOT NULL,                   -- local yyyy-mm-dd
+  progress_ayah_id  INTEGER NOT NULL,                   -- furthest ayah reached that day
+  PRIMARY KEY (khatmah_uuid, day)
 );
 
 CREATE TABLE preferences (

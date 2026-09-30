@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_app/data/khatmah_repository.dart';
 import 'package:quran_app/data/models.dart';
 import 'package:quran_app/data/providers.dart';
 import 'package:quran_app/data/reader_settings.dart';
 import 'package:quran_app/data/user_repository.dart';
+import 'package:quran_app/features/khatmah/khatmah_plan.dart';
+import 'package:quran_app/features/khatmah/khatmah_providers.dart';
 
 const fakeSurahs = [
   Surah(id: 1, nameAr: 'الفاتحة', nameEn: 'The Opening', nameTranslit: 'Al-Faatiha', isMeccan: true, ayahCount: 7, pageStart: 1),
@@ -24,7 +27,12 @@ class FakeSettings extends SettingsNotifier {
 }
 
 /// Everything the index and shell need, without any database.
-List overridesForIndex({ReadingPosition? position}) => [
+List overridesForIndex({ReadingPosition? position, List<Khatmah> khatmahs = const [], List<Bookmark> bookmarks = const []}) => [
+      khatmahsProvider.overrideWith((ref) async => khatmahs),
+      bookmarksProvider.overrideWith((ref) async => bookmarks),
+      // A toy mus'haf: 10 pages of 3 ayahs.
+      khatmahMathProvider.overrideWith((ref) async => KhatmahMath(QuranPages([0, for (var p = 1; p <= 10; p++) ...[p, p, p]]))),
+      khatmahTodayProvider.overrideWith((ref, uuid) async => (startOfDay: 6, days: {dayKey(DateTime.now())})),
       surahsProvider.overrideWith((ref) async => fakeSurahs),
       lastPositionProvider.overrideWith((ref) async => position),
       settingsProvider.overrideWith(FakeSettings.new),

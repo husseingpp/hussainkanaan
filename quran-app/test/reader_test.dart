@@ -5,19 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_app/app.dart';
 import 'package:quran_app/core/arabic_digits.dart';
+import 'package:quran_app/data/khatmah_repository.dart';
 import 'package:quran_app/data/models.dart';
 import 'package:quran_app/data/reader_settings.dart';
 import 'package:quran_app/data/user_repository.dart';
+import 'package:quran_app/features/khatmah/khatmah_plan.dart';
 import 'package:quran_app/features/reader/justified_line.dart';
 
 import 'support/fakes.dart';
 
-Future<void> _pumpIndex(WidgetTester tester, {ReadingPosition? position}) async {
+Future<void> _pumpIndex(WidgetTester tester, {ReadingPosition? position, List<Khatmah> khatmahs = const [], List<Bookmark> bookmarks = const []}) async {
   tester.view.physicalSize = const Size(400, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(ProviderScope(
-    overrides: [...overridesForIndex(position: position)],
+    overrides: [...overridesForIndex(position: position, khatmahs: khatmahs, bookmarks: bookmarks)],
     child: const QuranApp(openReaderOnLaunch: false),
   ));
   await tester.pumpAndSettle();
@@ -91,6 +93,29 @@ void main() {
           position: const ReadingPosition(view: ReaderView.page, ayah: AyahRef(2, 255), page: 42));
       expect(find.text('متابعة القراءة'), findsOneWidget);
       expect(find.text('سورة البقرة · الآية ٢٥٥ · صفحة ٤٢'), findsOneWidget);
+    });
+
+    testWidgets('invites a first khatmah', (tester) async {
+      await _pumpIndex(tester);
+      expect(find.text('ابدأ ختمة'), findsOneWidget);
+    });
+
+    testWidgets('shows the active khatmah with today\'s wird and streak', (tester) async {
+      await _pumpIndex(tester, khatmahs: [
+        Khatmah(uuid: 'k', name: 'ختمة رمضان', kind: PlanKind.dailyPages, start: DateTime(2026, 1, 1), dailyPages: 3, progress: 7),
+      ]);
+      expect(find.text('ختمة رمضان'), findsOneWidget);
+      expect(find.text('وِرد اليوم: ص ٣–٥ · 🔥 ١'), findsOneWidget);
+      expect(find.text('ابدأ ختمة'), findsNothing);
+    });
+
+    testWidgets('lists bookmarks in their own tab', (tester) async {
+      await _pumpIndex(tester, bookmarks: [
+        Bookmark(uuid: 'b', ayah: const AyahRef(2, 255), createdAt: DateTime(2026, 9, 30)),
+      ]);
+      await tester.tap(find.text('العلامات'));
+      await tester.pumpAndSettle();
+      expect(find.text('سورة البقرة، الآية ٢٥٥'), findsOneWidget);
     });
 
     testWidgets('no resume card on first launch', (tester) async {

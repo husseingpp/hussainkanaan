@@ -90,6 +90,15 @@ One feature per session, with a hard QA gate between phases (BLUEPRINT §10).
   - Gate: "search gate" in `tool/screenshots/render_pages_test.dart` checks correct results in under 100 ms on a cold DB (also run in CI).
   - Open: which tafsir(s) to offer. Quran Foundation's are all Sunni works, and Shia tafsirs need a sourced, licensed pack: the owner's decision. Also more translations as verified downloads.
   - Token search doesn't match a word with an attached clitic (ف، و، ب، ل), e.g. «ان» vs «فان». Known and deliberate for now.
+  - Tafsir: deferred by the owner (2026-09-30).
+- **Phase 5, Habit: built, awaiting the device gate.**
+  - Khatmah (`lib/features/khatmah/`): plans by daily pages or by date range. Progress is the global ayah id read through, only ever moves forward, and is counted in pages (`KhatmahMath`, pure and tested). A date-range plan spreads the pages left over the days left. `khatmah_days` logs progress per day for the streak and for where today's wird started.
+  - The reader takes `khatmah:`: turning one page forward, or «تمّت الصفحة», advances the plan to the end of that page.
+  - Bookmarks (reader app bar, «العلامات» tab on the index).
+  - Reminders (`reminders.dart`): a daily ayah (short ayahs, a 14-day window rescheduled at each launch) and per-plan wird reminders, via flutter_local_notifications, inexact (no exact-alarm permission). `syncReminders` never throws.
+  - Backup (`lib/features/backup/`): all user tables as one JSON file, from the settings screen. Restore merges: newest `updated_at` wins per row, khatmah progress takes the max, only known columns are imported. No server (rule 2).
+  - The user DB is at version 2; migrations live in `UserDb.migrations`.
+  - **Gate (needs a phone):** reminders fire at the set time after a reboot; a backup exported on one device restores on another.
 
 
 
