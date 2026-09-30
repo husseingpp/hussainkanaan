@@ -19,7 +19,7 @@ An offline-first Quran app for Android, iOS and desktop, built with Flutter. It 
   - Gapless playback to the end of the Quran.
   - A sleep timer with fade-out, and a quiet-room volume.
   - Lock-screen controls, crash-safe resume, and battery-saver guidance.
-- **Phase 3 (Follow Mode): built, needs the phone test.**
+- **Phase 3 (Follow Mode): done.** Passed the phone timing test.
   - The recited word is lit as you read (word by word for 10 reciters).
   - Auto-scroll with a "return to recitation" button.
   - Tap an ayah to jump to it, and the screen stays on only in this mode.

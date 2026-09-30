@@ -74,7 +74,7 @@ One feature per session, with a hard QA gate between phases (BLUEPRINT §10).
   - Logic lives in `lib/features/listen/listen_session.dart` behind `AudioPort` (tests use a fake); `listen_audio.dart` is the just_audio / audio_service layer.
   - Not yet: desktop playback (tray, media keys: Phase 7), and downloads continuing while the app is closed.
   - **Gate (needs a person):** 8 hours of continuous playback, screen off, on a physical Android phone (Xiaomi or Samsung) with battery optimization ON.
-- **Phase 3, Follow Mode: built, awaiting the device gate.**
+- **Phase 3, Follow Mode: done.** Device gate (150 ms highlight timing) passed by the owner on 2026-09-30.
   - `FollowScreen` (from the reader's read-along button) draws the surah word by word from the `words` table and lights the recited word.
   - `FollowTracker` binary-searches the reciter's segments (loaded per surah) against the current file's position, streamed at about 60 ms. Timings are relative to each ayah file, so there is no drift to accumulate. Ayahs without word timing (Tier B reciters, dropped ayahs) light whole. Word positions are never interpolated.
   - Auto-scroll keeps the ayah in the upper part of the screen; a drag suspends it and shows «العودة إلى موضع التلاوة».
@@ -82,7 +82,7 @@ One feature per session, with a hard QA gate between phases (BLUEPRINT §10).
   - The wakelock is held only while the screen is open.
   - Repeat engine: `RepeatPlan` (ayah ×N, range ×M, then continue) is expressed as the queue itself, so there are no counters.
   - Follow and Listen share the one audio engine (`SessionMode`), with separate resume points.
-  - **Gate (needs a phone):** highlight within 150 ms of the audio across a full 20-minute surah, including after seeking, pausing and backgrounding.
+  - Gate: highlight within 150 ms of the audio across a full 20-minute surah, including after seeking, pausing and backgrounding. Passed.
 - **Phase 4, Study: in progress.**
   - Search (`SearchScreen`, from the index): Arabic is folded and undiacritized against `ayahs_fts`, anything else goes against the translation's `translation_fts`, with prefix matching on the last word and marked matches. «٢:٢٥٥»-style references jump.
   - Word study: tap a word in Page View, or the ayah's medallion. It shows the meaning, the root, and every occurrence (`words_root` index).
