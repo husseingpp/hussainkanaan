@@ -42,14 +42,19 @@ class JustAudioPort implements AudioPort {
   @override
   Duration? get duration => player.duration;
 
+  /// A downloaded file, or the bundled reciter's asset (played from the APK).
+  static AudioSource _source(String path) => path.startsWith(BundledAudio.assetPrefix)
+      ? AudioSource.asset(path.substring(BundledAudio.assetPrefix.length))
+      : AudioSource.file(path);
+
   @override
   Future<void> load(List<String> paths, {int index = 0}) async {
     // Gapless: the whole window is one playlist, pre-buffering the next file.
-    await player.setAudioSources([for (final p in paths) AudioSource.file(p)], initialIndex: index);
+    await player.setAudioSources([for (final p in paths) _source(p)], initialIndex: index);
   }
 
   @override
-  Future<void> append(List<String> paths) => player.addAudioSources([for (final p in paths) AudioSource.file(p)]);
+  Future<void> append(List<String> paths) => player.addAudioSources([for (final p in paths) _source(p)]);
 
   @override
   Future<void> truncate(int length) async {

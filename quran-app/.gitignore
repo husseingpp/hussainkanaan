@@ -52,3 +52,7 @@ app.*.map.json
 !/assets/db/.gitkeep
 /tool/ingest/sources/
 __pycache__/
+
+# Built-in reciter audio, produced in CI by tool/audio/build_bundle.py
+/assets/audio/bundled.json
+/assets/audio/**/*.opus

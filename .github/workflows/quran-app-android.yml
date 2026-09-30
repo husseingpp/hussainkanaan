@@ -72,12 +72,32 @@ jobs:
       - name: Search on a cold DB (Phase 4 gate)
         run: flutter test tool/screenshots/render_pages_test.dart --plain-name "search gate"
 
+      # The built-in reciter: Minshawi (murattal) as 16 kbps Opus, ~200 MB for
+      # the whole Quran. Cached, so only a change to the script or reciter
+      # re-downloads and re-encodes.
+      - name: Restore built-in reciter
+        id: bundled
+        uses: actions/cache@v4
+        with:
+          path: |
+            quran-app/assets/audio/bundled.json
+            quran-app/assets/audio/minshawi-murattal
+          key: bundled-audio-minshawi-murattal-16k-${{ hashFiles('quran-app/tool/audio/build_bundle.py', 'quran-app/tool/ingest/reciters.json') }}
+
+      - name: Build built-in reciter (download and encode)
+        if: steps.bundled.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          python3 tool/audio/build_bundle.py minshawi-murattal --kbps 16
+
       - name: Build APK
         run: |
           flutter pub get
           # A rising version, so each APK is a newer version of the last and
           # update trackers (Obtainium) can tell builds apart.
-          flutter build apk --release --build-name=1.0.${{ github.run_number }} --build-number=$((100 + ${{ github.run_number }}))
+          # 64-bit ARM only: every current phone, and one copy of the engine
+          # instead of three.
+          flutter build apk --release --target-platform android-arm64 --build-name=1.0.${{ github.run_number }} --build-number=$((100 + ${{ github.run_number }}))
           cp build/app/outputs/flutter-apk/app-release.apk quran-app.apk
           ls -lh quran-app.apk
 
@@ -92,6 +112,9 @@ jobs:
             grep -q "resource .* $r" res.txt || { echo "missing from the APK: $r"; exit 1; }
           done
           echo "all runtime resources present"
+          test -f assets/audio/bundled.json && cat assets/audio/bundled.json
+          n=$(unzip -l quran-app.apk | grep -c 'flutter_assets/assets/audio/minshawi-murattal/.*\.opus' || true)
+          echo "bundled Opus files in the APK: $n"; test "$n" -eq 6236
 
       - uses: actions/upload-artifact@v4
         with:

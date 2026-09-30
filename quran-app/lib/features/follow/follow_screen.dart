@@ -77,6 +77,7 @@ class _FollowScreenState extends ConsumerState<FollowScreen> {
     final reciters = ref.read(recitersProvider).value ?? const <Reciter>[];
     final slug = ref.read(listenSettingsProvider).value?.reciterSlug;
     return reciters.where((r) => r.slug == slug).firstOrNull ??
+        reciters.where((r) => r.slug == ref.read(bundledAudioProvider).value?.slug).firstOrNull ??
         reciters.where((r) => r.slug == 'alafasy').firstOrNull ??
         reciters.firstOrNull;
   }

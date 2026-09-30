@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -23,8 +24,20 @@ final surahSizesProvider = FutureProvider.family<Map<int, int>, int>(
   (ref, reciterId) async => (await ref.watch(contentDbProvider.future)).surahSizes(reciterId),
 );
 
+/// The reciter built into the app, if this build has one (CI bundles it).
+final bundledAudioProvider = FutureProvider<BundledAudio?>((ref) async {
+  try {
+    return BundledAudio.fromJson(jsonDecode(await rootBundle.loadString(BundledAudio.manifest)) as Map<String, Object?>);
+  } catch (_) {
+    return null;
+  }
+});
+
 final audioLibraryProvider = FutureProvider<AudioLibrary>(
-  (ref) async => AudioLibrary(directory: p.join(await ref.watch(appDirectoryProvider.future), 'audio')),
+  (ref) async => AudioLibrary(
+    directory: p.join(await ref.watch(appDirectoryProvider.future), 'audio'),
+    bundled: await ref.watch(bundledAudioProvider.future),
+  ),
 );
 
 /// Which surahs a reciter has fully downloaded. Invalidate after downloads.

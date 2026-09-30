@@ -84,6 +84,10 @@ flutter:
   assets:
     - assets/db/
     - assets/images/
+    # The built-in reciter (Opus, written by tool/audio/build_bundle.py in CI;
+    # empty locally, and the app then simply has no built-in reciter).
+    - assets/audio/
+    - assets/audio/minshawi-murattal/
     - schema/user.sql
 
   fonts:

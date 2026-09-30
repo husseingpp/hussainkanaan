@@ -30,6 +30,7 @@ class DownloadsScreen extends ConsumerWidget {
     final done = ref.watch(downloadedSurahsProvider(reciter.slug)).value ?? const <int>{};
     final missing = [for (final s in surahs) if (!done.contains(s.id)) s];
     final missingBytes = missing.fold<int>(0, (n, s) => n + (sizes[s.id] ?? 0));
+    final bundled = ref.watch(bundledAudioProvider).value?.slug == reciter.slug;
 
     return Scaffold(
       appBar: AppBar(title: Text(reciter.nameAr ?? reciter.name)),
@@ -40,7 +41,10 @@ class DownloadsScreen extends ConsumerWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Text('المُنزَّل: ${arabicDigits(done.length)} من ${arabicDigits(surahs.length)} سورة'),
               const SizedBox(height: 4),
-              Text('حجم التلاوة كاملة: ≈ ${formatBytes(reciter.approxBytes)}',
+              Text(
+                  bundled
+                      ? 'هذه التلاوة مضمّنة في التطبيق كاملة، فلا تحتاج إلى تنزيل.'
+                      : 'حجم التلاوة كاملة: ≈ ${formatBytes(reciter.approxBytes)}',
                   style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 12),
               if (missing.isNotEmpty)
@@ -62,7 +66,9 @@ class DownloadsScreen extends ConsumerWidget {
               leading: CircleAvatar(child: Text(arabicDigits(s.id))),
               title: Text(s.nameAr),
               subtitle: Text('≈ ${formatBytes(sizes[s.id] ?? 0)}'),
-              trailing: done.contains(s.id)
+              trailing: bundled
+                  ? const Icon(Icons.check_circle_outline)
+                  : done.contains(s.id)
                   ? IconButton(
                       tooltip: 'حذف',
                       icon: const Icon(Icons.delete_outline),

@@ -32,6 +32,12 @@ android {
         versionName = flutter.versionName
     }
 
+    // The built-in reciter's Opus files are already compressed; storing them
+    // uncompressed lets the player read and seek them straight from the APK.
+    androidResources {
+        noCompress += listOf("opus")
+    }
+
     signingConfigs {
         create("test") {
             storeFile = file("../test-signing/quran-test.jks")

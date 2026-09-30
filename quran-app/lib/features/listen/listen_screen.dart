@@ -101,6 +101,8 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
 
   Reciter? _selected(List<Reciter> reciters, ListenSettings settings) =>
       reciters.where((r) => r.slug == settings.reciterSlug).firstOrNull ??
+      // The built-in reciter plays with nothing downloaded.
+      reciters.where((r) => r.slug == ref.read(bundledAudioProvider).value?.slug).firstOrNull ??
       reciters.where((r) => r.slug == 'alafasy').firstOrNull ??
       reciters.firstOrNull;
 
@@ -163,7 +165,7 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
           child: ListTile(
             leading: const Icon(Icons.record_voice_over_outlined),
             title: Text(reciter.nameAr ?? reciter.name),
-            subtitle: Text('${tierLabel(reciter.syncTier)} · كاملة ≈ ${formatBytes(reciter.approxBytes)}'),
+            subtitle: Text('${tierLabel(reciter.syncTier)} · ${sizeLabel(ref, reciter)}'),
             trailing: const Icon(Icons.expand_more),
             onTap: () async {
               final picked = await showModalBottomSheet<Reciter>(
@@ -245,7 +247,7 @@ class ReciterSheet extends ConsumerWidget {
           ListTile(
             selected: r.slug == selected,
             title: Text(r.nameAr ?? r.name),
-            subtitle: Text('${tierLabel(r.syncTier)} · ≈ ${formatBytes(r.approxBytes)}'),
+            subtitle: Text('${tierLabel(r.syncTier)} · ${sizeLabel(ref, r)}'),
             trailing: r.slug == selected ? const Icon(Icons.check) : null,
             onTap: () => Navigator.of(context).pop(r),
           ),
@@ -381,3 +383,8 @@ class _SleepChip extends ConsumerWidget {
     );
   }
 }
+
+/// "مضمّنة في التطبيق" for the built-in reciter, else the full download size.
+String sizeLabel(WidgetRef ref, Reciter r) => ref.watch(bundledAudioProvider).value?.slug == r.slug
+    ? 'مضمّنة في التطبيق، بلا تنزيل'
+    : 'كاملة ≈ ${formatBytes(r.approxBytes)}';

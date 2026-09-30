@@ -10,7 +10,7 @@ An offline-first Quran app for Android, iOS, Windows, macOS and Linux. Two core 
 ## Offline-first rules (BLUEPRINT §5), non-negotiable
 1. **No feature in the reading, playback, prayer-time or qibla path may touch the network.** If a code path in Listen Mode or Follow Mode can `await` a request, it's a bug. Prayer times and qibla are computed locally from coordinates and never fetched from an API.
 2. **v1 ships with no backend at all.** JSON export/import covers backup. Don't build auth before users ask for sync.
-3. **Never host audio yourself.** The download manager pulls from existing free CDNs (everyayah.com, Quran Foundation).
+3. **Never host audio yourself**, with one owner-approved exception (2026-09-30): Minshawi (murattal) ships inside the app as 16 kbps mono Opus (`tool/audio/build_bundle.py`, run in CI; ~200 MB) and plays straight from the APK's assets. Its redistribution terms must be confirmed before any public release. Every other reciter is still downloaded from the existing free CDNs (everyayah.com, Quran Foundation).
 4. **v2 sync covers user data only:** bookmarks, notes, khatmah, reciter and calculation preferences. Never content, never audio.
 5. **Content packs are versioned downloads, not app updates:** tafsirs, translations and the calendar dataset.
 

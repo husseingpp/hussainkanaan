@@ -23,19 +23,48 @@ class AudioDownloadError implements Exception {
 /// resume with an HTTP Range request. Audio comes straight from the
 /// reciter's CDN; the app never hosts audio (offline-first rule 3), and
 /// Listen Mode only plays files that are here (never streams).
+/// A reciter shipped inside the app as compact Opus (tool/audio/build_bundle.py),
+/// played straight from the app's assets: nothing to download or delete.
+class BundledAudio {
+  const BundledAudio({required this.slug, required this.bitrate, required this.bytes});
+
+  factory BundledAudio.fromJson(Map<String, Object?> j) => BundledAudio(
+        slug: j['slug']! as String,
+        bitrate: (j['bitrate']! as num).toInt(),
+        bytes: (j['bytes']! as num).toInt(),
+      );
+
+  static const manifest = 'assets/audio/bundled.json';
+
+  final String slug;
+  final int bitrate;
+  final int bytes;
+
+  /// A path the audio layer recognises as an app asset.
+  String assetPath(AyahRef file) => '$assetPrefix'
+      'assets/audio/$slug/${Reciter.fileName(file).replaceAll('.mp3', '.opus')}';
+
+  static const assetPrefix = 'asset:';
+}
+
 class AudioLibrary {
-  AudioLibrary({required this.directory, HttpClient Function()? httpClient})
+  AudioLibrary({required this.directory, this.bundled, HttpClient Function()? httpClient})
       : _httpClient = httpClient ?? HttpClient.new;
 
   final String directory;
+  final BundledAudio? bundled;
+
+  bool isBundled(Reciter r) => bundled?.slug == r.slug;
   final HttpClient Function() _httpClient;
 
   static const _parallel = 4;
   static const _attempts = 3;
 
-  String pathFor(Reciter r, AyahRef file) => p.join(directory, r.slug, Reciter.fileName(file));
+  String pathFor(Reciter r, AyahRef file) =>
+      isBundled(r) ? bundled!.assetPath(file) : p.join(directory, r.slug, Reciter.fileName(file));
 
   bool has(Reciter r, AyahRef file) {
+    if (isBundled(r)) return true;
     final f = File(pathFor(r, file));
     return f.existsSync() && f.lengthSync() > 0;
   }
@@ -46,6 +75,7 @@ class AudioLibrary {
       {for (final s in surahs) if (hasSurah(r, s)) s.id};
 
   int bytesOnDisk(Reciter r) {
+    if (isBundled(r)) return 0;
     final dir = Directory(p.join(directory, r.slug));
     if (!dir.existsSync()) return 0;
     return dir.listSync().whereType<File>().where((f) => f.path.endsWith('.mp3')).fold(0, (n, f) => n + f.lengthSync());
@@ -138,6 +168,7 @@ class AudioLibrary {
   /// Deletes [surahs]' recordings. 1:1 doubles as every surah's bismillah, so
   /// it stays while any other downloaded surah still needs it.
   void delete(Reciter r, List<Surah> surahs, List<Surah> all) {
+    if (isBundled(r)) return;
     final removing = {for (final s in surahs) s.id};
     final keep = <AyahRef>{
       for (final s in all)
