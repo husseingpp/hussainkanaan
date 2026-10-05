@@ -8,6 +8,8 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
 import '../common/about.dart';
+import '../common/surah_search.dart';
+import '../listen/listen_screen.dart';
 import '../khatmah/khatmah_plan.dart';
 import '../khatmah/khatmah_providers.dart';
 import '../khatmah/khatmah_screen.dart';
@@ -67,13 +69,7 @@ class QuranIndexScreen extends ConsumerWidget {
               const _KhatmahTile(),
               Expanded(
                 child: TabBarView(children: [
-                  ListView.builder(
-                    itemCount: list.length,
-                    itemBuilder: (context, i) => _SurahTile(
-                      surah: list[i],
-                      onTap: () => _open(context, ref, ReaderScreen(ayah: AyahRef(list[i].id, 1), page: list[i].pageStart)),
-                    ),
-                  ),
+                  _SurahTab(surahs: list, onOpen: (s) => _open(context, ref, s)),
                   _JuzList(surahs: list, onOpen: (s) => _open(context, ref, s)),
                   _BookmarkList(surahs: list, onOpen: (s) => _open(context, ref, s)),
                 ]),
@@ -202,21 +198,61 @@ class _BookmarkList extends ConsumerWidget {
   }
 }
 
-class _SurahTile extends StatelessWidget {
-  const _SurahTile({required this.surah, required this.onTap});
+/// Every surah, with a search box on top: by name (any spelling, with or
+/// without «ال» and diacritics) or number. Tap to read; the headphones
+/// button starts listening from that surah.
+class _SurahTab extends StatefulWidget {
+  const _SurahTab({required this.surahs, required this.onOpen});
 
-  final Surah surah;
-  final VoidCallback onTap;
+  final List<Surah> surahs;
+  final ValueChanged<ReaderScreen> onOpen;
+
+  @override
+  State<_SurahTab> createState() => _SurahTabState();
+}
+
+class _SurahTabState extends State<_SurahTab> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(child: Text(arabicDigits(surah.id))),
-      title: Text(surah.nameAr),
-      subtitle: Text('${surah.isMeccan ? 'مكية' : 'مدنية'} · آياتها ${arabicDigits(surah.ayahCount)}'),
-      trailing: Text(pageLabel(surah.pageStart)),
-      onTap: onTap,
-    );
+    final list = filterSurahs(widget.surahs, _query.text);
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+        child: SurahSearchField(controller: _query, onChanged: (_) => setState(() {})),
+      ),
+      Expanded(
+        child: list.isEmpty
+            ? const Center(child: Text('لا سورة بهذا الاسم أو الرقم'))
+            : ListView.builder(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                itemCount: list.length,
+                itemBuilder: (context, i) {
+                  final s = list[i];
+                  return SurahRow(
+                    surah: s,
+                    subtitleExtra: pageLabel(s.pageStart),
+                    onTap: () => widget.onOpen(ReaderScreen(ayah: AyahRef(s.id, 1), page: s.pageStart)),
+                    trailing: IconButton(
+                      tooltip: 'استمع إلى سورة ${s.nameAr}',
+                      iconSize: 28,
+                      icon: const Icon(Icons.headphones_outlined),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(builder: (_) => ListenScreen(startAt: AyahRef(s.id, 1))),
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
+    ]);
   }
 }
 

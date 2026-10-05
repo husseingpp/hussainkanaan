@@ -135,7 +135,7 @@ void main() {
       await _pumpIndex(tester);
       await tester.tap(find.byTooltip('الانتقال إلى صفحة'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), '٦٠٥');
+      await tester.enterText(find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)), '٦٠٥');
       await tester.tap(find.text('انتقال'));
       await tester.pumpAndSettle();
       expect(find.text('أدخل رقمًا من ١ إلى ٦٠٤'), findsOneWidget);

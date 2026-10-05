@@ -9,6 +9,7 @@ import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/reader_settings.dart';
 import '../../data/user_repository.dart';
+import '../common/surah_search.dart';
 import '../follow/follow_screen.dart';
 import '../khatmah/khatmah_plan.dart';
 import '../khatmah/khatmah_providers.dart';
@@ -108,6 +109,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     ));
   }
 
+  /// Jump to another surah from the title, in either view.
+  Future<void> _pickSurah(List<Surah> surahs) async {
+    final picked = await showSurahPicker(context, surahs: surahs, selected: _ayah.surah);
+    if (picked == null || !mounted) return;
+    setState(() {
+      _ayah = AyahRef(picked.id, 1);
+      _page = picked.pageStart;
+    });
+    _pages?.jumpToPage(picked.pageStart - 1);
+    _scheduleSave();
+  }
+
   ReaderView get _currentView => _view ?? ref.read(settingsProvider).value?.view ?? ReaderView.page;
 
   void _save() {
@@ -146,7 +159,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Semantics(
+          button: true,
+          label: 'اختيار سورة أخرى',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => _pickSurah(surahs),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Flexible(child: Text(title, overflow: TextOverflow.ellipsis)),
+                const Icon(Icons.arrow_drop_down),
+              ]),
+            ),
+          ),
+        ),
         actions: [
           if (view == ReaderView.reading) ...[
             IconButton(

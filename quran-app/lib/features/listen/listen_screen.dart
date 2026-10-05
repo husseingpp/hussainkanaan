@@ -6,6 +6,7 @@ import '../../core/format.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
+import '../common/surah_search.dart';
 import 'battery.dart';
 import 'downloads_screen.dart';
 import 'listen_providers.dart';
@@ -190,26 +191,39 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
           ),
         ),
         const SizedBox(height: 16),
-        DropdownMenu<int>(
-          label: const Text('ابدأ من سورة'),
-          expandedInsets: EdgeInsets.zero,
-          initialSelection: _from.surah,
-          menuHeight: 360,
-          dropdownMenuEntries: [
-            for (final s in surahs)
-              DropdownMenuEntry(
-                value: s.id,
-                label: '${arabicDigits(s.id)}. ${s.nameAr}',
-                trailingIcon: downloaded.contains(s.id) ? const Icon(Icons.check, size: 18) : null,
-              ),
-          ],
-          onSelected: (id) => setState(() => _from = AyahRef(id ?? 1, 1)),
-        ),
-        if (_from.ayah > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text('من الآية ${arabicDigits(_from.ayah)}', style: text.bodySmall),
+        Card(
+          child: ListTile(
+            minTileHeight: 72,
+            leading: const Icon(Icons.menu_book_outlined, size: 32),
+            title: Text('ابدأ من سورة $surahName', style: text.titleMedium),
+            subtitle: Text(
+              '${ready ? 'جاهزة للاستماع' : 'غير مُنزّلة بصوت هذا القارئ'} · اضغط للبحث عن سورة أخرى',
+            ),
+            trailing: const Icon(Icons.search),
+            onTap: () async {
+              final picked = await showSurahPicker(
+                context,
+                surahs: surahs,
+                title: 'من أي سورة تبدأ؟',
+                selected: _from.surah,
+                mark: (s) => downloaded.contains(s.id) ? 'جاهزة' : 'غير مُنزّلة',
+              );
+              if (picked != null) setState(() => _from = AyahRef(picked.id, 1));
+            },
           ),
+        ),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.format_list_numbered),
+            title: Text('من الآية ${arabicDigits(_from.ayah)}'),
+            subtitle: const Text('اضغط لاختيار آية أخرى'),
+            onTap: () async {
+              final count = surahs.where((s) => s.id == _from.surah).firstOrNull?.ayahCount ?? 1;
+              final ayah = await showDialog<int>(context: context, builder: (_) => _AyahDialog(count: count));
+              if (ayah != null) setState(() => _from = AyahRef(_from.surah, ayah));
+            },
+          ),
+        ),
         const SizedBox(height: 16),
         SizedBox(
           height: 64,
@@ -388,3 +402,49 @@ class _SleepChip extends ConsumerWidget {
 String sizeLabel(WidgetRef ref, Reciter r) => ref.watch(bundledAudioProvider).value?.slug == r.slug
     ? 'مضمّنة في التطبيق، بلا تنزيل'
     : 'كاملة ≈ ${formatBytes(r.approxBytes)}';
+
+/// Pick an ayah by number (Western or Arabic-Indic digits).
+class _AyahDialog extends StatefulWidget {
+  const _AyahDialog({required this.count});
+
+  final int count;
+
+  @override
+  State<_AyahDialog> createState() => _AyahDialogState();
+}
+
+class _AyahDialogState extends State<_AyahDialog> {
+  final _c = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final n = parseNumber(_c.text);
+    if (n == null || n < 1 || n > widget.count) {
+      setState(() => _error = 'أدخل رقمًا من ١ إلى ${arabicDigits(widget.count)}');
+      return;
+    }
+    Navigator.of(context).pop(n);
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('من أي آية؟'),
+        content: TextField(
+          controller: _c,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(hintText: '١ – ${arabicDigits(widget.count)}', errorText: _error),
+          onSubmitted: (_) => _submit(),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+          FilledButton(onPressed: _submit, child: const Text('تم')),
+        ],
+      );
+}

@@ -5,14 +5,30 @@ import '../../core/arabic_digits.dart';
 import '../../core/format.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../common/surah_search.dart';
 import 'audio_library.dart';
 import 'listen_providers.dart';
 
 /// One reciter's recitation files: download all or by surah, delete by surah.
-class DownloadsScreen extends ConsumerWidget {
+class DownloadsScreen extends ConsumerStatefulWidget {
   const DownloadsScreen({super.key, required this.reciter});
 
   final Reciter reciter;
+
+  @override
+  ConsumerState<DownloadsScreen> createState() => _DownloadsScreenState();
+}
+
+class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
+  final _query = TextEditingController();
+
+  Reciter get reciter => widget.reciter;
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   Future<void> _download(BuildContext context, WidgetRef ref, List<Surah> surahs) async {
     await showDialog<void>(
@@ -24,7 +40,7 @@ class DownloadsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final surahs = ref.watch(surahsProvider).value ?? const <Surah>[];
     final sizes = ref.watch(surahSizesProvider(reciter.id)).value ?? const <int, int>{};
     final done = ref.watch(downloadedSurahsProvider(reciter.slug)).value ?? const <int>{};
@@ -61,11 +77,14 @@ class DownloadsScreen extends ConsumerWidget {
             ]),
           ),
           const Divider(height: 1),
-          for (final s in surahs)
-            ListTile(
-              leading: CircleAvatar(child: Text(arabicDigits(s.id))),
-              title: Text(s.nameAr),
-              subtitle: Text('≈ ${formatBytes(sizes[s.id] ?? 0)}'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: SurahSearchField(controller: _query, onChanged: (_) => setState(() {})),
+          ),
+          for (final s in filterSurahs(surahs, _query.text))
+            SurahRow(
+              surah: s,
+              subtitleExtra: '≈ ${formatBytes(sizes[s.id] ?? 0)}${done.contains(s.id) ? ' · مُنزّلة' : ''}',
               trailing: bundled
                   ? const Icon(Icons.check_circle_outline)
                   : done.contains(s.id)
