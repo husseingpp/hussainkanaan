@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/arabic_digits.dart';
 import '../../core/format.dart';
+import '../../core/platform.dart' as platform;
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
@@ -28,6 +29,7 @@ class ListenScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dark = ThemeData(
+      fontFamily: platform.isWeb ? 'NotoSansArabic' : null,
       brightness: Brightness.dark,
       colorSchemeSeed: const Color(0xFF1B5E4A),
       useMaterial3: true,
@@ -104,7 +106,7 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
       reciters.where((r) => r.slug == settings.reciterSlug).firstOrNull ??
       // The built-in reciter plays with nothing downloaded.
       reciters.where((r) => r.slug == ref.read(bundledAudioProvider).value?.slug).firstOrNull ??
-      reciters.where((r) => r.slug == 'alafasy').firstOrNull ??
+      reciters.where((r) => r.slug == defaultReciterSlug).firstOrNull ??
       reciters.firstOrNull;
 
   Future<void> _start(Reciter r, AyahRef from) async {
@@ -179,6 +181,8 @@ class _StartPanelState extends ConsumerState<_StartPanel> {
             },
           ),
         ),
+        // The web streams everything: there are no downloads to manage.
+        if (!platform.isWeb)
         Card(
           child: ListTile(
             leading: const Icon(Icons.download_outlined),
@@ -399,9 +403,11 @@ class _SleepChip extends ConsumerWidget {
 }
 
 /// "مضمّنة في التطبيق" for the built-in reciter, else the full download size.
-String sizeLabel(WidgetRef ref, Reciter r) => ref.watch(bundledAudioProvider).value?.slug == r.slug
-    ? 'مضمّنة في التطبيق، بلا تنزيل'
-    : 'كاملة ≈ ${formatBytes(r.approxBytes)}';
+String sizeLabel(WidgetRef ref, Reciter r) => platform.isWeb
+    ? 'تُبث من الإنترنت'
+    : ref.watch(bundledAudioProvider).value?.slug == r.slug
+        ? 'مضمّنة في التطبيق، بلا تنزيل'
+        : 'كاملة ≈ ${formatBytes(r.approxBytes)}';
 
 /// Pick an ayah by number (Western or Arabic-Indic digits).
 class _AyahDialog extends StatefulWidget {

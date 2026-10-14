@@ -48,11 +48,15 @@ class BundledAudio {
 }
 
 class AudioLibrary {
-  AudioLibrary({required this.directory, this.bundled, HttpClient Function()? httpClient})
+  AudioLibrary({required this.directory, this.bundled, this.streaming = false, HttpClient Function()? httpClient})
       : _httpClient = httpClient ?? HttpClient.new;
 
   final String directory;
   final BundledAudio? bundled;
+
+  /// The web build: no files at all, every recitation plays from its CDN
+  /// (Quran Foundation / everyayah), so nothing is ever "missing".
+  final bool streaming;
 
   bool isBundled(Reciter r) => bundled?.slug == r.slug;
   final HttpClient Function() _httpClient;
@@ -60,11 +64,14 @@ class AudioLibrary {
   static const _parallel = 4;
   static const _attempts = 3;
 
-  String pathFor(Reciter r, AyahRef file) =>
-      isBundled(r) ? bundled!.assetPath(file) : p.join(directory, r.slug, Reciter.fileName(file));
+  String pathFor(Reciter r, AyahRef file) => streaming
+      ? r.urlFor(file)
+      : isBundled(r)
+          ? bundled!.assetPath(file)
+          : p.join(directory, r.slug, Reciter.fileName(file));
 
   bool has(Reciter r, AyahRef file) {
-    if (isBundled(r)) return true;
+    if (streaming || isBundled(r)) return true;
     final f = File(pathFor(r, file));
     return f.existsSync() && f.lengthSync() > 0;
   }
@@ -75,7 +82,7 @@ class AudioLibrary {
       {for (final s in surahs) if (hasSurah(r, s)) s.id};
 
   int bytesOnDisk(Reciter r) {
-    if (isBundled(r)) return 0;
+    if (streaming || isBundled(r)) return 0;
     final dir = Directory(p.join(directory, r.slug));
     if (!dir.existsSync()) return 0;
     return dir.listSync().whereType<File>().where((f) => f.path.endsWith('.mp3')).fold(0, (n, f) => n + f.lengthSync());
@@ -168,7 +175,7 @@ class AudioLibrary {
   /// Deletes [surahs]' recordings. 1:1 doubles as every surah's bismillah, so
   /// it stays while any other downloaded surah still needs it.
   void delete(Reciter r, List<Surah> surahs, List<Surah> all) {
-    if (isBundled(r)) return;
+    if (streaming || isBundled(r)) return;
     final removing = {for (final s in surahs) s.id};
     final keep = <AyahRef>{
       for (final s in all)

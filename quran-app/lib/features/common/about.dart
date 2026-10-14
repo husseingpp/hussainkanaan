@@ -22,6 +22,7 @@ void showCredits(BuildContext context) {
       item('جذور الكلمات', 'مكتبة QUL (qul.tarteel.ai).'),
       item('الترجمة الإنجليزية', 'علي قلي قرائي (Ali Quli Qara\'i)، عبر تنزيل.'),
       item('خط العرض', 'Amiri Quran، برخصة SIL Open Font License 1.1.'),
+      item('خط الواجهة على الويب', 'Noto Sans Arabic، برخصة SIL Open Font License 1.1.'),
     ],
   );
 }

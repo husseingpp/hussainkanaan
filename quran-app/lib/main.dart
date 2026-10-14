@@ -1,34 +1,25 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sqflite/sqflite.dart' as sqflite;
-import 'package:sqflite_common_ffi/sqflite_ffi.dart' show databaseFactoryFfi, sqfliteFfiInit;
 
 import 'app.dart';
+import 'core/platform.dart' as platform;
+import 'data/db_factory.dart';
 import 'data/providers.dart';
 import 'features/listen/listen_audio.dart';
 import 'features/listen/listen_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Listen Mode's background service: phones only for now (desktop is Phase 7).
-  final audio = Platform.isAndroid || Platform.isIOS ? await initAudio() : null;
+  // The audio service: background playback with lock-screen controls on
+  // phones, the browser's media session on the web. Desktop is Phase 7.
+  final audio = platform.isMobile || platform.isWeb ? await initAudio() : null;
   runApp(
     ProviderScope(
       overrides: [
-        databaseFactoryProvider.overrideWithValue(_databaseFactory()),
+        databaseFactoryProvider.overrideWithValue(platformDatabaseFactory()),
         audioHandlerProvider.overrideWithValue(audio),
       ],
       child: const QuranApp(),
     ),
   );
-}
-
-sqflite.DatabaseFactory _databaseFactory() {
-  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-    sqfliteFfiInit();
-    return databaseFactoryFfi;
-  }
-  return sqflite.databaseFactory;
 }

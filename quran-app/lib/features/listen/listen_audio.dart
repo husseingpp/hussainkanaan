@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
@@ -13,6 +12,7 @@ import 'listen_media.dart';
 import 'listen_queue.dart';
 import 'listen_session.dart';
 import 'sleep_timer.dart';
+import '../../core/platform.dart' as platform;
 
 /// just_audio behind the session's [AudioPort].
 class JustAudioPort implements AudioPort {
@@ -43,9 +43,11 @@ class JustAudioPort implements AudioPort {
   Duration? get duration => player.duration;
 
   /// A downloaded file, or the bundled reciter's asset (played from the APK).
-  static AudioSource _source(String path) => path.startsWith(BundledAudio.assetPrefix)
-      ? AudioSource.asset(path.substring(BundledAudio.assetPrefix.length))
-      : AudioSource.file(path);
+  static AudioSource _source(String path) => path.startsWith('https://')
+      ? AudioSource.uri(Uri.parse(path)) // the web build streams
+      : path.startsWith(BundledAudio.assetPrefix)
+          ? AudioSource.asset(path.substring(BundledAudio.assetPrefix.length))
+          : AudioSource.file(path);
 
   @override
   Future<void> load(List<String> paths, {int index = 0}) async {
@@ -125,8 +127,12 @@ class QuranAudioHandler extends BaseAudioHandler with SeekHandler {
     final session = _session;
     if (session == null) throw StateError('audio not configured');
     // Calls and alarms interrupt, then playback resumes; unplugging headphones pauses.
-    final audioSession = await AudioSession.instance;
-    await audioSession.configure(const AudioSessionConfiguration.music());
+    try {
+      final audioSession = await AudioSession.instance;
+      await audioSession.configure(const AudioSessionConfiguration.music());
+    } catch (_) {
+      // No audio session on this platform (the web): nothing to configure.
+    }
     await session.start(reciter, from, sleep: sleep, mode: mode, plan: plan);
   }
 
@@ -191,7 +197,7 @@ const playbackChannelId = 'net.hussainkanaan.quran_app.playback';
 /// no sound or vibration, and drops the old low one.
 @visibleForTesting
 Future<void> ensurePlaybackChannel() async {
-  if (!Platform.isAndroid) return;
+  if (!platform.isAndroid) return;
   final android = FlutterLocalNotificationsPlugin()
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
   if (android == null) return;

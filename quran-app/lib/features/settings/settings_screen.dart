@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
@@ -12,6 +13,7 @@ import '../backup/backup.dart';
 import '../khatmah/khatmah_providers.dart';
 import '../khatmah/khatmah_screen.dart';
 import '../listen/battery.dart';
+import '../../core/platform.dart' as platform;
 
 /// Daily ayah reminder, and backup of the user's data (bookmarks, notes,
 /// khatmah plans, preferences) as one JSON file. There is no account and no
@@ -96,7 +98,12 @@ class SettingsScreen extends ConsumerWidget {
     final now = DateTime.now();
     final stamp = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final name = 'quran-backup-$stamp.json';
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (platform.isWeb) {
+      // The browser downloads it (to the Downloads folder).
+      await XFile.fromData(utf8.encode(json), name: name, mimeType: 'application/json').saveTo(name);
+      return;
+    }
+    if (platform.isAndroid || platform.isIOS) {
       final file = File('${(await getTemporaryDirectory()).path}/$name');
       await file.writeAsString(json);
       await SharePlus.instance.share(ShareParams(files: [XFile(file.path, mimeType: 'application/json')], subject: name));

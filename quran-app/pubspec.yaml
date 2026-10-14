@@ -62,6 +62,10 @@ dependencies:
   flutter_compass: ^0.8.1
   geomag: ^0.3.0
   hijri: ^3.0.1
+  sqflite_common_ffi_web: ^1.2.0
+  # Must match web/sqlite3.wasm (sqflite_common_ffi_web setup ships sqlite3-3.6.0).
+  sqlite3: 3.6.0
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -94,6 +98,14 @@ flutter:
     - family: AmiriQuran
       fonts:
         - asset: assets/fonts/AmiriQuran.ttf
+    # The web build's interface font (OFL, NotoSansArabic-OFL.txt): browsers
+    # would otherwise fetch Arabic fallback fonts from Google at runtime,
+    # which fails offline. Phones use their system font.
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic-Regular.ttf
+        - asset: assets/fonts/NotoSansArabic-Bold.ttf
+          weight: 700
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

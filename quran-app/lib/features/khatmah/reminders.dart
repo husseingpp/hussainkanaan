@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -8,6 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../core/arabic_digits.dart';
 import 'khatmah_plan.dart';
+import '../../core/platform.dart' as platform;
 
 /// Reminder preferences (synced in v2 with the other preferences).
 class ReminderSettings {
@@ -136,7 +136,7 @@ class ReminderScheduler {
 
   Future<bool> _init() async {
     if (_ready) return true;
-    if (!(Platform.isAndroid || Platform.isIOS)) return false;
+    if (!(platform.isAndroid || platform.isIOS)) return false;
     tzdata.initializeTimeZones();
     try {
       tz.setLocalLocation(tz.getLocation((await FlutterTimezone.getLocalTimezone()).identifier));
@@ -160,7 +160,7 @@ class ReminderScheduler {
   /// Asks for notification permission (Android 13+, iOS). Returns whether granted.
   Future<bool> requestPermission() async {
     if (!await _init()) return false;
-    if (Platform.isAndroid) {
+    if (platform.isAndroid) {
       return await _plugin
               .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
               ?.requestNotificationsPermission() ??
@@ -203,7 +203,7 @@ class ReminderScheduler {
 
   /// Asks for exact alarms (Android 12+), so a prayer alert isn't late.
   Future<bool> requestExactAlarms() async {
-    if (!await _init() || !Platform.isAndroid) return true;
+    if (!await _init() || !platform.isAndroid) return true;
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (await android?.canScheduleExactNotifications() ?? true) return true;
     return await android?.requestExactAlarmsPermission() ?? false;
@@ -213,7 +213,7 @@ class ReminderScheduler {
   Future<void> sync(List<ReminderSpec> specs) async {
     if (!await _init()) return;
     await _plugin.cancelAll();
-    final exact = !Platform.isAndroid ||
+    final exact = !platform.isAndroid ||
         (await _plugin
                 .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
                 ?.canScheduleExactNotifications() ??

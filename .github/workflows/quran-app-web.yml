@@ -1,0 +1,84 @@
+name: Build web app (Quran app)
+
+# Builds the Quran app for the web and publishes it as quran-web.zip on the
+# quran-app-web-latest release. The portfolio's Pages deploy (deploy.yml on
+# main) unpacks it into /quran/, so the site is
+# https://husseingpp.github.io/hussainkanaan/quran/ .
+#
+# Self-contained: the Flutter engine (CanvasKit) and the interface font are
+# served from the site itself, not Google's CDNs. Recitations stream from
+# Quran Foundation / everyayah; the mus'haf page fonts load from Quran
+# Foundation's font CDN, verified against the content DB.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/new-project-wfesil
+    paths:
+      - "quran-app/**"
+      - ".github/workflows/quran-app-web.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: quran-app-web
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: quran-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Same pinned sources and cache key as the Android build.
+      - name: Restore sources
+        id: sources
+        uses: actions/cache@v4
+        with:
+          path: quran-app/tool/ingest/sources
+          key: ingest-sources-${{ hashFiles('quran-app/tool/ingest/sources.lock.json', 'quran-app/tool/ingest/fetch_sources.py', 'quran-app/tool/ingest/reciters.json', 'quran-app/tool/ingest/calendar/**', 'quran-app/tool/ingest/vendor/**') }}
+
+      - name: Download sources
+        if: steps.sources.outputs.cache-hit != 'true'
+        run: python3 tool/ingest/fetch_sources.py
+
+      - name: Build content DB
+        # The calendar pack is a draft until a qualified review (BLUEPRINT §9).
+        run: python3 tool/ingest/ingest.py --allow-unreviewed-calendar
+
+      - name: Build web app
+        run: |
+          flutter pub get
+          flutter build web --release --no-web-resources-cdn --base-href /hussainkanaan/quran/ \
+            --build-name=1.0.${{ github.run_number }}
+          du -sh build/web
+          (cd build/web && zip -qr ../../quran-web.zip .)
+          ls -lh quran-web.zip
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: quran-app-web-latest
+          name: "Quran app — web build"
+          body: |
+            The Quran app built for the web, unpacked by the portfolio's Pages deploy into
+            https://husseingpp.github.io/hussainkanaan/quran/
+
+            Commit: ${{ github.sha }}
+          files: quran-app/quran-web.zip
+          make_latest: "false"

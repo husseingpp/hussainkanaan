@@ -123,10 +123,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   ReaderView get _currentView => _view ?? ref.read(settingsProvider).value?.view ?? ReaderView.page;
 
+  /// The view last drawn. _save runs from dispose too, when ref can no
+  /// longer be read, so it uses this instead of the settings provider.
+  ReaderView _shownView = ReaderView.page;
+
   void _save() {
     final repo = _repo;
     if (repo == null || _page == 0) return;
-    repo.savePosition(ReadingPosition(view: _currentView, ayah: _ayah, page: _page));
+    repo.savePosition(ReadingPosition(view: _view ?? _shownView, ayah: _ayah, page: _page));
   }
 
   /// Positions change constantly while scrolling; write at most once a second.
@@ -153,8 +157,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final settings = ref.watch(settingsProvider).value ?? const ReaderSettings();
     final surahs = ref.watch(surahsProvider).value ?? const <Surah>[];
     final view = _view ?? settings.view;
+    _shownView = view;
     final surah = surahs.where((s) => s.id == _ayah.surah).firstOrNull;
-    final title = surah == null ? '' : 'سورة ${surah.nameAr}';
+    // Just the name: «سورة» plus the toolbar would cut it off on phones.
+    final title = surah?.nameAr ?? '';
     final bookmarked = (ref.watch(bookmarksProvider).value ?? const []).any((b) => b.ayah == _ayah);
 
     return Scaffold(

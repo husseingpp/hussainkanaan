@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/platform.dart' as platform;
 import 'data/providers.dart';
 import 'features/calendar/calendar_providers.dart';
 import 'features/shell/app_shell.dart';
@@ -38,6 +39,7 @@ class QuranApp extends ConsumerWidget {
 
 ThemeData _theme(Brightness brightness, {bool mourning = false}) => ThemeData(
       brightness: brightness,
+      fontFamily: platform.isWeb ? 'NotoSansArabic' : null,
       colorSchemeSeed: mourning ? const Color(0xFF3C3C3C) : const Color(0xFF1B5E4A),
       useMaterial3: true,
     );

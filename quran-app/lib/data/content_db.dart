@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 import '../core/arabic_normalizer.dart';
+import '../core/platform.dart' as platform;
 import '../features/calendar/calendar_model.dart';
 import 'models.dart';
 import 'mushaf_fonts.dart';
@@ -36,6 +37,8 @@ class ContentDb {
       throw const ContentDbMissing();
     }
 
+    if (platform.isWeb) return _openWeb(factory, directory, digest, bundle);
+
     final path = p.join(directory, 'content.db');
     final stamp = File('$path.sha256');
     final current = stamp.existsSync() ? stamp.readAsStringSync().trim() : null;
@@ -50,10 +53,24 @@ class ContentDb {
       await stamp.writeAsString(digest, flush: true);
     }
 
-    final db = await factory.openDatabase(
+    return _checked(await factory.openDatabase(
       path,
       options: OpenDatabaseOptions(readOnly: true, singleInstance: false),
-    );
+    ));
+  }
+
+  /// In a browser the bundled DB is copied into IndexedDB once per content
+  /// version (the name carries its digest), then opened from there.
+  static Future<ContentDb> _openWeb(DatabaseFactory factory, String directory, String digest, AssetBundle bundle) async {
+    final path = '$directory/content-${digest.substring(0, 16)}.db';
+    if (!await factory.databaseExists(path)) {
+      final data = await bundle.load(assetPath);
+      await factory.writeDatabaseBytes(path, data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    }
+    return _checked(await factory.openDatabase(path, options: OpenDatabaseOptions(readOnly: true)));
+  }
+
+  static Future<ContentDb> _checked(Database db) async {
     final version = Sqflite.firstIntValue(await db.rawQuery('PRAGMA user_version'));
     if (version != schemaVersion) {
       await db.close();

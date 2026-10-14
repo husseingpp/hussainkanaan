@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/platform.dart' as platform;
 import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../data/user_repository.dart';
@@ -24,8 +25,13 @@ final surahSizesProvider = FutureProvider.family<Map<int, int>, int>(
   (ref, reciterId) async => (await ref.watch(contentDbProvider.future)).surahSizes(reciterId),
 );
 
+/// The owner's chosen reciter: built into the Android app, streamed on the
+/// web, and the default wherever nothing else was picked.
+const defaultReciterSlug = 'minshawi-murattal';
+
 /// The reciter built into the app, if this build has one (CI bundles it).
 final bundledAudioProvider = FutureProvider<BundledAudio?>((ref) async {
+  if (platform.isWeb) return null; // the web streams every reciter
   try {
     return BundledAudio.fromJson(jsonDecode(await rootBundle.loadString(BundledAudio.manifest)) as Map<String, Object?>);
   } catch (_) {
@@ -37,6 +43,7 @@ final audioLibraryProvider = FutureProvider<AudioLibrary>(
   (ref) async => AudioLibrary(
     directory: p.join(await ref.watch(appDirectoryProvider.future), 'audio'),
     bundled: await ref.watch(bundledAudioProvider.future),
+    streaming: platform.isWeb,
   ),
 );
 
@@ -94,6 +101,7 @@ final listenReadyProvider = FutureProvider<QuranAudioHandler?>((ref) async {
 /// The cover shown by the system media controls. They take a file URI, not
 /// an asset, so the bundled image is copied out once.
 Future<Uri?> _coverArt(String dir) async {
+  if (platform.isWeb) return null;
   try {
     final file = File(p.join(dir, 'listen_cover.png'));
     if (!file.existsSync()) {

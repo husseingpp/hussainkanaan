@@ -3,6 +3,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../core/platform.dart' as platform;
 import 'content_db.dart';
 import 'models.dart';
 import 'mushaf_fonts.dart';
@@ -15,8 +16,10 @@ final databaseFactoryProvider = Provider<DatabaseFactory>(
   (ref) => throw UnimplementedError('override in main()'),
 );
 
+/// Where the app keeps its files. In a browser there is no file system:
+/// it's a name for the databases kept in IndexedDB.
 final appDirectoryProvider = FutureProvider<String>(
-  (ref) async => (await getApplicationSupportDirectory()).path,
+  (ref) async => platform.isWeb ? '/quran' : (await getApplicationSupportDirectory()).path,
 );
 
 final contentDbProvider = FutureProvider<ContentDb>((ref) async {

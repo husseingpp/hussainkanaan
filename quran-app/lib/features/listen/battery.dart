@@ -1,9 +1,9 @@
-import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../core/platform.dart' as platform;
 
 /// Android battery optimisation: even a correct foreground service is killed
 /// by aggressive OEM battery savers (BLUEPRINT §3), so the app asks once to be
@@ -17,7 +17,7 @@ class BatteryStatus {
 
 /// Null off Android, where none of this applies.
 final batteryStatusProvider = FutureProvider<BatteryStatus?>((ref) async {
-  if (!Platform.isAndroid) return null;
+  if (!platform.isAndroid) return null;
   final info = await DeviceInfoPlugin().androidInfo;
   return BatteryStatus(
     exempt: await Permission.ignoreBatteryOptimizations.isGranted,
@@ -98,13 +98,13 @@ class BatteryCard extends ConsumerWidget {
 /// notification (and, on several phones, the lock-screen controls) only
 /// appear once it's granted. Null off Android.
 final notificationPermissionProvider = FutureProvider<bool?>((ref) async {
-  if (!Platform.isAndroid) return null;
+  if (!platform.isAndroid) return null;
   return Permission.notification.isGranted;
 });
 
 /// Asks once, just before playback starts, when the reason is obvious.
 Future<void> requestNotificationPermission() async {
-  if (!Platform.isAndroid) return;
+  if (!platform.isAndroid) return;
   try {
     final status = await Permission.notification.status;
     if (!status.isGranted && !status.isPermanentlyDenied) await Permission.notification.request();

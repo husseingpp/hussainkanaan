@@ -4,7 +4,10 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
+
+import '../core/platform.dart' as platform;
 
 /// One page's QCF v1 font, as recorded (size + sha256) by the ingest.
 class QcfFontInfo {
@@ -58,6 +61,9 @@ class MushafFontPack {
   /// Size is checked here; the sha256 was checked when the file was written.
   bool isInstalled(int page) {
     final info = fonts[page];
+    // In a browser each page's font is fetched when the page is shown (the
+    // browser caches it), so there is nothing to install.
+    if (platform.isWeb) return info != null;
     final file = _file(page);
     return info != null && file.existsSync() && file.lengthSync() == info.bytes;
   }
@@ -126,9 +132,27 @@ class MushafFontPack {
     if (!isInstalled(page)) return Future.value(null);
     return _loaded.putIfAbsent(page, () async {
       final family = 'QCF_P${page.toString().padLeft(3, '0')}';
-      await _register(family, await _file(page).readAsBytes());
-      return family;
+      try {
+        await _register(family, platform.isWeb ? await _fetchVerified(fonts[page]!) : await _file(page).readAsBytes());
+        return family;
+      } catch (_) {
+        // Offline or a bad response: draw this page with the Uthmani font
+        // for now and try again next time it's shown.
+        unawaited(Future(() => _loaded.remove(page)));
+        return null;
+      }
     });
+  }
+
+  /// A page font over HTTP, kept only if it matches the size and sha256 the
+  /// ingest recorded.
+  static Future<Uint8List> _fetchVerified(QcfFontInfo info) async {
+    final r = await http.get(Uri.parse(info.url));
+    final bytes = r.bodyBytes;
+    if (r.statusCode != 200 || bytes.length != info.bytes || sha256.convert(bytes).toString() != info.sha256) {
+      throw FontDownloadError(info.page, 'font failed verification');
+    }
+    return bytes;
   }
 
   static Future<void> _registerWithEngine(String family, Uint8List bytes) =>

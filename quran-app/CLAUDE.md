@@ -111,4 +111,11 @@ One feature per session, with a hard QA gate between phases (BLUEPRINT §10).
 
 
 
+- **Web version (owner-approved 2026-10-14): built, deploy step pending on `main`.**
+  - Same Flutter app compiled for the browser (`.github/workflows/quran-app-web.yml` → `quran-web.zip` on the `quran-app-web-latest` release; the portfolio's `deploy.yml` on `main` is to unpack it into `/quran/`).
+  - Platform checks go through `lib/core/platform.dart` (dart:io's `Platform` throws in a browser). SQLite runs as WebAssembly (`sqflite_common_ffi_web`; `web/sqlite3.wasm` must match the pinned `sqlite3` package, 3.6.0); the content DB is copied into IndexedDB once per content version.
+  - Exceptions to rule 1 on the web only, by the owner's choice: every recitation streams from its CDN (Minshawi from Quran Foundation, not hosted by us), and mus'haf page fonts load per page from static.qurancdn.com, verified against `qcf_fonts`. Both CDNs send `Access-Control-Allow-Origin: *`.
+  - Self-contained otherwise: built with `--no-web-resources-cdn`, interface font Noto Sans Arabic bundled (browsers would fetch Arabic fallbacks from Google).
+  - Not on the web: scheduled notifications (no push server, by design), downloads, the compass needle, reliable background audio on iOS.
+
 Eyeball screens with `flutter test tool/screenshots/render_pages_test.dart --dart-define=OUT=<dir>`; it writes PNGs from the real content DB.

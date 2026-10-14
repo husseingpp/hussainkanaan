@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -12,6 +11,7 @@ import '../prayer/prayer_screen.dart';
 import '../prayer/prayer_settings.dart';
 import '../prayer/zones.dart';
 import 'qibla_math.dart';
+import '../../core/platform.dart' as platform;
 
 String degLabel(double d) => '${arabicNumerals(d.toStringAsFixed(1))}°';
 
@@ -50,7 +50,7 @@ class _Qibla extends ConsumerWidget {
     final bearing = qiblaBearing(location.lat, location.lng);
     final declination = magneticDeclination(location.lat, location.lng, now);
     final text = Theme.of(context).textTheme;
-    final hasCompass = (Platform.isAndroid || Platform.isIOS) && FlutterCompass.events != null;
+    final hasCompass = (platform.isAndroid || platform.isIOS) && FlutterCompass.events != null;
     return ListView(padding: const EdgeInsets.all(16), children: [
       Text(location.label, style: text.titleSmall, textAlign: TextAlign.center),
       const SizedBox(height: 8),
