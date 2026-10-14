@@ -86,6 +86,16 @@ jobs:
           mkdir -p out/ngo-platform
           cp -r ngo-platform/out/. out/ngo-platform/
 
+      # The Quran app's web build, published by quran-app-web.yml on the
+      # claude/new-project-wfesil branch as a release asset. Each rebuild
+      # (including the hourly one) picks up its latest version.
+      - name: Inject Quran app (web build) into portfolio output
+        run: |
+          mkdir -p out/quran
+          curl -sSfL -o quran-web.zip https://github.com/${{ github.repository }}/releases/download/quran-app-web-latest/quran-web.zip
+          unzip -q quran-web.zip -d out/quran
+          ls out/quran | head
+
       - name: Disable Jekyll processing
         run: touch out/.nojekyll
 
