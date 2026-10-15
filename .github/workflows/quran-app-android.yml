@@ -82,7 +82,9 @@ jobs:
           path: |
             quran-app/assets/audio/bundled.json
             quran-app/assets/audio/minshawi-murattal
-          key: bundled-audio-minshawi-murattal-16k-${{ hashFiles('quran-app/tool/audio/build_bundle.py', 'quran-app/tool/ingest/reciters.json') }}
+          # Only the encoder script decides the output; adding other reciters to
+          # reciters.json must not re-encode Minshawi.
+          key: bundled-audio-minshawi-murattal-16k-${{ hashFiles('quran-app/tool/audio/build_bundle.py') }}
 
       - name: Build built-in reciter (download and encode)
         if: steps.bundled.outputs.cache-hit != 'true'

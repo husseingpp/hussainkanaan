@@ -1,0 +1,28 @@
+name: Reciter source search (Quran app)
+
+# Looks up reciters in public audio catalogues the dev sandbox can't reach.
+on:
+  push:
+    branches:
+      - claude/new-project-wfesil
+    paths:
+      - ".github/workflows/quran-app-reciter-search.yml"
+  workflow_dispatch:
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - name: quranicaudio.com
+        run: |
+          curl -sS https://quranicaudio.com/api/qaris > qaris.json
+          python3 - <<'PY'
+          import json
+          keys = ['shaker', 'qasem', 'ghasem', 'kasem', 'abol', 'mansour', 'mansoor', 'parhiz', 'شاکر', 'شاكر', 'ابوالقاسم', 'أبوالقاسم', 'منصور']
+          for r in json.load(open('qaris.json')):
+              n = f"{r.get('name')} | {r.get('arabic_name')}"
+              if any(k in n.lower() or k in n for k in keys):
+                  print(json.dumps({k: r.get(k) for k in ('id', 'name', 'arabic_name', 'relative_path', 'file_formats', 'section_id', 'home')}, ensure_ascii=False))
+          PY
+      - name: everyayah.com folders
+        run: curl -sS https://everyayah.com/data/recitations.js | grep -oE '"subfolder":"[^"]+"' | sort | head -200
