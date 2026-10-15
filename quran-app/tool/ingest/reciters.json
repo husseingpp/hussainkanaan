@@ -118,5 +118,14 @@
     "audio": "per_ayah",
     "base_url": "https://everyayah.com/data/Parhizgar_48kbps",
     "bitrate": 48
+  },
+  {
+    "slug": "mansouri",
+    "name": "Karim Mansouri",
+    "name_ar": "كريم منصوري",
+    "style": "murattal",
+    "audio": "per_ayah",
+    "base_url": "https://everyayah.com/data/Karim_Mansoori_40kbps",
+    "bitrate": 40
   }
 ]
