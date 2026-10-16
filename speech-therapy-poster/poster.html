@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>تقويم نطق ولغة — ملصق A5</title>
+<style>
+  @font-face { font-family: "Readex"; font-weight: 400; src: url(fonts/readex-400.ttf); }
+  @font-face { font-family: "Readex"; font-weight: 600; src: url(fonts/readex-600.ttf); }
+  @font-face { font-family: "Readex"; font-weight: 700; src: url(fonts/readex-700.ttf); }
+  @page { size: 148mm 210mm; margin: 0; }
+  :root {
+    --paper: #ecece9; --ink: #2b2b2b;
+    --pink: #f28ce6; --coral: #f4604f; --lime: #e6f77c;
+    --blue: #14a4ff; --olive: #8faa45; --mint: #b4d9ca;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 148mm; height: 210mm; }
+  body { background: var(--paper); color: var(--ink); font-family: "Readex", sans-serif;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .poster { position: relative; width: 148mm; height: 210mm; overflow: hidden;
+            display: flex; flex-direction: column; }
+
+  header { padding: 10mm 12mm 0; }
+  .rule { height: 0.8mm; width: 46mm; background: var(--olive); margin-bottom: 5mm; }
+  h1 { font-weight: 400; font-size: 22mm; line-height: 0.95; letter-spacing: -0.3mm; }
+  h1 .ring { position: relative; display: inline-block; }
+  h1 .ring svg { position: absolute; inset: -3mm -4mm -1mm -4mm; width: calc(100% + 8mm);
+                 height: calc(100% + 4mm); overflow: visible; }
+  .sub { margin-top: 5mm; display: inline-block; background: var(--mint);
+         padding: 2.2mm 5mm; font-size: 4.6mm; border-radius: 1mm; }
+
+  .treat { padding: 6mm 12mm 0; }
+  .treat h2 { font-size: 4.4mm; font-weight: 600; margin-bottom: 3mm; }
+  .chips { display: flex; flex-wrap: wrap; gap: 2mm; }
+  .chips span { font-size: 3.6mm; padding: 1.6mm 3.4mm; border-radius: 10mm;
+                border: 0.35mm solid var(--ink); background: #fff; }
+
+  .places { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm;
+            padding: 6mm 12mm 7mm; }
+  .places div { aspect-ratio: 1; display: grid; place-items: center; text-align: center;
+                font-size: 3.3mm; font-weight: 600; line-height: 1.25; padding: 1mm; }
+
+  .cta { margin-top: auto; background: var(--olive); padding: 7mm 12mm 7mm;
+         display: flex; align-items: center; gap: 8mm; }
+  .cta .text { flex: 1; }
+  .cta h3 { white-space: nowrap; font-size: 9mm; font-weight: 400; line-height: 1.1; position: relative; }
+  .cta h3 .mark { position: relative; display: inline-block; }
+  .cta h3 .mark svg { position: absolute; inset: -2mm -3mm -1mm -3mm; width: calc(100% + 6mm);
+                      height: calc(100% + 3mm); overflow: visible; }
+  .cta p { margin-top: 3mm; font-size: 4.2mm; line-height: 1.5; }
+  .cta .arrow { display: block; margin-top: 2mm; font-size: 8mm; line-height: 1; color: var(--lime); }
+  .qr-wrap { flex: none; width: 44mm; display: flex; flex-direction: column; align-items: center; }
+  .qr { background: #fff; padding: 4mm; border-radius: 2.5mm;
+        box-shadow: 0 0 0 1.4mm var(--lime); }
+  .qr img { display: block; width: 36mm; height: 36mm; }
+  .url { margin-top: 3mm; font-size: 2.1mm; white-space: nowrap; direction: ltr; text-align: center; opacity: .8; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <header>
+    <div class="rule"></div>
+    <h1>تقويم <span class="ring">نطق<svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="M8 34 C 6 10, 70 2, 92 18 C 104 30, 80 56, 40 54 C 12 52, 2 40, 12 24" fill="none" stroke="#f28ce6" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></span><br>ولغة</h1>
+    <div class="sub">٤ سنوات في الجامعة</div>
+  </header>
+
+  <section class="treat">
+    <h2>ما الذي نعالجه؟</h2>
+    <div class="chips">
+      <span>النّطق</span><span>اللّغة</span><span>الطّلاقة</span><span>الصّوت</span>
+      <span>البلع والتّغذية</span><span>التّواصل والإدراك</span>
+    </div>
+  </section>
+
+  <section class="places" aria-label="أماكن العمل">
+    <div style="background:var(--pink)">مراكز</div>
+    <div style="background:var(--coral)">جمعيّات</div>
+    <div style="background:var(--lime)">مدارس</div>
+    <div style="background:var(--blue)">مستشفيات</div>
+    <div style="background:var(--olive)">عيادتك الخاصّة</div>
+  </section>
+
+  <section class="cta">
+    <div class="text">
+      <h3>هل أنت <span class="mark">منّا؟<svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="M6 32 C 4 8, 74 0, 94 20 C 104 34, 78 58, 38 55 C 10 52, 0 40, 14 22" fill="none" stroke="#e6f77c" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></span></h3>
+      <p>امسح الرمز وتعرّف على<br>مهنة تقويم النّطق واللّغة</p>
+    </div>
+    <div class="qr-wrap">
+      <div class="qr"><img src="qr.svg" alt="رمز QR"></div>
+      <div class="url">husseingpp.github.io/hussainkanaan/speech-therapy</div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
