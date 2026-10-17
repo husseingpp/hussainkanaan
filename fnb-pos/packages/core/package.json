@@ -1,0 +1,12 @@
+{
+  "name": "@fnb-pos/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Platform-free business logic shared by every POS target: money, tax, second currency, ids, receipts",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "tsc -p ."
+  }
+}

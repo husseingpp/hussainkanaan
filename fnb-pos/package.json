@@ -1,0 +1,21 @@
+{
+  "name": "fnb-pos",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Multi-tenant, offline-first restaurant POS with native second-currency checkout",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "npm run test --workspaces",
+    "typecheck": "npm run typecheck --workspaces"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.2"
+  }
+}
